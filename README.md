@@ -1,65 +1,8 @@
-<img src="https://github.com/user-attachments/assets/1eeccc90-342c-4f45-a444-7acc9cb9112a" width="128" alt="logo">
+# 3D Renderer
 
-# Numcraft Rust
+A 3D renderer made for extremelly limited hardware.
 
-Numcraft Rust is a (WIP) cube sandbox game running natively on Numworks calculators on both Epsilon and Upsilon firmwares.
-
-## Screenshot
-
-<img width="456" height="350" alt="Screenshot_20260207_134349" src="https://github.com/user-attachments/assets/8771ed31-173a-40ed-86cc-6db6b1be55f3" />
-
-
-<img src="https://github.com/user-attachments/assets/f247677e-0f19-4170-92b9-51563961c862" width="512" alt="screenshot">
-
-
-
-Numcraft running on actual N0110 Numworks on latest Epsilon (more than 40 FPS on N120) and on the Epsilon simulator.
-
-Note that this is not the final result but the current state of the project.
-
-## Current project state
-[See Roadmap below]
-
-The program runs at 10-20 FPS on N0110 and 30-50 FPS on N0120. It runs perfectly on the simulator (it depends on your hardware though).
-
-## Support
-
-NumcraftRust should run on both N120, N115 and N110 models. You will get better performances with the N120 model (N110 and N115 have the same CPU clock speed and same RAM).
-It can run on both Upsilon and Epsilon.
-
-## Roadmap
-**Here is the current roadmap for the project :**
-- [X] Fix the raycaster
-- [ ] Textures (WIP)
-- [X] World deletion
-- [X] World creation settings
-- [X] Save system with compression
-- [X] Collisions
-- [X] Better world generation
-- [X] Main menu
-- [X] Creative menu to select multiple blocks
-- [X] Menu to select between multiple worlds
-- [ ] Lighting engine
-- [ ] Mobs
-- [X] Survival mode
-
-If I have the time:
-- [ ] TNT
-- [ ] Redstone
-- [ ] Commands support
-- [ ] Make a tool to convert Minecraft schematics to Numcraft structures
-- [ ] Structures such as Villages
-- [X] Upsilon / ~~Omega~~ compatibility
-- [ ] Mini games
-
-Good ideas but I will never have the time to do that :
-- [ ] Mod support
-- [ ] Multiplayer (impossible at this point in time)
-
-## Known Bugs:
-- Weird beahaviors in the negative coordinates
-- Rendering issues with the block selection marker
-- Can randomly crash on start on N0120. You have to reset your calculator before downloading a new version (I can't do anything about that, it's related to the OS)
+The renderer is based on NumcraftRust.
 
 ## Setup the build environment
 
@@ -118,4 +61,3 @@ just sim 5
 
 ## Legal info
 NumWorks is a registered trademark.
-This project is not associated or affiliated with Mojang Studios.
