@@ -1,0 +1,12 @@
+[target.'cfg(target_os="macos")']
+rustflags = [
+    "-C", "link-arg=-undefined", "-C", "link-arg=dynamic_lookup", "-C", "link-arg=-lSystem"
+]
+
+[target.'cfg(target_os="linux")']
+rustflags = [
+    "-C", "link-arg=-Wl,-undefined,dynamic_lookup", "-C", "link-arg=-Wl,-z,undefs"
+]
+
+[build]
+target = "thumbv7em-none-eabihf"
