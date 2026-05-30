@@ -25,6 +25,7 @@ mod renderer;
 mod timing;
 
 mod model;
+mod draw_tools;
 
 setup_allocator!();
 
@@ -41,6 +42,8 @@ fn main() {
     let mut input_manager = InputManager::new();
     let mut time_manager = TimingManager::new();
     let mut renderer = Renderer::new();
+
+    renderer.camera.update_pos(Vector3::new(0.0, 1.0, -2.0));
 
     let mut mesh = Mesh::new();
 

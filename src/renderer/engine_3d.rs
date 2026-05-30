@@ -1,11 +1,10 @@
 use crate::{
-    nadk::display::{ScreenRect, push_rect, wait_for_vblank},
-    renderer::{
+    draw_tools, nadk::display::{ScreenRect, push_rect, wait_for_vblank}, renderer::{
         clipping::{triangle_clip_against_line, triangle_clip_against_plane},
         draw_2d_triangles::clip_and_draw_2d_triangle,
         mesh::{IndexedTriangle2D, Mesh, MeshTriangle, Triangle, Triangle2D},
         *,
-    },
+    }
 };
 
 impl Renderer {
@@ -161,6 +160,8 @@ impl Renderer {
                     self.tile_depth_buffer[i] = f16::MAX;
                 }
                 self.draw_triangles(x, y);
+
+                draw_tools::circle::rounded_rectangle(20.0, Vector2::new(50 - (x * SCREEN_TILE_WIDTH) as isize, 50 - (y * SCREEN_TILE_HEIGHT) as isize), 61, 60, &mut self.tile_frame_buffer, SCREEN_TILE_WIDTH as isize, SCREEN_TILE_HEIGHT as isize, COLOR_BLACK);
 
                 push_rect(
                     ScreenRect {
