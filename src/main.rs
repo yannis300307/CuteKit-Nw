@@ -24,6 +24,8 @@ mod input_manager;
 mod renderer;
 mod timing;
 
+mod model;
+
 setup_allocator!();
 
 configure_app!(b"Numcraft\0", 9, "../target/assets/icon.nwi", 3437);
@@ -42,29 +44,7 @@ fn main() {
 
     let mut mesh = Mesh::new();
 
-    mesh.add_vertex(Vector3::new(1.0, 1.0, 2.0));
-    mesh.add_vertex(Vector3::new(1.0, 0.0, 2.0));
-    mesh.add_vertex(Vector3::new(0.0, 0.0, 2.0));
-    mesh.add_vertex(Vector3::new(1.0, 0.0, 3.0));
-
-
-    mesh.add_triangle(MeshTriangle {
-        v1: 0,
-        v2: 1,
-        v3: 2,
-        t1: Vector2::new(1.0, 0.0),
-        t2: Vector2::new(2.0, 0.0),
-        t3: Vector2::new(2.0, 1.0),
-    });
-
-    mesh.add_triangle(MeshTriangle {
-        v1: 3,
-        v2: 1,
-        v3: 0,
-        t1: Vector2::new(1.0, 0.0),
-        t2: Vector2::new(2.0, 0.0),
-        t3: Vector2::new(2.0, 1.0),
-    });
+    model::load_mesh(&mut mesh);
 
     loop {
         time_manager.update();
