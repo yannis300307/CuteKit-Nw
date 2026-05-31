@@ -1,10 +1,8 @@
 use image::{self, GenericImageView, ImageReader};
 use regex::Regex;
-use serde::{Deserialize, Serialize};
-use serde_json::Value;
 use std::{fs, process::Command};
 
-fn convert_image(file_name: &str) {
+fn convert_greyscale_image(file_name: &str) {
     let img = ImageReader::open(format!("assets/{file_name}.png").as_str())
         .unwrap()
         .decode()
@@ -87,8 +85,28 @@ fn patch_simulator() {
     }
 }
 
-fn convert_texture() {
-    let img = ImageReader::open(format!("assets/texture.png").as_str())
+fn convert_image(file_name: &str) {
+    let img = ImageReader::open(format!("assets/{}.png", file_name).as_str())
+        .unwrap()
+        .decode()
+        .unwrap();
+
+    let mut data: Vec<u8> = Vec::new();
+
+    for pix in img.pixels() {
+        data.extend(
+            (((pix.2.0[0] as u16 & 0xF8) << 8)
+                | ((pix.2.0[1] as u16 & 0xFC) << 3)
+                | ((pix.2.0[2] as u16 & 0xF8) >> 3))
+                .to_be_bytes(),
+        );
+    }
+
+    fs::write(format!("target/assets/{}.bin", file_name).as_str(), data).unwrap();
+}
+
+fn convert_image_transparent(file_name: &str) {
+    let img = ImageReader::open(format!("assets/{}.png", file_name).as_str())
         .unwrap()
         .decode()
         .unwrap();
@@ -102,9 +120,10 @@ fn convert_texture() {
                 | (pix.2.0[2] as u16 >> 3))
                 .to_be_bytes(),
         );
+        data.push(pix.2.0[3]);
     }
 
-    fs::write(format!("target/assets/texture.bin").as_str(), data).unwrap();
+    fs::write(format!("target/assets/{}.bin", file_name).as_str(), data).unwrap();
 }
 
 fn convert_icon() {
@@ -132,19 +151,16 @@ fn main() {
     // Turn icon.png into icon.nwi
 
     println!("cargo:rerun-if-changed=assets/icon.png");
+    println!("cargo:rerun-if-changed=assets/font.png");
+    println!("cargo:rerun-if-changed=assets/texture.png");
+
     convert_icon();
 
     // Convert font to usable data
-    println!("cargo:rerun-if-changed=assets/font.png");
-    convert_image("font");
+    convert_greyscale_image("font");
 
-    // Convert other textures
-    println!("cargo:rerun-if-changed=assets/cross.png");
-    convert_image("cross");
-
-    // Convert tileset
-    println!("cargo:rerun-if-changed=assets/texture.png");
-    convert_texture();
+    convert_image("texture");
+    convert_image_transparent("9parts");
 
     // Compile storage.c
     if std::env::var("CARGO_CFG_TARGET_OS").unwrap() == "none" {

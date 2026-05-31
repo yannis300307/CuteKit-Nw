@@ -6,7 +6,7 @@ use nalgebra::Vector2;
 use crate::nadk::display::{COLOR_BLACK, COLOR_BLUE, COLOR_RED, Color565};
 
 #[inline]
-fn put_pixel(buffer: &mut [Color565], buffer_width: isize, buffer_height: isize, x: isize, y: isize, color: Color565)
+pub fn put_pixel(buffer: &mut [Color565], buffer_width: isize, buffer_height: isize, x: isize, y: isize, color: Color565)
 {
     if x < 0 || x >= buffer_width {return ;}
     if y < 0 || y >= buffer_height {return ;}
@@ -14,7 +14,7 @@ fn put_pixel(buffer: &mut [Color565], buffer_width: isize, buffer_height: isize,
 }
 
 #[inline]
-fn get_pixel(buffer: &mut [Color565], buffer_width: isize, buffer_height: isize, x: isize, y: isize) -> Color565
+pub fn get_pixel(buffer: &[Color565], buffer_width: isize, buffer_height: isize, x: isize, y: isize) -> Color565
 {
     if x < 0 || x >= buffer_width {return COLOR_BLACK;}
     if y < 0 || y >= buffer_height {return COLOR_BLACK;}
@@ -73,9 +73,9 @@ fn put_horizontal_line(y: isize, x_start: isize, width: isize, buffer: &mut [Col
 
 pub fn rectangle(x: isize, y: isize, width: isize, height: isize, buffer: &mut [Color565], buffer_width: isize, buffer_height: isize, color: Color565)
 {
-    for xx in x..(x + width)
+    for yy in y..(y + height)
     {
-        for yy in y..(y + height)
+        for xx in x..(x + width)
         {
             put_pixel(buffer, buffer_width, buffer_height, xx, yy, color);
         }

@@ -86,9 +86,13 @@ pub fn textured_triangle(
                 tex_coords = (1.0 - t) * tex_s + t * tex_e;
                 let index = (i * SCREEN_TILE_WIDTH as i16 + j) as usize;
                 let z_inv = 1.0 / tex_coords.z;
+
+                let u = (tex_coords.x * z_inv).clamp(0.0, 0.9999);
+                let v = (tex_coords.y * z_inv).clamp(0.0, 0.9999);
+
                 if tex_coords.z < depth_buffer[index] as f32 {
-                    let texture_pixel_index = ((((tex_coords.x * z_inv) * 8.0) as usize)
-                        + ((tex_coords.y * z_inv * 8.0) as usize) * 128)
+                    let texture_pixel_index = (((u * 2048.0) as usize)
+                        + ((v * 2048.0) as usize) * 2048)
                         * 2;
                     let pixel = u16::from_be_bytes([
                         *unsafe { TEXTURE.get_unchecked(texture_pixel_index) },
@@ -146,9 +150,13 @@ pub fn textured_triangle(
                 tex_coords = (1.0 - t) * tex_s + t * tex_e;
                 let index = (i * SCREEN_TILE_WIDTH as i16 + j) as usize;
                 let z_inv = 1.0 / tex_coords.z;
+
+                let u = (tex_coords.x * z_inv).clamp(0.0, 0.9999);
+                let v = (tex_coords.y * z_inv).clamp(0.0, 0.9999);
+
                 if tex_coords.z < depth_buffer[index] as f32 {
-                    let texture_pixel_index = ((((tex_coords.x * z_inv) * 8.0) as usize)
-                        + ((tex_coords.y * z_inv * 8.0) as usize) * 128)
+                    let texture_pixel_index = (((u * 2048.0) as usize)
+                        + ((v * 2048.0) as usize) * 2048)
                         * 2;
                     let pixel = u16::from_be_bytes([
                         *unsafe { TEXTURE.get_unchecked(texture_pixel_index) },

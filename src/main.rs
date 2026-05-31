@@ -7,7 +7,7 @@
 use nalgebra::{Vector2, Vector3};
 
 use crate::{
-    input_manager::InputManager, nadk::{
+    ingame_ui::draw_ui, input_manager::InputManager, nadk::{
         display::{self, COLOR_RED, ScreenRect}, keyboard::wait_until_pressed, time, utils::wait_ok_released
     }, renderer::{
         Renderer,
@@ -26,6 +26,7 @@ mod timing;
 
 mod model;
 mod draw_tools;
+mod ingame_ui;
 
 setup_allocator!();
 
@@ -54,7 +55,7 @@ fn main() {
         input_manager.update();
         let delta = time_manager.get_delta_time();
         renderer.draw_mesh(&mesh);
-        renderer.draw_game();
+        renderer.draw_game(Some(&draw_ui));
         renderer.camera.update(delta, &input_manager);
 
         if input_manager.is_just_pressed(nadk::keyboard::Key::Back) {

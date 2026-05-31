@@ -52,41 +52,6 @@ impl Renderer {
                     t3,
                 };
 
-                /*let mut clip_buffer: heapless::Deque<Triangle2D, 16> = heapless::Deque::new(); // 2^4
-
-                clip_buffer.push_back(projected_triangle).unwrap();
-                let mut new_tris = 1;
-
-                let mut clip_triangle = |line_p, line_n| {
-                    while new_tris > 0 {
-                        let test = clip_buffer.pop_front().unwrap();
-                        new_tris -= 1;
-
-                        let clipped = triangle_clip_against_line(&line_p, &line_n, &test);
-
-                        if let Some(clipped_tri) = clipped.0 {
-                            clip_buffer.push_back(clipped_tri).unwrap();
-                        }
-                        if let Some(clipped_tri) = clipped.1 {
-                            clip_buffer.push_back(clipped_tri).unwrap();
-                        }
-                    }
-                    new_tris = clip_buffer.len();
-                };
-
-                clip_triangle(Vector2::new(0.0, 0.0), Vector2::new(0.0, 1.0));
-                clip_triangle(Vector2::new(0.0, SCREEN_HEIGHTF), Vector2::new(0.0, -1.0));
-                clip_triangle(Vector2::new(0.0, 0.0), Vector2::new(1.0, 0.0));
-                clip_triangle(Vector2::new(SCREEN_WIDTHF, 0.0), Vector2::new(-1.0, 0.0));
-
-                for tri in clip_buffer {
-                    if self.triangles_to_render.len() >= MAX_TRIANGLES {
-                        // TODO : Find a proper fix for this
-                        break;
-                    }
-                    self.triangles_to_render.push(tri.to_small()); // Do nothing if overflow
-                }*/
-
                 self.triangles_to_render.push(projected_triangle);
             };
 
@@ -99,7 +64,7 @@ impl Renderer {
         }
     }
 
-    fn draw_triangles(&mut self, tile_x: usize, tile_y: usize) {
+    pub fn draw_triangles(&mut self, tile_x: usize, tile_y: usize) {
         let tile_offset = Vector2::new(
             -((SCREEN_TILE_WIDTH * tile_x) as i16),
             -((SCREEN_TILE_HEIGHT * tile_y) as i16),
@@ -148,37 +113,5 @@ impl Renderer {
             self.add_3d_triangle_to_render(mesh, triangle);
         }
         self.project_verticies();
-    }
-
-    pub fn draw_game(&mut self) {
-        self.mat_view = self.get_mat_view();
-
-        for x in 0..SCREEN_TILE_SUBDIVISION {
-            for y in 0..SCREEN_TILE_SUBDIVISION {
-                self.clear_screen(Color565::new(0b01110, 0b110110, 0b11111));
-                for i in 0..SCREEN_TILE_WIDTH * SCREEN_TILE_HEIGHT {
-                    self.tile_depth_buffer[i] = f16::MAX;
-                }
-                self.draw_triangles(x, y);
-
-                draw_tools::circle::rounded_rectangle(20.0, Vector2::new(50 - (x * SCREEN_TILE_WIDTH) as isize, 50 - (y * SCREEN_TILE_HEIGHT) as isize), 61, 60, &mut self.tile_frame_buffer, SCREEN_TILE_WIDTH as isize, SCREEN_TILE_HEIGHT as isize, COLOR_BLACK);
-
-                push_rect(
-                    ScreenRect {
-                        x: (SCREEN_TILE_WIDTH * x) as u16,
-                        y: (SCREEN_TILE_HEIGHT * y) as u16,
-                        width: SCREEN_TILE_WIDTH as u16,
-                        height: SCREEN_TILE_HEIGHT as u16,
-                    },
-                    &self.tile_frame_buffer,
-                );
-            }
-        }
-        if self.enable_vsync {
-            wait_for_vblank();
-        }
-        self.triangles_to_render.clear();
-        self.transformed_vertex_buffer.clear();
-        self.projected_buffer.clear();
     }
 }

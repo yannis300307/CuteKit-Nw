@@ -5,6 +5,7 @@ mod matrix_utils;
 pub mod mesh;
 mod misc;
 mod textured_triangle;
+pub mod drawing;
 
 calc_use!(alloc::format);
 calc_use!(alloc::vec::Vec);
