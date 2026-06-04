@@ -12,6 +12,12 @@ pub struct DrawInfo {
 }
 
 impl Renderer {
+    pub fn clear_intermediate_buffers(&mut self)
+    {
+        self.transformed_vertex_buffer.clear();
+        self.projected_buffer.clear();
+    }
+
     pub fn draw_game(
         &mut self,
         custom_layer_function: Option<&dyn Fn(&DrawInfo, &mut [Color565])>,

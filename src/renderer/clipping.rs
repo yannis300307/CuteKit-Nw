@@ -57,6 +57,7 @@ pub fn triangle_clip_against_line(
     let mut outside_tex: [&Vector3<f32>; 3] = [&default; 3];
     let mut n_outside_tex_count = 0;
 
+    // TODO: Why is the i16 cast into a f32 ????!!! I wrote that but I don't remember why I did that...
     let p1 = Vector2::new(in_tri.p1.x as f32, in_tri.p1.y as f32);
     let p2 = Vector2::new(in_tri.p2.x as f32, in_tri.p2.y as f32);
     let p3 = Vector2::new(in_tri.p3.x as f32, in_tri.p3.y as f32);
@@ -154,12 +155,14 @@ pub fn triangle_clip_against_line(
     (None, None)
 }
 
+/* Clips the triangle against the described lines.
+Can return additional vertex created during the clipping that must be projected.*/
 pub fn triangle_clip_against_plane(
     plane_p: &Vector3<f32>,
     plane_n: &Vector3<f32>,
     in_tri: &MeshTriangle,
-    verticies: &mut Vec<Vector3<f32>>
-) -> (Option<MeshTriangle>, Option<MeshTriangle>) {
+    verticies: &mut Vec<Vector3<f32>>,
+) -> ((Option<MeshTriangle>, Option<MeshTriangle>), (Option<Vector3<f32>>, Option<Vector3<f32>>)) {
     let plane_n = plane_n.normalize();
 
     let dist = |p: Vector3<f32>| {
@@ -216,80 +219,84 @@ pub fn triangle_clip_against_plane(
     }
 
     if n_inside_point_count == 0 {
-        return (None, None);
+        return ((None, None), (None, None));
     }
 
     if n_inside_point_count == 3 {
-        return (Some(in_tri.clone()), None);
+        return ((Some(in_tri.clone()), None), (None, None));
     }
 
     if n_inside_point_count == 1 && n_outside_point_count == 2 {
-        let (v2, t) = vector_intersect_plane(
+        // Well yeah, this can be a bit weird but the extra_vX variables are used later to add the missing projected verticies to the projected buffer.
+        let (extra_v2, t) = vector_intersect_plane(
             plane_p,
             &plane_n,
             &verticies[inside_points[0] as usize],
             &verticies[outside_points[0] as usize],
         );
-        verticies.push(v2);
+        verticies.push(extra_v2);
         let v2 = (verticies.len() - 1) as u16;
         let t2 = t * (outside_tex[0] - inside_tex[0]) + inside_tex[0];
-        let (p3, t) = vector_intersect_plane(
+        let (extra_v3, t) = vector_intersect_plane(
             plane_p,
             &plane_n,
             &verticies[inside_points[0] as usize],
             &verticies[outside_points[1] as usize],
         );
-        verticies.push(p3);
+        verticies.push(extra_v3);
         let t3 = t * (outside_tex[1] - inside_tex[0]) + inside_tex[0];
         let out_tri = MeshTriangle {
             v1: inside_points[0],
             v2,
             v3: v2 + 1,
+            padding: 0,
             t1: *inside_tex[0],
             t2,
             t3,
         };
 
-        return (Some(out_tri), None);
+        return ((Some(out_tri), None), (Some(extra_v2), Some(extra_v3)));
     }
 
     if n_inside_point_count == 2 && n_outside_point_count == 1 {
-        let (v3, t) = vector_intersect_plane(
+        let (extra_v3_1, t) = vector_intersect_plane(
             plane_p,
             &plane_n,
             &verticies[inside_points[0] as usize],
             &verticies[outside_points[0] as usize],
         );
-        verticies.push(v3);
+        verticies.push(extra_v3_1);
         let v3 = (verticies.len() - 1) as u16;
         let t3 = t * (outside_tex[0] - inside_tex[0]) + inside_tex[0];
         let out_tri1 = MeshTriangle {
             v1: inside_points[0],
             v2: inside_points[1],
             v3,
+            padding: 0,
             t1: *inside_tex[0],
             t2: *inside_tex[1],
             t3,
         };
 
-        let (v3, t) = vector_intersect_plane(
+        let (extra_v3_2, t) = vector_intersect_plane(
             plane_p,
             &plane_n,
             &verticies[inside_points[1] as usize],
             &verticies[outside_points[0] as usize],
         );
-        verticies.push(v3);
+        verticies.push(extra_v3_2);
         let v3 = (verticies.len() - 1) as u16;
         let t3 = t * (outside_tex[0] - inside_tex[1]) + inside_tex[1];
         let out_tri2 = MeshTriangle {
             v1: inside_points[1],
             v2: out_tri1.v3,
             v3,
+            padding: 0,
             t1: *inside_tex[1],
             t2: out_tri1.t3,
             t3,
         };
-        return (Some(out_tri1), Some(out_tri2));
+        return ((Some(out_tri1), Some(out_tri2)), (Some(extra_v3_1), Some(extra_v3_2)));
     }
-    (None, None)
+    ((None, None), (None, None))
 }

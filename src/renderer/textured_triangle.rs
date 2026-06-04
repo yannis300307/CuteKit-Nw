@@ -91,8 +91,8 @@ pub fn textured_triangle(
                 let v = (tex_coords.y * z_inv).clamp(0.0, 0.9999);
 
                 if tex_coords.z < depth_buffer[index] as f32 {
-                    let texture_pixel_index = (((u * 2048.0) as usize)
-                        + ((v * 2048.0) as usize) * 2048)
+                    let texture_pixel_index = (((u * 512.0) as usize)
+                        + ((v * 512.0) as usize) * 512)
                         * 2;
                     let pixel = u16::from_be_bytes([
                         *unsafe { TEXTURE.get_unchecked(texture_pixel_index) },
@@ -155,8 +155,8 @@ pub fn textured_triangle(
                 let v = (tex_coords.y * z_inv).clamp(0.0, 0.9999);
 
                 if tex_coords.z < depth_buffer[index] as f32 {
-                    let texture_pixel_index = (((u * 2048.0) as usize)
-                        + ((v * 2048.0) as usize) * 2048)
+                    let texture_pixel_index = (((u * 512.0) as usize)
+                        + ((v * 512.0) as usize) * 512)
                         * 2;
                     let pixel = u16::from_be_bytes([
                         *unsafe { TEXTURE.get_unchecked(texture_pixel_index) },

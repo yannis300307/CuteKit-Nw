@@ -1,3 +1,4 @@
+import struct
 import sys
 
 def get_verticies(file_content: str) -> list[tuple[float, float, float]]:
@@ -28,7 +29,7 @@ def compile_verticies(file_content: str):
     verticies = get_verticies(file_content)
     compiled = []
     for vertex in verticies:
-        compiled.append(f"    mesh.add_vertex(Vector3::new({vertex[0]}, {vertex[1]}, {vertex[2]}));")
+        compiled.append(struct.pack("<3f", vertex[0], vertex[1], vertex[2]))
     return compiled
 
 def compile_faces(file_content: str):
@@ -42,21 +43,22 @@ def compile_faces(file_content: str):
         t1 = texture_coordinates[int(face[0][1]) - 1]
         t2 = texture_coordinates[int(face[1][1]) - 1]
         t3 = texture_coordinates[int(face[2][1]) - 1]
-        compiled.append(f"    mesh.add_triangle(MeshTriangle {{ v1: {v1}, v2: {v2}, v3: {v3}, t1: Vector2::new({t1[0]}, {t1[1]}), t2: Vector2::new({t2[0]}, {t2[1]}), t3: Vector2::new({t3[0]}, {t3[1]})}});")
+        compiled.append(v1.to_bytes(2, "little"))
+        compiled.append(v2.to_bytes(2, "little"))
+        compiled.append(v3.to_bytes(2, "little"))
+        compiled.append((0).to_bytes(2, "little"))
+        compiled.append(struct.pack("<6f", t1[0], 1 - t1[1], t2[0], 1 - t2[1], t3[0], 1 - t3[1]))
     return compiled
 
 def main():
     with open(sys.argv[1]) as f:
         file_content: str = f.read()
-        out = []
-        out.append("use nalgebra::{Vector2, Vector3};")
-        out.append("use crate::renderer::mesh::{Mesh, MeshTriangle};")
-        out.append("pub fn load_mesh(mesh: &mut Mesh) {")
-        out.extend(compile_verticies(file_content))
-        out.extend(compile_faces(file_content))
-        out.append("}")
-    with open(sys.argv[2], "w") as f:
-        f.write("\n".join(out))
+        verticies = compile_verticies(file_content)
+        faces = compile_faces(file_content)
+    with open(sys.argv[2], "wb") as f:
+        f.write(b''.join(verticies))
+    with open(sys.argv[3], "wb") as f:
+        f.write(b''.join(faces))
 
 if __name__ == "__main__":
     main()
