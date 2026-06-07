@@ -3,13 +3,14 @@ use nalgebra::Vector2;
 use crate::{
     nadk::display::Color565,
     renderer::{
-        SCREEN_TILE_HEIGHT, SCREEN_TILE_WIDTH, clipping::triangle_clip_against_line,
-        mesh::{IndexedTriangle2D, Triangle2D}, misc::draw_line, textured_triangle::textured_triangle,
+        SCREEN_TILE_HEIGHT, SCREEN_TILE_WIDTH,
+        mesh::TexTriangle2D,
+        textured::{clipping::triangle_clip_against_line, textured_triangle::textured_triangle},
     },
 };
 
 pub fn draw_2d_triangles(
-    tri: &Triangle2D,
+    tri: &TexTriangle2D,
     frame_buffer: &mut [Color565; SCREEN_TILE_WIDTH * SCREEN_TILE_HEIGHT],
     depth_buffer: &mut [f16; SCREEN_TILE_WIDTH * SCREEN_TILE_HEIGHT],
 ) {
@@ -25,33 +26,15 @@ pub fn draw_2d_triangles(
         tri.t3,
         //get_quad_color_from_texture_id(tri.texture_id).apply_light(tri.light * 17),
     );
-    /*draw_line(
-        (tri.p1.x as isize, tri.p1.y as isize),
-        (tri.p2.x as isize, tri.p2.y as isize),
-        frame_buffer,
-        Color565::new(0b11111, 0b0, 0b0),
-    );
-    draw_line(
-        (tri.p2.x as isize, tri.p2.y as isize),
-        (tri.p3.x as isize, tri.p3.y as isize),
-        frame_buffer,
-        Color565::new(0b11111, 0b0, 0b0),
-    );
-    draw_line(
-        (tri.p3.x as isize, tri.p3.y as isize),
-        (tri.p1.x as isize, tri.p1.y as isize),
-        frame_buffer,
-        Color565::new(0b11111, 0b0, 0b0),
-    );*/
 }
 
 // Takes a Triangle2D and draw it as a filled triangle or lines depending of the texture_id
 pub fn clip_and_draw_2d_triangle(
-    tri: Triangle2D,
+    tri: TexTriangle2D,
     frame_buffer: &mut [Color565; SCREEN_TILE_WIDTH * SCREEN_TILE_HEIGHT],
     depth_buffer: &mut [f16; SCREEN_TILE_WIDTH * SCREEN_TILE_HEIGHT],
 ) {
-    let mut clip_buffer: heapless::Deque<Triangle2D, 16> = heapless::Deque::new(); // 2^4
+    let mut clip_buffer: heapless::Deque<TexTriangle2D, 16> = heapless::Deque::new(); // 2^4
 
     clip_buffer.push_back(tri).unwrap();
     let mut new_tris = 1;

@@ -36,24 +36,20 @@ impl Camera {
 
     pub fn update(&mut self, delta: f32, input_manager: &InputManager) {
         // Rotation
-        if input_manager.is_keydown(nadk::keyboard::Key::Right)
-        {
+        if input_manager.is_keydown(nadk::keyboard::Key::Right) {
             self.rotation.y -= delta * CAMERA_ROTATION_SPEED;
         }
-        if input_manager.is_keydown(nadk::keyboard::Key::Left)
-        {
+        if input_manager.is_keydown(nadk::keyboard::Key::Left) {
             self.rotation.y += delta * CAMERA_ROTATION_SPEED;
         }
-        if input_manager.is_keydown(nadk::keyboard::Key::Up)
-        {
+        if input_manager.is_keydown(nadk::keyboard::Key::Up) {
             self.rotation.x -= delta * CAMERA_ROTATION_SPEED;
 
             if self.rotation.x <= -PI / 2.0 + 0.0001 {
                 self.rotation.x = -PI / 2.0 + 0.0001
             }
         }
-        if input_manager.is_keydown(nadk::keyboard::Key::Down)
-        {
+        if input_manager.is_keydown(nadk::keyboard::Key::Down) {
             self.rotation.x += delta * CAMERA_ROTATION_SPEED;
 
             if self.rotation.x >= PI / 2.0 - 0.0001 {
@@ -64,33 +60,27 @@ impl Camera {
         let forward = self.get_forward_vector();
         let right = self.get_right_vector();
 
-        if input_manager.is_keydown(nadk::keyboard::Key::Toolbox)
-        {
+        if input_manager.is_keydown(nadk::keyboard::Key::Toolbox) {
             self.pos += forward * delta * 1.0;
         }
 
-        if input_manager.is_keydown(nadk::keyboard::Key::Comma)
-        {
+        if input_manager.is_keydown(nadk::keyboard::Key::Comma) {
             self.pos -= forward * delta * 1.0;
         }
 
-        if input_manager.is_keydown(nadk::keyboard::Key::Imaginary)
-        {
+        if input_manager.is_keydown(nadk::keyboard::Key::Imaginary) {
             self.pos += right * delta * 1.0;
         }
 
-        if input_manager.is_keydown(nadk::keyboard::Key::Power)
-        {
+        if input_manager.is_keydown(nadk::keyboard::Key::Power) {
             self.pos -= right * delta * 1.0;
         }
 
-        if input_manager.is_keydown(nadk::keyboard::Key::Shift)
-        {
+        if input_manager.is_keydown(nadk::keyboard::Key::Shift) {
             self.pos.y += delta * 1.0;
         }
 
-        if input_manager.is_keydown(nadk::keyboard::Key::Exp)
-        {
+        if input_manager.is_keydown(nadk::keyboard::Key::Exp) {
             self.pos.y -= delta * 1.0;
         }
     }

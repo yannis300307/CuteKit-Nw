@@ -12,8 +12,7 @@ pub struct DrawInfo {
 }
 
 impl Renderer {
-    pub fn clear_intermediate_buffers(&mut self)
-    {
+    pub fn clear_intermediate_buffers(&mut self) {
         self.transformed_vertex_buffer.clear();
         self.projected_buffer.clear();
     }
@@ -30,7 +29,8 @@ impl Renderer {
                 for i in 0..SCREEN_TILE_WIDTH * SCREEN_TILE_HEIGHT {
                     self.tile_depth_buffer[i] = f16::MAX;
                 }
-                self.draw_triangles(x, y);
+                self.draw_tex_triangles(x, y);
+                self.draw_flat_triangles(x, y);
 
                 let drawing_info = DrawInfo {
                     buffer_width: SCREEN_TILE_WIDTH as isize,
@@ -57,7 +57,8 @@ impl Renderer {
         if self.enable_vsync {
             wait_for_vblank();
         }
-        self.triangles_to_render.clear();
+        self.tex_triangles_to_render.clear();
+        self.flat_triangles_to_render.clear();
         self.transformed_vertex_buffer.clear();
         self.projected_buffer.clear();
     }

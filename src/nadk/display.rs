@@ -6,6 +6,8 @@ use std::ffi::CString;
 
 use core::ffi::c_char;
 
+use bytemuck::{Pod, Zeroable};
+
 pub const SCREEN_RECT: ScreenRect = ScreenRect {
     x: 0,
     y: 0,
@@ -20,7 +22,7 @@ pub const COLOR_BLUE: Color565 = Color565::from_rgb888(0, 0, 255);
 
 /// The color format of the screen. Encoded with 16 bits (or 2 bytes). 5 bits are used for red, 6 for green and 5 for blue.
 #[repr(C)]
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Zeroable, Pod)]
 pub struct Color565 {
     pub value: u16,
 }

@@ -29,10 +29,6 @@ epsilon = []
 
 [profile.dev]
 panic="abort"
-strip=true
-opt-level= "z"
-lto = true
-codegen-units = 1
 
 [profile.release]
 panic="abort"
@@ -57,6 +53,7 @@ enum-iterator = "2.3.0"
 rand_xorshift = "0.4.0"
 rand_core = "0.9.3"
 bytemuck = { version = "1.25.0", features = ["derive"] }
+include_bytes_aligned = "0.2.0"
 
 [build-dependencies]
 image = "0.25.6"

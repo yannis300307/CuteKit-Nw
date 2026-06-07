@@ -1,20 +1,28 @@
-calc_use!(alloc::vec::Vec);
-
 use bytemuck::{Pod, Zeroable};
 use nalgebra::{Vector2, Vector3};
 
-#[derive(Clone, Copy, Debug)]
-pub struct Triangle {
-    pub p1: Vector3<f32>,
-    pub p2: Vector3<f32>,
-    pub p3: Vector3<f32>,
-    pub t1: Vector2<f32>,
-    pub t2: Vector2<f32>,
-    pub t3: Vector2<f32>,
+use crate::nadk::display::Color565;
+
+#[repr(C)]
+#[derive(Copy, Clone, Debug, Zeroable, Pod)]
+pub struct FlatMeshTriangle {
+    pub v1: u16,
+    pub v2: u16,
+    pub v3: u16,
+    pub color: Color565,
 }
 
 #[derive(Clone, Copy, Debug)]
-pub struct IndexedTriangle2D {
+pub struct FlatCompactTriangle2D {
+    pub p1: Vector2<i16>,
+    pub p2: Vector2<i16>,
+    pub p3: Vector2<i16>,
+    pub color: Color565,
+    pub depth: (f16, f16, f16)
+}
+
+#[derive(Clone, Copy, Debug)]
+pub struct TexCompactTriangle2D {
     pub p1: Vector2<i16>,
     pub p2: Vector2<i16>,
     pub p3: Vector2<i16>,
@@ -24,7 +32,7 @@ pub struct IndexedTriangle2D {
 }
 
 #[derive(Clone, Copy, Debug)]
-pub struct Triangle2D {
+pub struct TexTriangle2D {
     pub p1: Vector2<i16>,
     pub p2: Vector2<i16>,
     pub p3: Vector2<i16>,
@@ -33,18 +41,19 @@ pub struct Triangle2D {
     pub t3: Vector3<f32>,
 }
 
-impl Triangle {
-    pub fn get_normal(&self) -> Vector3<f32> {
-        let a = self.p2 - self.p1;
-        let b = self.p3 - self.p1;
-        a.cross(&b).normalize()
-    }
+#[derive(Clone, Copy, Debug)]
+pub struct FlatTriangle2D {
+    pub p1: Vector2<i16>,
+    pub p2: Vector2<i16>,
+    pub p3: Vector2<i16>,
+    pub depth: (f32, f32, f32),
+    pub color: Color565
 }
+
 
 #[repr(C)]
 #[derive(Copy, Clone, Debug, Zeroable, Pod)]
-pub struct MeshTriangle
-{
+pub struct TexMeshTriangle {
     pub v1: u16,
     pub v2: u16,
     pub v3: u16,
@@ -54,7 +63,12 @@ pub struct MeshTriangle
     pub t3: Vector2<f32>,
 }
 
-pub struct Mesh {
-    pub triangles: &'static [MeshTriangle],
+pub struct TexturedMesh {
+    pub triangles: &'static [TexMeshTriangle],
+    pub vertices: &'static [Vector3<f32>],
+}
+
+pub struct FlatMesh {
+    pub triangles: &'static [FlatMeshTriangle],
     pub vertices: &'static [Vector3<f32>],
 }

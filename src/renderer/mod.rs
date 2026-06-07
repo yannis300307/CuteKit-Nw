@@ -1,22 +1,21 @@
 mod clipping;
-mod draw_2d_triangles;
+pub mod drawing;
 mod engine_3d;
+mod flat;
 mod matrix_utils;
 pub mod mesh;
 mod misc;
-mod textured_triangle;
-pub mod drawing;
+mod textured;
 
-calc_use!(alloc::format);
 calc_use!(alloc::vec::Vec);
 
-use nalgebra::{Matrix4, Perspective3, Vector2, Vector3, Vector4};
+use nalgebra::{Matrix4, Perspective3, Vector2, Vector3};
 
 use crate::{
     camera::Camera,
     constants::rendering::*,
     nadk::display::{COLOR_BLACK, Color565},
-    renderer::mesh::IndexedTriangle2D,
+    renderer::mesh::{FlatCompactTriangle2D, TexCompactTriangle2D},
 };
 
 // Screen size related constants
@@ -48,14 +47,15 @@ static TEXTURE: &[u8] = include_bytes!("../../target/assets/texture.bin");
 
 pub struct Renderer {
     pub camera: Camera,
-    triangles_to_render: Vec<IndexedTriangle2D>,
+    tex_triangles_to_render: Vec<TexCompactTriangle2D>,
+    flat_triangles_to_render: Vec<FlatCompactTriangle2D>,
     tile_frame_buffer: [Color565; SCREEN_TILE_WIDTH * SCREEN_TILE_HEIGHT],
     tile_depth_buffer: [f16; SCREEN_TILE_WIDTH * SCREEN_TILE_HEIGHT],
     projection_matrix: Perspective3<f32>,
     pub enable_vsync: bool,
     mat_view: Matrix4<f32>,
     projected_buffer: Vec<Vector2<i16>>,
-    transformed_vertex_buffer: Vec<Vector3<f32>>
+    transformed_vertex_buffer: Vec<Vector3<f32>>,
 }
 
 impl Renderer {
@@ -63,13 +63,14 @@ impl Renderer {
         let renderer: Renderer = Renderer {
             camera: Camera::new(),
             projection_matrix: Perspective3::new(ASPECT_RATIO, FOV, ZNEAR, ZFAR),
-            triangles_to_render: Vec::with_capacity(MAX_TRIANGLES),
+            tex_triangles_to_render: Vec::with_capacity(1),
+            flat_triangles_to_render: Vec::with_capacity(MAX_TRIANGLES),
             tile_frame_buffer: [COLOR_BLACK; SCREEN_TILE_WIDTH * SCREEN_TILE_HEIGHT],
             tile_depth_buffer: [0.0; SCREEN_TILE_WIDTH * SCREEN_TILE_HEIGHT],
             enable_vsync: true,
             mat_view: Matrix4::zeros(),
             projected_buffer: Vec::new(),
-            transformed_vertex_buffer: Vec::new()
+            transformed_vertex_buffer: Vec::new(),
         };
 
         renderer

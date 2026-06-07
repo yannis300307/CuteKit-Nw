@@ -76,7 +76,7 @@ pub fn textured_triangle(
                 swap(&mut tex_s, &mut tex_e);
             }
 
-            let tstep = 1.0 / ((bx - ax) as f32);
+            let tstep: f32 = 1.0 / ((bx - ax) as f32);
             let mut t = 0.0;
 
             for j in ax..bx {
@@ -91,9 +91,8 @@ pub fn textured_triangle(
                 let v = (tex_coords.y * z_inv).clamp(0.0, 0.9999);
 
                 if tex_coords.z < depth_buffer[index] as f32 {
-                    let texture_pixel_index = (((u * 512.0) as usize)
-                        + ((v * 512.0) as usize) * 512)
-                        * 2;
+                    let texture_pixel_index =
+                        (((u * 512.0) as usize) + ((v * 512.0) as usize) * 512) * 2;
                     let pixel = u16::from_be_bytes([
                         *unsafe { TEXTURE.get_unchecked(texture_pixel_index) },
                         *unsafe { TEXTURE.get_unchecked(texture_pixel_index + 1) },
@@ -155,9 +154,8 @@ pub fn textured_triangle(
                 let v = (tex_coords.y * z_inv).clamp(0.0, 0.9999);
 
                 if tex_coords.z < depth_buffer[index] as f32 {
-                    let texture_pixel_index = (((u * 512.0) as usize)
-                        + ((v * 512.0) as usize) * 512)
-                        * 2;
+                    let texture_pixel_index =
+                        (((u * 512.0) as usize) + ((v * 512.0) as usize) * 512) * 2;
                     let pixel = u16::from_be_bytes([
                         *unsafe { TEXTURE.get_unchecked(texture_pixel_index) },
                         *unsafe { TEXTURE.get_unchecked(texture_pixel_index + 1) },

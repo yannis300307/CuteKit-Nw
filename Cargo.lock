@@ -16,6 +16,7 @@ dependencies = [
  "format_no_std",
  "heapless 0.8.0",
  "image",
+ "include_bytes_aligned",
  "libm",
  "lz4_flex",
  "nalgebra",
@@ -599,6 +600,12 @@ name = "imgref"
 version = "1.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d0263a3d970d5c054ed9312c0057b4f3bde9c0b33836d3637361d4a9e6e7a408"
+
+[[package]]
+name = "include_bytes_aligned"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fb3f0fd7913f9257b6862075640a029db0fff0887a3f49e00059f52b7111cf11"
 
 [[package]]
 name = "indexmap"
