@@ -3,10 +3,11 @@ use core::mem::transmute;
 use nalgebra::Vector2;
 
 use crate::{
-    draw_tools::shapes::{get_pixel, put_pixel},
+    renderer2d::shapes::{get_pixel, put_pixel},
     nadk::display::{COLOR_BLACK, Color565}, renderer::drawing::DrawInfo,
 };
 
+#[derive(Clone)]
 pub struct NinePartsTexture {
     pub data: &'static [u8],
     pub texture_width: usize,
