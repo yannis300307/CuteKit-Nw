@@ -4,7 +4,7 @@ use nalgebra::Vector2;
 
 use crate::{
     constants::rendering::*,
-    nadk::display::{COLOR_BLACK, Color565, ScreenRect, push_rect},
+    nadk::display::{COLOR_BLACK, COLOR_RED, COLOR_WHITE, Color565, ScreenRect, push_rect},
     renderer2d::nine_parts_rectangle::NinePartsTexture,
 };
 
@@ -28,14 +28,27 @@ pub enum ScaleMode {
     Tile,
 }
 
-/// The font is used for the text rendering. The texture is the tilemap of the characters.
+/// The font is used for the text rendering.
 /// The grid_size must be in characters (not pixels).
 /// The chars string stores the available characters in this font.
 #[derive(Clone)]
 pub struct Font {
-    texture: Texture,
-    grid_size: Vector2<u16>,
-    chars: &'static str,
+    pub data: &'static [u8],
+    pub font_image_width: u16,
+    pub char_width: u16,
+    pub char_height: u16,
+    pub chars: &'static str,
+}
+
+#[inline]
+fn add_alpha_color(a: Color565, b: Color565, b_alpha: u16) -> Color565 {
+    let a_comp = a.get_components();
+    let b_comp = b.get_components();
+    Color565::new(
+        ((255 - b_alpha) * a_comp.0 + b_comp.0 * b_alpha) / 255,
+        ((255 - b_alpha) * a_comp.1 + b_comp.1 * b_alpha) / 255,
+        ((255 - b_alpha) * a_comp.2 + b_comp.2 * b_alpha) / 255,
+    )
 }
 
 #[derive(Clone)]
@@ -133,6 +146,105 @@ impl<'a, const SIZE: usize> Renderer2d<'a, SIZE> {
     #[inline(always)]
     pub(crate) fn draw_pixel(&mut self, x: usize, y: usize, color: Color565) {
         self.tile_frame_buffer[x + y * SCREEN_TILE_WIDTH] = color;
+    }
+
+    #[inline]
+    pub fn get_pixel(&self, x: usize, y: usize) -> Color565 {
+        self.tile_frame_buffer[x + y * SCREEN_TILE_WIDTH]
+    }
+
+    fn draw_text(
+        &mut self,
+        pos: Vector2<isize>,
+        text: &'a str,
+        font: Font,
+        font_color: Color565,
+        background_color: Option<Color565>,
+    ) {
+        let char_size = Vector2::new(font.char_width as isize, font.char_height as isize);
+
+        if pos.x > SCREEN_TILE_WIDTH as isize
+            || pos.y > SCREEN_TILE_HEIGHT as isize
+            || pos.x + text.len() as isize * char_size.x < 0
+            || pos.y + char_size.y < 0
+        {
+            return;
+        }
+
+        let font_width = font.font_image_width as isize;
+
+        let mut start_char_index: usize = 0;
+        if pos.x < 0 {
+            start_char_index = (-pos.x / char_size.x) as usize;
+        }
+
+        if start_char_index > text.len() {
+            return;
+        }
+
+        let max_char_count = (SCREEN_TILE_WIDTH) / (char_size.x) as usize + 2; // TODO: could be replaced by a + 1 by fixing the end character dropping bug
+
+        let mut max_char_y = char_size.y;
+        if pos.y + char_size.y > SCREEN_TILE_HEIGHT as isize {
+            max_char_y = SCREEN_TILE_HEIGHT as isize - pos.y;
+        }
+
+        let mut start_char_y = 0;
+        if pos.y < 0 {
+            start_char_y = -pos.y;
+        }
+
+        for index in start_char_index..text.len().min(start_char_index + max_char_count) {
+            let char: isize = font
+                .chars
+                .find(|c| c as u8 == text.as_bytes()[index])
+                .unwrap() as isize;
+
+            let letter_offset = char_size.x * char;
+
+            // Destination x relative to the start of the text
+            let out_letter_offset = index as isize * char_size.x;
+
+            let mut max_char_width = char_size.x;
+
+            // Right of the letter
+            let letter_x_stop = pos.x + out_letter_offset + char_size.x;
+            // Adjust the max width to avoid overflow
+            if letter_x_stop > SCREEN_TILE_WIDTH as isize {
+                max_char_width = char_size.x - (letter_x_stop - SCREEN_TILE_WIDTH as isize);
+            }
+
+            let mut letter_x_start = 0;
+            if pos.x + out_letter_offset < 0 {
+                letter_x_start = -(pos.x + out_letter_offset);
+            }
+
+            if let Some(background_color) = background_color {
+                for y in start_char_y..max_char_y {
+                    let mut out_x = out_letter_offset + letter_x_start;
+                    for x in letter_x_start..max_char_width {
+                        let pixel =
+                            font.data[((letter_offset + x) + font_width * y) as usize] as u16;
+                        let color = add_alpha_color(background_color, font_color, pixel);
+                        self.draw_pixel((pos.x + out_x) as usize, (pos.y + y) as usize, color);
+                        out_x += 1;
+                    }
+                }
+            } else {
+                for y in start_char_y..max_char_y {
+                    let mut out_x = out_letter_offset + letter_x_start;
+                    for x in letter_x_start..max_char_width {
+                        let pixel =
+                            font.data[((letter_offset + x) + font_width * y) as usize] as u16;
+                        let background_color =
+                            self.get_pixel((pos.x + out_x) as usize, (pos.y + y) as usize);
+                        let color = add_alpha_color(background_color, font_color, pixel);
+                        self.draw_pixel((pos.x + out_x) as usize, (pos.y + y) as usize, color);
+                        out_x += 1;
+                    }
+                }
+            }
+        }
     }
 
     fn draw_rectangle(&mut self, mut pos: Vector2<isize>, size: Vector2<isize>, color: Color565) {
@@ -306,7 +418,12 @@ impl<'a, const SIZE: usize> Renderer2d<'a, SIZE> {
                     pos,
                     size,
                     scaling_mode,
-                } => self.draw_nine_parts_rectangle(texture.clone(), *pos - buffer_offset, *size, *scaling_mode),
+                } => self.draw_nine_parts_rectangle(
+                    texture.clone(),
+                    *pos - buffer_offset,
+                    *size,
+                    *scaling_mode,
+                ),
                 Element::Circle {
                     center,
                     radius,
@@ -329,7 +446,13 @@ impl<'a, const SIZE: usize> Renderer2d<'a, SIZE> {
                     font,
                     font_color,
                     background_color,
-                } => todo!(),
+                } => self.draw_text(
+                    *pos - buffer_offset,
+                    text,
+                    font.clone(),
+                    *font_color,
+                    *background_color,
+                ),
             }
         }
     }
@@ -409,6 +532,23 @@ impl<'a, const SIZE: usize> Renderer2d<'a, SIZE> {
             pos,
             size,
             scaling_mode,
+        })
+    }
+
+    pub fn add_text(
+        &mut self,
+        pos: Vector2<isize>,
+        text: &'a str,
+        font: Font,
+        font_color: Color565,
+        background_color: Option<Color565>,
+    ) -> Result<(), ()> {
+        self.queue_element(Element::Text {
+            pos,
+            text,
+            font,
+            font_color,
+            background_color,
         })
     }
 }

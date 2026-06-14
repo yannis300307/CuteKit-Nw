@@ -58,9 +58,9 @@ fn add_alpha_color(a: Color565, b: TransparentRGB565) -> Color565 {
     let a_comp = a.get_components();
     let b_comp = rgb.get_components();
     Color565::new(
-        (255 - b.alpha as u16) * a_comp.0 + b_comp.0 * b.alpha as u16,
-        (255 - b.alpha as u16) * a_comp.1 + b_comp.1 * b.alpha as u16,
-        (255 - b.alpha as u16) * a_comp.2 + b_comp.2 * b.alpha as u16,
+        ((255 - b.alpha as u16) * a_comp.0 + b_comp.0 * b.alpha as u16) / 255,
+        ((255 - b.alpha as u16) * a_comp.1 + b_comp.1 * b.alpha as u16) / 255,
+        ((255 - b.alpha as u16) * a_comp.2 + b_comp.2 * b.alpha as u16) / 255,
     )
 }
 
