@@ -97,8 +97,8 @@ fn convert_image(file_name: &str) {
         data.extend(
             (((pix.2.0[0] as u16 & 0xF8) << 8)
                 | ((pix.2.0[1] as u16 & 0xFC) << 3)
-                | ((pix.2.0[2] as u16 & 0xF8) >> 3))
-                .to_be_bytes(),
+                | ((pix.2.0[2] as u16) >> 3))
+                .to_le_bytes(),
         );
     }
 
@@ -118,7 +118,7 @@ fn convert_image_transparent(file_name: &str) {
             (((pix.2.0[0] as u16 & 0b11111000) << 8)
                 | ((pix.2.0[1] as u16 & 0b11111100) << 3)
                 | (pix.2.0[2] as u16 >> 3))
-                .to_be_bytes(),
+                .to_le_bytes(),
         );
         data.push(pix.2.0[3]);
     }

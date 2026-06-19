@@ -3,30 +3,19 @@ use core::mem::transmute;
 use nalgebra::Vector2;
 
 use crate::{
-    nadk::display::{COLOR_BLACK, COLOR_WHITE, Color565},
-    renderer::drawing::DrawInfo,
+    nadk::display::{COLOR_BLACK, Color565},
     renderer2d::{
-        renderer::{Renderer2d, SCREEN_TILE_HEIGHT, SCREEN_TILE_WIDTH, ScaleMode},
-        shapes::{get_pixel, put_pixel},
+        elements::ScaleMode, renderer::{Renderer2d, SCREEN_TILE_HEIGHT, SCREEN_TILE_WIDTH}, sprite::{TransparentRGB565, TransparentTexture, add_alpha_color}
     },
 };
 
 #[derive(Clone)]
-pub struct NinePartsTexture {
-    pub data: &'static [u8],
-    pub texture_width: usize,
-    pub texture_height: usize,
+pub struct NinePartsTexture<'a> {
+    pub texture: &'a TransparentTexture,
     pub left_border_size: usize,
     pub right_border_size: usize,
     pub top_border_size: usize,
     pub bottom_border_size: usize,
-}
-
-#[repr(C, packed)]
-#[derive(Copy, Clone, Debug)]
-struct TransparentRGB565 {
-    pub rgb: Color565,
-    pub alpha: u8,
 }
 
 #[inline]
@@ -52,22 +41,10 @@ fn get_pixel_transparent(
     buffer[(x + y * buffer_width) as usize]
 }
 
-#[inline]
-fn add_alpha_color(a: Color565, b: TransparentRGB565) -> Color565 {
-    let rgb = b.rgb;
-    let a_comp = a.get_components();
-    let b_comp = rgb.get_components();
-    Color565::new(
-        ((255 - b.alpha as u16) * a_comp.0 + b_comp.0 * b.alpha as u16) / 255,
-        ((255 - b.alpha as u16) * a_comp.1 + b_comp.1 * b.alpha as u16) / 255,
-        ((255 - b.alpha as u16) * a_comp.2 + b_comp.2 * b.alpha as u16) / 255,
-    )
-}
-
-impl<'a, const SIZE: usize> Renderer2d<'_, SIZE> {
-    pub fn draw_region(
+impl Renderer2d {
+    pub(super) fn draw_region(
         &mut self,
-        parts: &NinePartsTexture,
+        texture: &TransparentTexture,
         out_buffer_start: Vector2<isize>,
         texture_buffer_start: Vector2<isize>,
         mut width: isize,
@@ -81,7 +58,7 @@ impl<'a, const SIZE: usize> Renderer2d<'_, SIZE> {
             return;
         }
 
-        let color_vec: &'static [TransparentRGB565] = unsafe { transmute(parts.data) }; // Bro, this is fine
+        let color_vec: &'static [TransparentRGB565] = unsafe { transmute(texture.data) }; // Bro, this is fine
 
         let mut start = Vector2::new(0, 0);
 
@@ -103,8 +80,8 @@ impl<'a, const SIZE: usize> Renderer2d<'_, SIZE> {
             for x in start.x..width {
                 let color = get_pixel_transparent(
                     color_vec,
-                    parts.texture_width as isize,
-                    parts.texture_height as isize,
+                    texture.width as isize,
+                    texture.height as isize,
                     texture_buffer_start.x + x,
                     texture_buffer_start.y + y,
                 );
@@ -130,9 +107,9 @@ impl<'a, const SIZE: usize> Renderer2d<'_, SIZE> {
         }
     }
 
-    pub fn draw_region_strech(
+    pub(super) fn draw_region_strech(
         &mut self,
-        parts: &NinePartsTexture,
+        texture: &TransparentTexture,
         out_buffer_start: Vector2<isize>,
         texture_buffer_start: Vector2<isize>,
         tex_width: isize,
@@ -164,14 +141,14 @@ impl<'a, const SIZE: usize> Renderer2d<'_, SIZE> {
             max_size.y = SCREEN_TILE_HEIGHT as isize - out_buffer_start.y;
         }
 
-        let color_vec: &'static [TransparentRGB565] = unsafe { transmute(parts.data) }; // Bro, this is fine
+        let color_vec: &'static [TransparentRGB565] = unsafe { transmute(texture.data) }; // Bro, this is fine
         for y in start.y..max_size.y {
             let pix_y = texture_buffer_start.y + y * tex_height / out_height;
             for x in start.x..max_size.x {
                 let color = get_pixel_transparent(
                     color_vec,
-                    parts.texture_width as isize,
-                    parts.texture_height as isize,
+                    texture.width as isize,
+                    texture.height as isize,
                     texture_buffer_start.x + x * tex_width / out_width,
                     pix_y,
                 );
@@ -197,9 +174,9 @@ impl<'a, const SIZE: usize> Renderer2d<'_, SIZE> {
         }
     }
 
-    pub fn draw_region_tile(
+    pub(super) fn draw_region_tile(
         &mut self,
-        parts: &NinePartsTexture,
+        texture: &TransparentTexture,
         out_buffer_start: Vector2<isize>,
         texture_buffer_start: Vector2<isize>,
         tex_width: isize,
@@ -238,15 +215,15 @@ impl<'a, const SIZE: usize> Renderer2d<'_, SIZE> {
         let mut tex_x = 0;
         let mut tex_y = tex_start.y;
 
-        let color_vec: &'static [TransparentRGB565] = unsafe { transmute(parts.data) }; // Bro, this is fine
+        let color_vec: &'static [TransparentRGB565] = unsafe { transmute(texture.data) }; // Bro, this is fine
         for y in start.y..max_size.y {
             let pix_y = texture_buffer_start.y + tex_y;
             tex_x = tex_start.x;
             for x in start.x..max_size.x {
                 let color = get_pixel_transparent(
                     color_vec,
-                    parts.texture_width as isize,
-                    parts.texture_height as isize,
+                    texture.width as isize,
+                    texture.height as isize,
                     texture_buffer_start.x + tex_x,
                     pix_y,
                 );
@@ -280,9 +257,9 @@ impl<'a, const SIZE: usize> Renderer2d<'_, SIZE> {
         }
     }
 
-    pub fn draw_nine_parts_rectangle(
+    pub(super) fn draw_nine_parts_rectangle(
         &mut self,
-        parts: NinePartsTexture,
+        parts: &NinePartsTexture,
         pos: Vector2<isize>,
         size: Vector2<u16>,
         scaling_mode: ScaleMode,
@@ -326,7 +303,7 @@ impl<'a, const SIZE: usize> Renderer2d<'_, SIZE> {
             );
 
         self.draw_region(
-            &parts,
+            &parts.texture,
             top_left_corner,
             Vector2::new(0, 0),
             parts.left_border_size as isize,
@@ -334,31 +311,31 @@ impl<'a, const SIZE: usize> Renderer2d<'_, SIZE> {
         );
 
         self.draw_region(
-            &parts,
+            &parts.texture,
             bottom_left_corner,
             Vector2::new(
                 0,
-                (parts.texture_height - parts.bottom_border_size) as isize,
+                (parts.texture.height as usize - parts.bottom_border_size) as isize,
             ),
             parts.left_border_size as isize,
             parts.bottom_border_size as isize,
         );
 
         self.draw_region(
-            &parts,
+            &parts.texture,
             bottom_right_corner,
             Vector2::new(
-                (parts.texture_width - parts.right_border_size) as isize,
-                (parts.texture_height - parts.bottom_border_size) as isize,
+                (parts.texture.width as usize - parts.right_border_size) as isize,
+                (parts.texture.height as usize - parts.bottom_border_size) as isize,
             ),
             parts.right_border_size as isize,
             parts.bottom_border_size as isize,
         );
 
         self.draw_region(
-            &parts,
+            &parts.texture,
             top_right_corner,
-            Vector2::new((parts.texture_width - parts.right_border_size) as isize, 0),
+            Vector2::new((parts.texture.width as usize - parts.right_border_size) as isize, 0),
             parts.right_border_size as isize,
             parts.top_border_size as isize,
         );
@@ -366,7 +343,7 @@ impl<'a, const SIZE: usize> Renderer2d<'_, SIZE> {
         match scaling_mode {
             ScaleMode::Stretch => {
                 self.draw_region_strech(
-                    &parts,
+                    &parts.texture,
                     top_corner,
                     Vector2::new((parts.left_border_size) as isize, 0),
                     parts.right_border_size as isize,
@@ -376,11 +353,11 @@ impl<'a, const SIZE: usize> Renderer2d<'_, SIZE> {
                 );
 
                 self.draw_region_strech(
-                    &parts,
+                    &parts.texture,
                     bottom_corner,
                     Vector2::new(
                         (parts.left_border_size) as isize,
-                        (parts.texture_height - parts.bottom_border_size) as isize,
+                        (parts.texture.height as usize - parts.bottom_border_size) as isize,
                     ),
                     parts.right_border_size as isize,
                     parts.top_border_size as isize,
@@ -389,7 +366,7 @@ impl<'a, const SIZE: usize> Renderer2d<'_, SIZE> {
                 );
 
                 self.draw_region_strech(
-                    &parts,
+                    &parts.texture,
                     left_corner,
                     Vector2::new(0, parts.top_border_size as isize),
                     parts.right_border_size as isize,
@@ -399,10 +376,10 @@ impl<'a, const SIZE: usize> Renderer2d<'_, SIZE> {
                 );
 
                 self.draw_region_strech(
-                    &parts,
+                    &parts.texture,
                     right_corner,
                     Vector2::new(
-                        (parts.texture_width - parts.right_border_size) as isize,
+                        (parts.texture.width as usize - parts.right_border_size) as isize,
                         parts.top_border_size as isize,
                     ),
                     parts.right_border_size as isize,
@@ -412,7 +389,7 @@ impl<'a, const SIZE: usize> Renderer2d<'_, SIZE> {
                 );
 
                 self.draw_region_strech(
-                    &parts,
+                    &parts.texture,
                     center_corner,
                     Vector2::new(
                         parts.left_border_size as isize,
@@ -426,7 +403,7 @@ impl<'a, const SIZE: usize> Renderer2d<'_, SIZE> {
             }
             ScaleMode::Tile => {
                 self.draw_region_tile(
-                    &parts,
+                    &parts.texture,
                     top_corner,
                     Vector2::new((parts.left_border_size) as isize, 0),
                     parts.right_border_size as isize,
@@ -436,11 +413,11 @@ impl<'a, const SIZE: usize> Renderer2d<'_, SIZE> {
                 );
 
                 self.draw_region_tile(
-                    &parts,
+                    &parts.texture,
                     bottom_corner,
                     Vector2::new(
                         (parts.left_border_size) as isize,
-                        (parts.texture_height - parts.bottom_border_size) as isize,
+                        (parts.texture.height as usize - parts.bottom_border_size) as isize,
                     ),
                     parts.right_border_size as isize,
                     parts.top_border_size as isize,
@@ -449,7 +426,7 @@ impl<'a, const SIZE: usize> Renderer2d<'_, SIZE> {
                 );
 
                 self.draw_region_tile(
-                    &parts,
+                    &parts.texture,
                     left_corner,
                     Vector2::new(0, parts.top_border_size as isize),
                     parts.right_border_size as isize,
@@ -459,10 +436,10 @@ impl<'a, const SIZE: usize> Renderer2d<'_, SIZE> {
                 );
 
                 self.draw_region_tile(
-                    &parts,
+                    &parts.texture,
                     right_corner,
                     Vector2::new(
-                        (parts.texture_width - parts.right_border_size) as isize,
+                        (parts.texture.width as usize - parts.right_border_size) as isize,
                         parts.top_border_size as isize,
                     ),
                     parts.right_border_size as isize,
@@ -472,7 +449,7 @@ impl<'a, const SIZE: usize> Renderer2d<'_, SIZE> {
                 );
 
                 self.draw_region_tile(
-                    &parts,
+                    &parts.texture,
                     center_corner,
                     Vector2::new(
                         parts.left_border_size as isize,

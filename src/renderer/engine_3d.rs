@@ -5,7 +5,7 @@ use crate::{
     renderer::{ASPECT_RATIO, HALF_SCREEN, Renderer, ZFAR, ZNEAR},
 };
 
-impl Renderer {
+impl<'a> Renderer<'a> {
     pub fn update_fov(&mut self, new_fov: f32) {
         self.camera.set_fov(new_fov);
         self.projection_matrix =

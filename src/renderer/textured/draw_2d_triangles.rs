@@ -6,13 +6,14 @@ use crate::{
         SCREEN_TILE_HEIGHT, SCREEN_TILE_WIDTH,
         mesh::TexTriangle2D,
         textured::{clipping::triangle_clip_against_line, textured_triangle::textured_triangle},
-    },
+    }, renderer2d::elements::Texture,
 };
 
 pub fn draw_2d_triangles(
     tri: &TexTriangle2D,
     frame_buffer: &mut [Color565; SCREEN_TILE_WIDTH * SCREEN_TILE_HEIGHT],
     depth_buffer: &mut [f16; SCREEN_TILE_WIDTH * SCREEN_TILE_HEIGHT],
+    texture:&Texture 
 ) {
     // Normal Triangle
     textured_triangle(
@@ -24,7 +25,7 @@ pub fn draw_2d_triangles(
         tri.t2,
         tri.p3,
         tri.t3,
-        //get_quad_color_from_texture_id(tri.texture_id).apply_light(tri.light * 17),
+        texture
     );
 }
 
@@ -33,6 +34,7 @@ pub fn clip_and_draw_2d_triangle(
     tri: TexTriangle2D,
     frame_buffer: &mut [Color565; SCREEN_TILE_WIDTH * SCREEN_TILE_HEIGHT],
     depth_buffer: &mut [f16; SCREEN_TILE_WIDTH * SCREEN_TILE_HEIGHT],
+    texture: &Texture
 ) {
     let mut clip_buffer: heapless::Deque<TexTriangle2D, 16> = heapless::Deque::new(); // 2^4
 
@@ -68,6 +70,6 @@ pub fn clip_and_draw_2d_triangle(
     );
 
     for cliped_tri in clip_buffer {
-        draw_2d_triangles(&cliped_tri, frame_buffer, depth_buffer);
+        draw_2d_triangles(&cliped_tri, frame_buffer, depth_buffer, texture);
     }
 }

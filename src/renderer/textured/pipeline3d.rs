@@ -1,14 +1,14 @@
 use nalgebra::{Vector2, Vector3};
 
-use crate::renderer::{
+use crate::{renderer::{
     Renderer, SCREEN_TILE_HEIGHT, SCREEN_TILE_WIDTH,
     mesh::{TexCompactTriangle2D, TexMeshTriangle, TexTriangle2D, TexturedMesh},
     textured::{
         clipping::tex_triangle_clip_against_plane, draw_2d_triangles::clip_and_draw_2d_triangle,
     },
-};
+}, renderer2d::elements::Texture};
 
-impl Renderer {
+impl<'a> Renderer<'a> {
     fn add_3d_textured_triangle_to_render(&mut self, mesh: &TexturedMesh, tri_index: usize) {
         let tri = mesh.triangles[tri_index].clone();
         let camera_ray = mesh.vertices[tri.v1 as usize] - self.camera.get_pos();
@@ -74,7 +74,7 @@ impl Renderer {
         }
     }
 
-    pub fn draw_tex_triangles(&mut self, tile_x: usize, tile_y: usize) {
+    pub fn draw_tex_triangles(&mut self, tile_x: usize, tile_y: usize, texture: &Texture) {
         let tile_offset = Vector2::new(
             -((SCREEN_TILE_WIDTH * tile_x) as i16),
             -((SCREEN_TILE_HEIGHT * tile_y) as i16),
@@ -98,6 +98,7 @@ impl Renderer {
                 tri_copy,
                 &mut self.tile_frame_buffer,
                 &mut self.tile_depth_buffer,
+                texture
             );
         }
     }

@@ -1,44 +1,18 @@
-use heapless::Vec;
 use libm::roundf;
 use nalgebra::Vector2;
 
 use crate::{
     constants::rendering::*,
-    nadk::display::{COLOR_BLACK, COLOR_RED, COLOR_WHITE, Color565, ScreenRect, push_rect},
-    renderer2d::nine_parts_rectangle::NinePartsTexture,
+    nadk::display::{COLOR_BLACK, COLOR_BLUE, Color565, ScreenRect, push_rect},
+    renderer2d::{
+        elements::{Element, Font},
+        sprite::TransparentTexture,
+        textured_triangle::TexTriangle2D,
+    },
 };
 
 pub const SCREEN_TILE_WIDTH: usize = SCREEN_WIDTH.div_ceil(SCREEN_TILE_SUBDIVISION);
 pub const SCREEN_TILE_HEIGHT: usize = SCREEN_HEIGHT.div_ceil(SCREEN_TILE_SUBDIVISION);
-
-/// A texture struct that store a size and a reference to the actual pixels.
-#[derive(Clone)]
-pub struct Texture {
-    width: u16,
-    height: u16,
-    data: &'static [Color565],
-}
-
-/// A scaling mode enum used in elements that requiere a scalling strategy.
-/// `Stretch` will distort the texture to match the size of the area
-/// that needs to be drawn while `tile` will repeat the texture without scaling it.
-#[derive(Clone, Copy)]
-pub enum ScaleMode {
-    Stretch,
-    Tile,
-}
-
-/// The font is used for the text rendering.
-/// The grid_size must be in characters (not pixels).
-/// The chars string stores the available characters in this font.
-#[derive(Clone)]
-pub struct Font {
-    pub data: &'static [u8],
-    pub font_image_width: u16,
-    pub char_width: u16,
-    pub char_height: u16,
-    pub chars: &'static str,
-}
 
 #[inline]
 fn add_alpha_color(a: Color565, b: Color565, b_alpha: u16) -> Color565 {
@@ -51,90 +25,17 @@ fn add_alpha_color(a: Color565, b: Color565, b_alpha: u16) -> Color565 {
     )
 }
 
-#[derive(Clone)]
-pub enum Element<'a> {
-    /// A flat colored rectangle. Very fast to draw.
-    ColorRectangle {
-        pos: Vector2<isize>,
-        size: Vector2<u16>,
-        color: Color565,
-    },
-    /// A textured non-scaled rectangle. Also known as a sprite.
-    /// Use ScaledSprite to change the scaling of the texture.
-    /// Fast to draw.
-    Sprite {
-        pos: Vector2<isize>,
-        texture: Texture,
-    },
-    /// A textured scaled rectangle. Also known as a sprite.
-    /// Use ScaledSprite to change the scaling of the texture.
-    /// Slower than Sprite.
-    ScaledSprite {
-        pos: Vector2<isize>,
-        size: Vector2<u16>,
-        texture: Texture,
-        scale_mode: ScaleMode,
-    },
-    /// A textured rectangle drawn using 9 parts of a textures.
-    /// One for each corners, sides and one for the center part of the rectangle.
-    /// The goal of this element is to have the same flexibility has a regular
-    /// rect but with the advantages of a scaled sprite.
-    /// Given the nine parts texture and the other arguments, the renderer will
-    /// automatically adapt the image by properly scalling each part.
-    /// This element is quite slow to draw.
-    NinePartsRectangle {
-        texture: NinePartsTexture,
-        pos: Vector2<isize>,
-        size: Vector2<u16>,
-        scaling_mode: ScaleMode,
-    },
-    /// A simple flat color circle. Very fast to draw.
-    Circle {
-        center: Vector2<isize>,
-        radius: f32,
-        color: Color565,
-    },
-    /// A flat color rounded corner rectangle.
-    /// Quite fast to draw.
-    RoundedRectangle {
-        pos: Vector2<isize>,
-        size: Vector2<u16>,
-        corner_radius: f32,
-        color: Color565,
-    },
-    /// A simple colored text label. The text is drawn using the given font object.
-    /// Setting the background color to None will make it transparent.
-    /// Quite slow to draw
-    Text {
-        pos: Vector2<isize>,
-        text: &'a str,
-        font: Font,
-        font_color: Color565,
-        background_color: Option<Color565>,
-    },
-}
-
-pub struct Renderer2d<'a, const SIZE: usize> {
-    draw_queue: heapless::Vec<Element<'a>, SIZE>,
-    pub(crate) tile_frame_buffer: [Color565; SCREEN_TILE_WIDTH * SCREEN_TILE_HEIGHT],
+pub struct Renderer2d {
+    pub(super) tile_frame_buffer: [Color565; SCREEN_TILE_WIDTH * SCREEN_TILE_HEIGHT],
     clear_color: Color565,
 }
 
-impl<'a, const SIZE: usize> Renderer2d<'a, SIZE> {
+impl<'a> Renderer2d {
     pub fn new(clear_color: Color565) -> Self {
         return Self {
-            draw_queue: heapless::Vec::new(),
             tile_frame_buffer: [COLOR_BLACK; SCREEN_TILE_WIDTH * SCREEN_TILE_HEIGHT],
             clear_color,
         };
-    }
-
-    pub fn queue_element(&mut self, element: Element<'a>) -> Result<(), ()> {
-        if self.draw_queue.push(element).is_ok() {
-            Ok(())
-        } else {
-            Err(())
-        }
     }
 
     fn clear_frame_frame_buffer(&mut self) {
@@ -144,12 +45,12 @@ impl<'a, const SIZE: usize> Renderer2d<'a, SIZE> {
     }
 
     #[inline(always)]
-    pub(crate) fn draw_pixel(&mut self, x: usize, y: usize, color: Color565) {
+    pub(super) fn draw_pixel(&mut self, x: usize, y: usize, color: Color565) {
         self.tile_frame_buffer[x + y * SCREEN_TILE_WIDTH] = color;
     }
 
     #[inline]
-    pub fn get_pixel(&self, x: usize, y: usize) -> Color565 {
+    pub(super) fn get_pixel(&self, x: usize, y: usize) -> Color565 {
         self.tile_frame_buffer[x + y * SCREEN_TILE_WIDTH]
     }
 
@@ -157,7 +58,7 @@ impl<'a, const SIZE: usize> Renderer2d<'a, SIZE> {
         &mut self,
         pos: Vector2<isize>,
         text: &'a str,
-        font: Font,
+        font: &Font,
         font_color: Color565,
         background_color: Option<Color565>,
     ) {
@@ -306,7 +207,7 @@ impl<'a, const SIZE: usize> Renderer2d<'a, SIZE> {
     }
 
     /// Based on the Midpoint algorithm on Wikipedia: https://en.wikipedia.org/wiki/Midpoint_circle_algorithm
-    pub fn draw_circle(&mut self, r: f32, center: Vector2<isize>, color: Color565) {
+    pub(super) fn draw_circle(&mut self, r: f32, center: Vector2<isize>, color: Color565) {
         let mut t1 = r / 16.0;
         let mut x = r;
         let mut y = 0.0;
@@ -345,7 +246,7 @@ impl<'a, const SIZE: usize> Renderer2d<'a, SIZE> {
         }
     }
 
-    pub fn draw_rounded_rectangle(
+    pub(super) fn draw_rounded_rectangle(
         &mut self,
         r: f32,
         pos: Vector2<isize>,
@@ -399,27 +300,131 @@ impl<'a, const SIZE: usize> Renderer2d<'a, SIZE> {
         );
     }
 
-    fn draw_shapes(&mut self, buffer_offset: Vector2<isize>) {
-        for index in 0..self.draw_queue.len() {
-            let element = &self.draw_queue[index];
+    // Adapted from http://members.chello.at/~easyfilter/bresenham.html
+    fn draw_line(
+        &mut self,
+        mut start: Vector2<isize>,
+        stop: Vector2<isize>,
+        mut width: f32,
+        color: Color565,
+    ) {
+        let d = (stop - start).abs();
+        let s = Vector2::new(
+            if start.x < stop.x { 1 } else { -1 },
+            if start.y < stop.y { 1 } else { -1 },
+        );
+        let mut err = d.x - d.y;
+        let mut x2;
+        let mut y2;
+        let mut e2;
+        let ed = if d.x + d.y == 0 {
+            1.0
+        } else {
+            d.map(|x| x as f32).norm()
+        };
+        width = (width + 1.0) / 2.0;
+        loop {
+            let opacity = (255.0 * (width - (err - d.x + d.y).abs() as f32 / ed)).clamp(0.0, 255.0);
+            let bg_color = self.get_pixel(start.x as usize, start.y as usize);
+            self.draw_pixel(
+                start.x as usize,
+                start.y as usize,
+                add_alpha_color(bg_color, color, opacity as u16),
+            );
+            e2 = err;
+            x2 = start.x;
+            if 2 * e2 >= -d.x {
+                e2 += d.y;
+                y2 = start.y;
+                while (e2 as f32) < ed * width && (stop.y != y2 || d.x > d.y) {
+                    y2 += s.y;
+                    let opacity = (255.0 * (width - e2.abs() as f32 / ed)).clamp(0.0, 255.0);
+                    let bg_color = self.get_pixel(start.x as usize, y2 as usize);
+                    self.draw_pixel(
+                        start.x as usize,
+                        y2 as usize,
+                        add_alpha_color(bg_color, color, opacity as u16),
+                    );
+                    e2 += d.x;
+                }
+                if start.x == stop.x {
+                    break;
+                };
+                e2 = err;
+                err -= d.y;
+                start.x += s.x;
+            }
+            if 2 * e2 <= d.y {
+                e2 = d.x - e2;
+                while (e2 as f32) < ed * width && (stop.x != x2 || d.x < d.y) {
+                    x2 += s.x;
+                    let opacity = (255.0 * (width - e2.abs() as f32 / ed)).clamp(0.0, 255.0);
+                    let bg_color = self.get_pixel(x2 as usize, start.y as usize);
+                    self.draw_pixel(
+                        x2 as usize,
+                        start.y as usize,
+                        add_alpha_color(bg_color, color, opacity as u16),
+                    );
+                    e2 += d.y;
+                }
+                if start.y == stop.y {
+                    break;
+                }
+                err += d.x;
+                start.y += s.y;
+            }
+        }
+    }
+
+    fn draw_shapes(
+        &mut self,
+        buffer_offset: Vector2<isize>,
+        draw_queue: &core::slice::Iter<'_, Element<'_>>,
+    ) {
+        for element in draw_queue.clone() {
             match element {
                 Element::ColorRectangle { pos, size, color } => {
                     self.draw_rectangle(pos - buffer_offset, size.map(|x| x as isize), *color)
                 }
-                Element::Sprite { pos, texture } => todo!(),
-                Element::ScaledSprite {
+                Element::TransparentSprite { pos, texture } => self.draw_region(
+                    texture,
+                    *pos - buffer_offset,
+                    Vector2::repeat(0),
+                    texture.width as isize,
+                    texture.height as isize,
+                ),
+                Element::TransparentScaledSprite {
                     pos,
                     size,
                     texture,
                     scale_mode,
-                } => todo!(),
+                } => match scale_mode {
+                    super::elements::ScaleMode::Stretch => self.draw_region_strech(
+                        texture,
+                        *pos - buffer_offset,
+                        Vector2::repeat(0),
+                        texture.width as isize,
+                        texture.height as isize,
+                        size.x as isize,
+                        size.y as isize,
+                    ),
+                    super::elements::ScaleMode::Tile => self.draw_region_tile(
+                        texture,
+                        *pos - buffer_offset,
+                        Vector2::repeat(0),
+                        texture.width as isize,
+                        texture.height as isize,
+                        size.x as isize,
+                        size.y as isize,
+                    ),
+                },
                 Element::NinePartsRectangle {
-                    texture,
+                    parts,
                     pos,
                     size,
                     scaling_mode,
                 } => self.draw_nine_parts_rectangle(
-                    texture.clone(),
+                    parts,
                     *pos - buffer_offset,
                     *size,
                     *scaling_mode,
@@ -449,23 +454,67 @@ impl<'a, const SIZE: usize> Renderer2d<'a, SIZE> {
                 } => self.draw_text(
                     *pos - buffer_offset,
                     text,
-                    font.clone(),
+                    *font,
                     *font_color,
                     *background_color,
                 ),
+                Element::TexturedTriangle {
+                    p1,
+                    p2,
+                    p3,
+                    t1,
+                    t2,
+                    t3,
+                    texture,
+                } => {
+                    let buffer_offset = buffer_offset.map(|x| x as i16);
+                    self.draw_textured_triangle(
+                        *p1 - buffer_offset,
+                        *p2 - buffer_offset,
+                        *p3 - buffer_offset,
+                        *t1,
+                        *t2,
+                        *t3,
+                        texture,
+                    )
+                }
             }
         }
     }
 
-    pub fn draw(&mut self) {
+    pub fn draw_textured_triangle(
+        &mut self,
+        p1: Vector2<i16>,
+        p2: Vector2<i16>,
+        p3: Vector2<i16>,
+        t1: Vector2<f32>,
+        t2: Vector2<f32>,
+        t3: Vector2<f32>,
+        texture: &'a TransparentTexture,
+    ) {
+        let tri = TexTriangle2D {
+            p1,
+            p2,
+            p3,
+            t1,
+            t2,
+            t3,
+        };
+        self.clip_and_draw_2d_triangle(tri, texture);
+    }
+
+    pub fn draw(&mut self, draw_queue: &core::slice::Iter<'_, Element<'_>>) {
         for x in 0..SCREEN_TILE_SUBDIVISION {
             for y in 0..SCREEN_TILE_SUBDIVISION {
                 self.clear_frame_frame_buffer();
 
-                self.draw_shapes(Vector2::new(
-                    (x * SCREEN_TILE_WIDTH) as isize,
-                    (y * SCREEN_TILE_HEIGHT) as isize,
-                ));
+                self.draw_shapes(
+                    Vector2::new(
+                        (x * SCREEN_TILE_WIDTH) as isize,
+                        (y * SCREEN_TILE_HEIGHT) as isize,
+                    ),
+                    draw_queue,
+                );
 
                 push_rect(
                     ScreenRect {
@@ -478,77 +527,5 @@ impl<'a, const SIZE: usize> Renderer2d<'a, SIZE> {
                 );
             }
         }
-        self.draw_queue.clear();
-    }
-}
-
-impl<'a, const SIZE: usize> Renderer2d<'a, SIZE> {
-    pub fn add_rectangle(
-        &mut self,
-        pos: Vector2<isize>,
-        size: Vector2<u16>,
-        color: Color565,
-    ) -> Result<(), ()> {
-        self.queue_element(Element::ColorRectangle { pos, size, color })
-    }
-
-    pub fn add_circle(
-        &mut self,
-        center: Vector2<isize>,
-        radius: f32,
-        color: Color565,
-    ) -> Result<(), ()> {
-        self.queue_element(Element::Circle {
-            center,
-            radius,
-            color,
-        })
-    }
-
-    pub fn add_rounded_rectangle(
-        &mut self,
-        pos: Vector2<isize>,
-        size: Vector2<u16>,
-        corner_radius: f32,
-        color: Color565,
-    ) -> Result<(), ()> {
-        self.queue_element(Element::RoundedRectangle {
-            pos,
-            size,
-            corner_radius,
-            color,
-        })
-    }
-
-    pub fn add_nine_parts_rectangle(
-        &mut self,
-        texture: NinePartsTexture,
-        pos: Vector2<isize>,
-        size: Vector2<u16>,
-        scaling_mode: ScaleMode,
-    ) -> Result<(), ()> {
-        self.queue_element(Element::NinePartsRectangle {
-            texture,
-            pos,
-            size,
-            scaling_mode,
-        })
-    }
-
-    pub fn add_text(
-        &mut self,
-        pos: Vector2<isize>,
-        text: &'a str,
-        font: Font,
-        font_color: Color565,
-        background_color: Option<Color565>,
-    ) -> Result<(), ()> {
-        self.queue_element(Element::Text {
-            pos,
-            text,
-            font,
-            font_color,
-            background_color,
-        })
     }
 }

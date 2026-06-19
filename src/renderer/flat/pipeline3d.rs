@@ -8,7 +8,7 @@ use crate::renderer::{
     mesh::{FlatCompactTriangle2D, FlatMesh, FlatMeshTriangle, FlatTriangle2D},
 };
 
-impl Renderer {
+impl<'a> Renderer<'a> {
     fn add_3d_flat_triangle_to_render(&mut self, mesh: &FlatMesh, tri_index: usize) {
         let tri = mesh.triangles[tri_index].clone();
         let camera_ray = mesh.vertices[tri.v1 as usize] - self.camera.get_pos();

@@ -32,7 +32,7 @@ pub fn matrix_point_at(
     )
 }
 
-impl Renderer {
+impl<'a> Renderer<'a> {
     pub fn project_point(&self, point: Vector3<f32>) -> Vector3<f32> {
         self.projection_matrix.project_vector(&point)
     }

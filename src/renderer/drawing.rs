@@ -11,7 +11,7 @@ pub struct DrawInfo {
     pub offset_y: isize,
 }
 
-impl Renderer {
+impl<'a> Renderer<'a> {
     pub fn clear_intermediate_buffers(&mut self) {
         self.transformed_vertex_buffer.clear();
         self.projected_buffer.clear();
@@ -29,8 +29,13 @@ impl Renderer {
                 for i in 0..SCREEN_TILE_WIDTH * SCREEN_TILE_HEIGHT {
                     self.tile_depth_buffer[i] = f16::MAX;
                 }
-                self.draw_tex_triangles(x, y);
-                self.draw_flat_triangles(x, y);
+
+                if !self.flat_triangles_to_render.is_empty() {
+                    self.draw_flat_triangles(x, y);
+                }
+                if !self.tex_triangles_to_render.is_empty() {
+                    self.draw_tex_triangles(x, y, self.texture.expect("Trying to use textured triangles without a texture loaded in the 3D renderer."));
+                }
 
                 let drawing_info = DrawInfo {
                     buffer_width: SCREEN_TILE_WIDTH as isize,

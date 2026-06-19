@@ -31,7 +31,7 @@ pub fn draw_line(
 }
 
 #[allow(dead_code)]
-impl Renderer {
+impl<'a> Renderer<'a> {
     pub fn draw_string(&mut self, text: &str, pos: &Vector2<usize>) {
         let mut text_cursor: usize = 0;
         for char in text.chars() {

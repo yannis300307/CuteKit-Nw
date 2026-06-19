@@ -15,7 +15,7 @@ use crate::{
     camera::Camera,
     constants::rendering::*,
     nadk::display::{COLOR_BLACK, Color565},
-    renderer::mesh::{FlatCompactTriangle2D, TexCompactTriangle2D},
+    renderer::mesh::{FlatCompactTriangle2D, TexCompactTriangle2D}, renderer2d::elements::Texture,
 };
 
 // Screen size related constants
@@ -43,9 +43,7 @@ const FONT_HEIGHT: usize = 15;
 const FONT_CHAR_WIDTH: usize = 11;
 static FONT_ORDER: &str = "!\" $%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^+`abcdefghijklmnopqrstuvwxyz{|}~€";
 
-static TEXTURE: &[u8] = include_bytes!("../../target/assets/texture.bin");
-
-pub struct Renderer {
+pub struct Renderer<'a> {
     pub camera: Camera,
     tex_triangles_to_render: Vec<TexCompactTriangle2D>,
     flat_triangles_to_render: Vec<FlatCompactTriangle2D>,
@@ -56,23 +54,29 @@ pub struct Renderer {
     mat_view: Matrix4<f32>,
     projected_buffer: Vec<Vector2<i16>>,
     transformed_vertex_buffer: Vec<Vector3<f32>>,
+    texture: Option<&'a Texture>
 }
 
-impl Renderer {
+impl<'a> Renderer<'a> {
     pub fn new() -> Self {
         let renderer: Renderer = Renderer {
             camera: Camera::new(),
             projection_matrix: Perspective3::new(ASPECT_RATIO, FOV, ZNEAR, ZFAR),
-            tex_triangles_to_render: Vec::with_capacity(1),
-            flat_triangles_to_render: Vec::with_capacity(MAX_TRIANGLES),
+            tex_triangles_to_render: Vec::with_capacity(MAX_TRIANGLES),
+            flat_triangles_to_render: Vec::with_capacity(1),
             tile_frame_buffer: [COLOR_BLACK; SCREEN_TILE_WIDTH * SCREEN_TILE_HEIGHT],
             tile_depth_buffer: [0.0; SCREEN_TILE_WIDTH * SCREEN_TILE_HEIGHT],
             enable_vsync: true,
             mat_view: Matrix4::zeros(),
             projected_buffer: Vec::new(),
             transformed_vertex_buffer: Vec::new(),
+            texture: None
         };
 
         renderer
+    }
+
+    pub fn load_texture(&mut self, texture: &'a Texture) {
+        self.texture = Some(texture);
     }
 }
