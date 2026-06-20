@@ -1,12 +1,12 @@
 use nalgebra::{Vector2, Vector3};
 
-use crate::renderer::{
+use crate::{nadk::display::Color565, renderer::{
     Renderer, SCREEN_TILE_HEIGHT, SCREEN_TILE_WIDTH,
     flat::{
         clipping::flat_triangle_clip_against_plane, draw_2d_triangle::clip_and_draw_2d_triangle,
     },
     mesh::{FlatCompactTriangle2D, FlatMesh, FlatMeshTriangle, FlatTriangle2D},
-};
+}};
 
 impl<'a> Renderer<'a> {
     fn add_3d_flat_triangle_to_render(&mut self, mesh: &FlatMesh, tri_index: usize) {
@@ -58,11 +58,8 @@ impl<'a> Renderer<'a> {
         }
     }
 
-    pub fn draw_flat_triangles(&mut self, tile_x: usize, tile_y: usize) {
-        let tile_offset = Vector2::new(
-            -((SCREEN_TILE_WIDTH * tile_x) as i16),
-            -((SCREEN_TILE_HEIGHT * tile_y) as i16),
-        );
+    pub fn draw_flat_triangles(&mut self, offset: Vector2<isize>, frame_buffer: &mut [Color565; SCREEN_TILE_WIDTH * SCREEN_TILE_HEIGHT]) {
+        let offset = offset.map(|x | x as i16);
         for tri in self.flat_triangles_to_render.iter_mut().rev() {
             let mut tri_copy = FlatTriangle2D {
                 p1: tri.p1,
@@ -71,15 +68,15 @@ impl<'a> Renderer<'a> {
                 depth: (tri.depth.0 as f32, tri.depth.1 as f32, tri.depth.2 as f32),
                 color: tri.color,
             };
-            tri_copy.p1 += tile_offset;
+            tri_copy.p1 -= offset;
 
-            tri_copy.p2 += tile_offset;
+            tri_copy.p2 -= offset;
 
-            tri_copy.p3 += tile_offset;
+            tri_copy.p3 -= offset;
 
             clip_and_draw_2d_triangle(
                 tri_copy,
-                &mut self.tile_frame_buffer,
+                frame_buffer,
                 &mut self.tile_depth_buffer,
             );
         }

@@ -5,7 +5,8 @@ use crate::{
     constants::rendering::*,
     nadk::display::{COLOR_BLACK, COLOR_BLUE, Color565, ScreenRect, push_rect},
     renderer2d::{
-        elements::{Element, Font},
+        draw_queue::DrawQueue,
+        elements::{CustomPlugin, Element, Font},
         sprite::TransparentTexture,
         textured_triangle::TexTriangle2D,
     },
@@ -379,12 +380,12 @@ impl<'a> Renderer2d {
     fn draw_shapes(
         &mut self,
         buffer_offset: Vector2<isize>,
-        draw_queue: &core::slice::Iter<'_, Element<'_>>,
+        draw_queue: &mut core::slice::IterMut<'_, Element<'_>>,
     ) {
-        for element in draw_queue.clone() {
+        for element in draw_queue.by_ref() {
             match element {
                 Element::ColorRectangle { pos, size, color } => {
-                    self.draw_rectangle(pos - buffer_offset, size.map(|x| x as isize), *color)
+                    self.draw_rectangle(*pos - buffer_offset, size.map(|x| x as isize), *color);
                 }
                 Element::TransparentSprite { pos, texture } => self.draw_region(
                     texture,
@@ -478,6 +479,9 @@ impl<'a> Renderer2d {
                         texture,
                     )
                 }
+                Element::CustomPlugin { object } => {
+                    object.draw(&mut self.tile_frame_buffer, buffer_offset);
+                }
             }
         }
     }
@@ -503,7 +507,13 @@ impl<'a> Renderer2d {
         self.clip_and_draw_2d_triangle(tri, texture);
     }
 
-    pub fn draw(&mut self, draw_queue: &core::slice::Iter<'_, Element<'_>>) {
+    pub fn draw<const SIZE: usize>(&mut self, draw_queue: &mut DrawQueue<SIZE>) {
+        for element in draw_queue.get_iterator() {
+            if let Element::CustomPlugin { object } = element {
+                object.pre_frame();
+            }
+        }
+
         for x in 0..SCREEN_TILE_SUBDIVISION {
             for y in 0..SCREEN_TILE_SUBDIVISION {
                 self.clear_frame_frame_buffer();
@@ -513,7 +523,7 @@ impl<'a> Renderer2d {
                         (x * SCREEN_TILE_WIDTH) as isize,
                         (y * SCREEN_TILE_HEIGHT) as isize,
                     ),
-                    draw_queue,
+                    &mut draw_queue.get_iterator(),
                 );
 
                 push_rect(
@@ -525,6 +535,12 @@ impl<'a> Renderer2d {
                     },
                     &self.tile_frame_buffer,
                 );
+            }
+        }
+
+        for element in draw_queue.get_iterator() {
+            if let Element::CustomPlugin { object } = element {
+                object.post_frame();
             }
         }
     }

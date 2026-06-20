@@ -69,7 +69,7 @@ def main():
     with open(sys.argv[1]) as f:
         file_content: str = f.read()
         verticies = compile_verticies(file_content)
-        faces = compile_flat_faces(file_content)
+        faces = compile_tex_faces(file_content)
     out_basename = path.join(sys.argv[2], path.basename(sys.argv[1]))
     verticies_path = path.splitext(out_basename)[0] + "_verticies.bin"
     faces_path = path.splitext(out_basename)[0] + "_faces.bin"

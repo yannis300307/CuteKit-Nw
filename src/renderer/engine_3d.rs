@@ -12,10 +12,6 @@ impl<'a> Renderer<'a> {
             Perspective3::new(ASPECT_RATIO, self.camera.get_fov(), ZNEAR, ZFAR);
     }
 
-    pub fn clear_screen(&mut self, color: Color565) {
-        self.tile_frame_buffer.fill(color);
-    }
-
     pub fn transform_verticies(&mut self, verticies: &[Vector3<f32>]) {
         for vertex in verticies.iter() {
             let transformed: nalgebra::Matrix<

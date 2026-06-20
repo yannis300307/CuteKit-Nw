@@ -1,6 +1,13 @@
 use nalgebra::Vector2;
 
-use crate::{nadk::display::Color565, renderer2d::{nine_parts_rectangle::NinePartsTexture, sprite::TransparentTexture}};
+use crate::{
+    nadk::display::Color565,
+    renderer2d::{
+        nine_parts_rectangle::NinePartsTexture,
+        renderer::{SCREEN_TILE_HEIGHT, SCREEN_TILE_WIDTH},
+        sprite::TransparentTexture,
+    },
+};
 
 /// A texture struct that store a size and a reference to the actual pixels.
 #[derive(Clone)]
@@ -31,7 +38,6 @@ pub struct Font {
     pub chars: &'static str,
 }
 
-#[derive(Clone)]
 pub enum Element<'a> {
     /// A flat colored rectangle. Very fast to draw.
     ColorRectangle {
@@ -101,6 +107,18 @@ pub enum Element<'a> {
         t1: Vector2<f32>,
         t2: Vector2<f32>,
         t3: Vector2<f32>,
-        texture: &'a TransparentTexture
-    }
+        texture: &'a TransparentTexture,
+    },
+    /// A custom virtual object that calls a custom function on each screen tile
+    CustomPlugin { object: &'a mut dyn CustomPlugin },
+}
+
+pub trait CustomPlugin {
+    fn draw(
+        &mut self,
+        buffer: &mut [Color565; SCREEN_TILE_WIDTH * SCREEN_TILE_HEIGHT],
+        offset: Vector2<isize>,
+    );
+    fn pre_frame(&mut self) {}
+    fn post_frame(&mut self) {}
 }

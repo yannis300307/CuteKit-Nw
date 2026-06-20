@@ -74,7 +74,7 @@ static FACE_FACES: &'static [u8] = include_bytes_aligned!(
     "../assets/model/Anime_character_optimised_face_faces.bin"
 );
 
-static TEXTURE: &[u8] = include_bytes!("../target/assets/texture.bin");
+static TEXTURE: &[u8] = include_bytes_aligned!(4, "../target/assets/texture.bin");
 
 #[unsafe(no_mangle)]
 fn main() {
@@ -85,7 +85,7 @@ fn main() {
     let mut input_manager = InputManager::new();
     let mut time_manager = TimingManager::new();
 
-    /*let texture = Texture { width: 512, height: 512, data: bytemuck::cast_slice(TEXTURE) };
+    let texture = Texture { width: 512, height: 512, data: bytemuck::cast_slice(TEXTURE) };
     let mut renderer = Renderer::new();
     renderer.load_texture(&texture);
 
@@ -111,26 +111,6 @@ fn main() {
         triangles: bytemuck::cast_slice(&FACE_FACES),
         vertices: bytemuck::cast_slice(&FACE_VERTICIES),
     };
-
-
-
-    loop {
-        time_manager.update();
-        input_manager.update();
-        let delta = time_manager.get_delta_time();
-        renderer.draw_textured_mesh(&face);
-        renderer.draw_textured_mesh(&hair);
-        renderer.draw_textured_mesh(&body);
-        renderer.draw_textured_mesh(&zip);
-        renderer.draw_textured_mesh(&skirt);
-        renderer.draw_game(Some(&draw_ui));
-        renderer.camera.update(delta, &input_manager);
-
-        if input_manager.is_just_pressed(nadk::keyboard::Key::Back) {
-            break;
-        }
-        time::wait_milliseconds(16);
-    }*/
 
     let mut renderer2d = Renderer2d::new(COLOR_BLACK);
 
@@ -158,6 +138,14 @@ fn main() {
         if input_manager.is_just_pressed(nadk::keyboard::Key::Back) {
             break;
         }
+        let delta = time_manager.get_delta_time();
+        renderer.camera.update(delta, &input_manager);
+
+        renderer.draw_textured_mesh(&face);
+        renderer.draw_textured_mesh(&hair);
+        renderer.draw_textured_mesh(&body);
+        renderer.draw_textured_mesh(&zip);
+        renderer.draw_textured_mesh(&skirt);
 
         let frame_time = heapless::format!(30; "time: {}", time_manager.get_frame_time()).unwrap();
 
@@ -182,6 +170,9 @@ fn main() {
 
         draw_queue.add_nine_parts_rectangle(&parts, Vector2::new(120 + a /2, 50 - a), Vector2::new(30 + a as u16, 100 + a as u16 / 2), ScaleMode::Stretch).unwrap();
 
+        draw_queue.add_plugin(&mut renderer).unwrap();
+
+
         draw_queue.add_text(Vector2::new(a / 2, a), frame_time.as_str(), &font, COLOR_WHITE, None).unwrap();
         draw_queue.add_text(Vector2::new( 60 + a, 50 + a), "Hello !", &font, COLOR_BLACK, Some(COLOR_WHITE)).unwrap();
         draw_queue.add_text(Vector2::new( 60 + a, 50 + a), "Hello !", &font, COLOR_BLACK, Some(COLOR_WHITE)).unwrap();
@@ -200,7 +191,7 @@ fn main() {
 
         draw_queue.add_textured_triangle(Vector2::new(5 + a as i16, 10 + a as i16 / 2), Vector2::new(200 - a as i16, 160 - a as i16 / 2), Vector2::new(180 - a as i16 / 2, 200 + a as i16 / 2), Vector2::new(0.0, 0.0), Vector2::new(1.0, 1.0), Vector2::new(1.0, 0.0), &nine_parts_texture).unwrap();
 
-        renderer2d.draw(&draw_queue.get_iterator());
+        renderer2d.draw(&mut draw_queue);
         a += 1;
         a %= 200;
 

@@ -4,7 +4,6 @@ mod engine_3d;
 mod flat;
 mod matrix_utils;
 pub mod mesh;
-mod misc;
 mod textured;
 
 calc_use!(alloc::vec::Vec);
@@ -47,14 +46,13 @@ pub struct Renderer<'a> {
     pub camera: Camera,
     tex_triangles_to_render: Vec<TexCompactTriangle2D>,
     flat_triangles_to_render: Vec<FlatCompactTriangle2D>,
-    tile_frame_buffer: [Color565; SCREEN_TILE_WIDTH * SCREEN_TILE_HEIGHT],
     tile_depth_buffer: [f16; SCREEN_TILE_WIDTH * SCREEN_TILE_HEIGHT],
     projection_matrix: Perspective3<f32>,
     pub enable_vsync: bool,
     mat_view: Matrix4<f32>,
     projected_buffer: Vec<Vector2<i16>>,
     transformed_vertex_buffer: Vec<Vector3<f32>>,
-    texture: Option<&'a Texture>
+    texture: Option<&'a Texture>,
 }
 
 impl<'a> Renderer<'a> {
@@ -64,7 +62,6 @@ impl<'a> Renderer<'a> {
             projection_matrix: Perspective3::new(ASPECT_RATIO, FOV, ZNEAR, ZFAR),
             tex_triangles_to_render: Vec::with_capacity(MAX_TRIANGLES),
             flat_triangles_to_render: Vec::with_capacity(1),
-            tile_frame_buffer: [COLOR_BLACK; SCREEN_TILE_WIDTH * SCREEN_TILE_HEIGHT],
             tile_depth_buffer: [0.0; SCREEN_TILE_WIDTH * SCREEN_TILE_HEIGHT],
             enable_vsync: true,
             mat_view: Matrix4::zeros(),

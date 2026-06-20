@@ -1,6 +1,6 @@
 use nalgebra::{Vector2, Vector3};
 
-use crate::{renderer::{
+use crate::{nadk::display::Color565, renderer::{
     Renderer, SCREEN_TILE_HEIGHT, SCREEN_TILE_WIDTH,
     mesh::{TexCompactTriangle2D, TexMeshTriangle, TexTriangle2D, TexturedMesh},
     textured::{
@@ -74,11 +74,8 @@ impl<'a> Renderer<'a> {
         }
     }
 
-    pub fn draw_tex_triangles(&mut self, tile_x: usize, tile_y: usize, texture: &Texture) {
-        let tile_offset = Vector2::new(
-            -((SCREEN_TILE_WIDTH * tile_x) as i16),
-            -((SCREEN_TILE_HEIGHT * tile_y) as i16),
-        );
+    pub fn draw_tex_triangles(&mut self, offset: Vector2<isize>, texture: &Texture, frame_buffer: &mut [Color565; SCREEN_TILE_WIDTH * SCREEN_TILE_HEIGHT]) {
+        let offset = offset.map(|x | x as i16);
         for tri in self.tex_triangles_to_render.iter_mut().rev() {
             let mut tri_copy = TexTriangle2D {
                 p1: tri.p1,
@@ -88,15 +85,15 @@ impl<'a> Renderer<'a> {
                 t2: tri.t2.map(|x| x as f32),
                 t3: tri.t3.map(|x| x as f32),
             };
-            tri_copy.p1 += tile_offset;
+            tri_copy.p1 -= offset;
 
-            tri_copy.p2 += tile_offset;
+            tri_copy.p2 -= offset;
 
-            tri_copy.p3 += tile_offset;
+            tri_copy.p3 -= offset;
 
             clip_and_draw_2d_triangle(
                 tri_copy,
-                &mut self.tile_frame_buffer,
+                frame_buffer,
                 &mut self.tile_depth_buffer,
                 texture
             );

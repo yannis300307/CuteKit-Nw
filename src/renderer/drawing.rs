@@ -1,7 +1,10 @@
+use nalgebra::Vector2;
+
 use crate::{
     constants::rendering::*,
-    nadk::display::{Color565, ScreenRect, push_rect, wait_for_vblank},
+    nadk::display::{Color565, ScreenRect, push_rect},
     renderer::{Renderer, SCREEN_TILE_HEIGHT, SCREEN_TILE_WIDTH},
+    renderer2d::elements::CustomPlugin,
 };
 
 pub struct DrawInfo {
@@ -17,7 +20,7 @@ impl<'a> Renderer<'a> {
         self.projected_buffer.clear();
     }
 
-    pub fn draw_game(
+    /*pub fn draw_game(
         &mut self,
         custom_layer_function: Option<&dyn Fn(&DrawInfo, &mut [Color565])>,
     ) {
@@ -59,9 +62,42 @@ impl<'a> Renderer<'a> {
                 );
             }
         }
-        if self.enable_vsync {
-            wait_for_vblank();
+        self.tex_triangles_to_render.clear();
+        self.flat_triangles_to_render.clear();
+        self.transformed_vertex_buffer.clear();
+        self.projected_buffer.clear();
+    }*/
+}
+
+impl<'a> CustomPlugin for Renderer<'a> {
+    fn draw(
+        &mut self,
+        buffer: &mut [Color565; SCREEN_TILE_WIDTH * SCREEN_TILE_HEIGHT],
+        offset: Vector2<isize>,
+    ) {
+        for i in 0..SCREEN_TILE_WIDTH * SCREEN_TILE_HEIGHT {
+            self.tile_depth_buffer[i] = f16::MAX;
         }
+
+        if !self.flat_triangles_to_render.is_empty() {
+            self.draw_flat_triangles(offset, buffer);
+        }
+        if !self.tex_triangles_to_render.is_empty() {
+            self.draw_tex_triangles(
+                offset,
+                self.texture.expect(
+                    "Trying to use textured triangles without a texture loaded in the 3D renderer.",
+                ),
+                buffer,
+            );
+        }
+    }
+
+    fn pre_frame(&mut self) {
+        self.mat_view = self.get_mat_view();
+    }
+
+    fn post_frame(&mut self) {
         self.tex_triangles_to_render.clear();
         self.flat_triangles_to_render.clear();
         self.transformed_vertex_buffer.clear();

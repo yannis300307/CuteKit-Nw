@@ -3,8 +3,9 @@ use nalgebra::Vector2;
 use crate::{
     nadk::display::Color565,
     renderer2d::{
-        elements::{Element, Font, ScaleMode},
+        elements::{CustomPlugin, Element, Font, ScaleMode},
         nine_parts_rectangle::NinePartsTexture,
+        renderer::{SCREEN_TILE_HEIGHT, SCREEN_TILE_WIDTH},
         sprite::TransparentTexture,
     },
 };
@@ -141,7 +142,11 @@ impl<'a, const SIZE: usize> DrawQueue<'a, SIZE> {
         })
     }
 
-    pub fn get_iterator(&self) -> core::slice::Iter<'_, Element<'_>> {
-        self.queue.iter()
+    pub fn add_plugin(&mut self, object: &'a mut dyn CustomPlugin) -> Result<(), ()> {
+        self.queue_element(Element::CustomPlugin { object })
+    }
+
+    pub fn get_iterator(&mut self) -> core::slice::IterMut<'_, Element<'a>> {
+        self.queue.iter_mut()
     }
 }
