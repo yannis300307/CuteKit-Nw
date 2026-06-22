@@ -7,11 +7,11 @@
 use nalgebra::{Vector2, Vector3};
 
 use crate::{
-    ingame_ui::draw_ui, input_manager::InputManager, nadk::{
+    gui::{Anchor, Button, ColorRectanglePrimitive, Container, Layout, Menu, Node, NodeType}, ingame_ui::draw_ui, input_manager::InputManager, nadk::{
         display::{self, COLOR_BLACK, COLOR_BLUE, COLOR_GREEN, COLOR_RED, COLOR_WHITE, Color565, ScreenRect},
         time::{self, wait_milliseconds},
         utils::wait_ok_released,
-    }, renderer::{Renderer, mesh::{FlatMesh, TexturedMesh}}, renderer2d::{draw_queue::DrawQueue, elements::{Font, ScaleMode, Texture}, nine_parts_rectangle::NinePartsTexture, renderer::Renderer2d, sprite::TransparentTexture}, timing::TimingManager
+    }, renderer::{Renderer, mesh::{FlatMesh, TexturedMesh}}, renderer2d::{draw_queue::DrawQueue, elements::{Element, Font, ScaleMode, Texture}, nine_parts_rectangle::NinePartsTexture, renderer::Renderer2d, sprite::TransparentTexture}, timing::TimingManager
 };
 
 use include_bytes_aligned::include_bytes_aligned;
@@ -19,11 +19,11 @@ use include_bytes_aligned::include_bytes_aligned;
 #[macro_use]
 mod nadk;
 
-mod camera;
 mod constants;
 mod input_manager;
 mod renderer;
 mod timing;
+mod gui;
 
 mod ingame_ui;
 mod renderer2d;
@@ -141,59 +141,38 @@ fn main() {
         let delta = time_manager.get_delta_time();
         renderer.camera.update(delta, &input_manager);
 
-        renderer.draw_textured_mesh(&face);
+        /*renderer.draw_textured_mesh(&face);
         renderer.draw_textured_mesh(&hair);
         renderer.draw_textured_mesh(&body);
         renderer.draw_textured_mesh(&zip);
-        renderer.draw_textured_mesh(&skirt);
+        renderer.draw_textured_mesh(&skirt);*/
 
         let frame_time = heapless::format!(30; "time: {}", time_manager.get_frame_time()).unwrap();
 
+
+        let primitive1 = ColorRectanglePrimitive {
+            pos: Vector2::new(10, 10),
+            size: Vector2::new(100, 20),
+            color: COLOR_RED
+        };
+
+        let top_lvl_container: [NodeType; 1] = [
+            NodeType::Primitive(&primitive1)
+        ];
+
+        let menu = Menu {
+            base_node: Container {
+                children: &top_lvl_container,
+                layout: Layout::Anchor(Anchor::TopLeft),
+                pos: Vector2::new(10, 100),
+            },
+        };
+
         let mut draw_queue: DrawQueue<'_, 100> = DrawQueue::new();
 
-        draw_queue.add_rectangle(Vector2::new(20 + a, 200 - a),Vector2::new(100, 50), COLOR_RED).unwrap();
-        draw_queue.add_circle(Vector2::new(100 + a, 100 - a), 70.0, COLOR_BLUE).unwrap();
-        draw_queue.add_circle(Vector2::new(100 + a, 100 - a), 20.0, COLOR_RED).unwrap();
-        draw_queue.add_rounded_rectangle(Vector2::new(a / 2, 120), Vector2::new(100, 30 + a as u16), 15.0, COLOR_GREEN).unwrap();
-
-        draw_queue.add_rounded_rectangle(Vector2::new(a / 2, 120), Vector2::new(100, 30 + a  as u16), 10.0, COLOR_GREEN).unwrap();
-        draw_queue.add_rounded_rectangle(Vector2::new(a / 2, 120 - a / 2), Vector2::new(100, 60 + a as u16), 15.0, COLOR_GREEN).unwrap();
-        draw_queue.add_rounded_rectangle(Vector2::new(a / 2, 120), Vector2::new(100 + a as u16, 100 + a as u16), 30.0, COLOR_RED).unwrap();
-        draw_queue.add_rounded_rectangle(Vector2::new(a / 2, 120), Vector2::new(100, 30 + a as u16 / 2), 15.0, COLOR_BLUE).unwrap();
-
-        draw_queue.add_nine_parts_rectangle(&parts, Vector2::new(50 + a, 50 + a * 2), Vector2::new(100 + a as u16, 100 + a as u16), ScaleMode::Tile).unwrap();
-        draw_queue.add_nine_parts_rectangle(&parts, Vector2::new(100 + a, 50 - a), Vector2::new(30 + a as u16, 100 + a as u16), ScaleMode::Stretch).unwrap();
-
-        draw_queue.add_nine_parts_rectangle(&parts, Vector2::new(100 + a, 50 - a), Vector2::new(30 + a as u16, 150 + a as u16), ScaleMode::Stretch).unwrap();
-
-        draw_queue.add_nine_parts_rectangle(&parts, Vector2::new(100 + a, 50 - a), Vector2::new(100 + a as u16, 100 + a as u16), ScaleMode::Stretch).unwrap();
-
-        draw_queue.add_nine_parts_rectangle(&parts, Vector2::new(120 + a /2, 50 - a), Vector2::new(30 + a as u16, 100 + a as u16 / 2), ScaleMode::Stretch).unwrap();
-
-        draw_queue.add_plugin(&mut renderer).unwrap();
-
-
-        draw_queue.add_text(Vector2::new(a / 2, a), frame_time.as_str(), &font, COLOR_WHITE, None).unwrap();
-        draw_queue.add_text(Vector2::new( 60 + a, 50 + a), "Hello !", &font, COLOR_BLACK, Some(COLOR_WHITE)).unwrap();
-        draw_queue.add_text(Vector2::new( 60 + a, 50 + a), "Hello !", &font, COLOR_BLACK, Some(COLOR_WHITE)).unwrap();
-
-        draw_queue.add_text(Vector2::new( 60 + a, 70 + a), "Hello !", &font, COLOR_RED, None).unwrap();
-
-        draw_queue.add_text(Vector2::new( 60 + a, 90 + a), "Hello !", &font, COLOR_BLACK, Some(COLOR_WHITE)).unwrap();
-
-        draw_queue.add_text(Vector2::new( 60 + a, 110 + a), "Hello !", &font, COLOR_BLACK, None).unwrap();
-
-        draw_queue.add_text(Vector2::new( 60 + a, 130 + a), "Hello !", &font, COLOR_BLACK, Some(COLOR_WHITE)).unwrap();
-
-        draw_queue.add_text(Vector2::new( 60 + a, 150 + a), "Hello !", &font, COLOR_BLACK, Some(COLOR_GREEN)).unwrap();
-
-        draw_queue.add_transparent_sprite(Vector2::new(10 + a / 2, 10 + a / 3), &nine_parts_texture).unwrap();
-
-        draw_queue.add_textured_triangle(Vector2::new(5 + a as i16, 10 + a as i16 / 2), Vector2::new(200 - a as i16, 160 - a as i16 / 2), Vector2::new(180 - a as i16 / 2, 200 + a as i16 / 2), Vector2::new(0.0, 0.0), Vector2::new(1.0, 1.0), Vector2::new(1.0, 0.0), &nine_parts_texture).unwrap();
+        menu.render(&mut draw_queue).unwrap();
 
         renderer2d.draw(&mut draw_queue);
-        a += 1;
-        a %= 200;
 
     }
 }

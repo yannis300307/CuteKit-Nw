@@ -1,9 +1,6 @@
 use nalgebra::{Perspective3, Vector2, Vector3, Vector4};
 
-use crate::{
-    nadk::display::Color565,
-    renderer::{ASPECT_RATIO, HALF_SCREEN, Renderer, ZFAR, ZNEAR},
-};
+use crate::renderer::{ASPECT_RATIO, HALF_SCREEN, Renderer, ZFAR, ZNEAR};
 
 impl<'a> Renderer<'a> {
     pub fn update_fov(&mut self, new_fov: f32) {

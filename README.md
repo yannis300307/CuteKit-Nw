@@ -59,5 +59,8 @@ You can speed up the simulator build by setting the job number.
 just sim 5
 ```
 
+### AI usage
+AI was used to fix little bugs in the code. There is nearly no AI written code in this project.
+
 ## Legal info
 NumWorks is a registered trademark.

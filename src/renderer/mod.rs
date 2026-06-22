@@ -5,16 +5,17 @@ mod flat;
 mod matrix_utils;
 pub mod mesh;
 mod textured;
+mod camera;
 
 calc_use!(alloc::vec::Vec);
 
 use nalgebra::{Matrix4, Perspective3, Vector2, Vector3};
 
 use crate::{
-    camera::Camera,
     constants::rendering::*,
     nadk::display::{COLOR_BLACK, Color565},
-    renderer::mesh::{FlatCompactTriangle2D, TexCompactTriangle2D}, renderer2d::elements::Texture,
+    renderer::{camera::Camera, mesh::{FlatCompactTriangle2D, TexCompactTriangle2D}},
+    renderer2d::elements::Texture,
 };
 
 // Screen size related constants
@@ -67,7 +68,7 @@ impl<'a> Renderer<'a> {
             mat_view: Matrix4::zeros(),
             projected_buffer: Vec::new(),
             transformed_vertex_buffer: Vec::new(),
-            texture: None
+            texture: None,
         };
 
         renderer

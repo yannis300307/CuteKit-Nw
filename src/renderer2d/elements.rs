@@ -113,6 +113,94 @@ pub enum Element<'a> {
     CustomPlugin { object: &'a mut dyn CustomPlugin },
 }
 
+impl<'a> Clone for Element<'a> {
+    fn clone(&self) -> Self {
+        match self {
+            Element::ColorRectangle { pos, size, color } => Element::ColorRectangle {
+                pos: *pos,
+                size: *size,
+                color: *color,
+            },
+            Element::TransparentSprite { pos, texture } => {
+                Element::TransparentSprite { pos: *pos, texture }
+            }
+            Element::TransparentScaledSprite {
+                pos,
+                size,
+                texture,
+                scale_mode,
+            } => Element::TransparentScaledSprite {
+                pos: *pos,
+                size: *size,
+                texture,
+                scale_mode: *scale_mode,
+            },
+            Element::NinePartsRectangle {
+                parts,
+                pos,
+                size,
+                scaling_mode,
+            } => Element::NinePartsRectangle {
+                parts,
+                pos: *pos,
+                size: *size,
+                scaling_mode: *scaling_mode,
+            },
+            Element::Circle {
+                center,
+                radius,
+                color,
+            } => Element::Circle {
+                center: *center,
+                radius: *radius,
+                color: *color,
+            },
+            Element::RoundedRectangle {
+                pos,
+                size,
+                corner_radius,
+                color,
+            } => Element::RoundedRectangle {
+                pos: *pos,
+                size: *size,
+                corner_radius: *corner_radius,
+                color: *color,
+            },
+            Element::Text {
+                pos,
+                text,
+                font,
+                font_color,
+                background_color,
+            } => Element::Text {
+                pos: *pos,
+                text,
+                font,
+                font_color: *font_color,
+                background_color: *background_color,
+            },
+            Element::TexturedTriangle {
+                p1,
+                p2,
+                p3,
+                t1,
+                t2,
+                t3,
+                texture,
+            } => Element::TexturedTriangle {
+                p1: *p1,
+                p2: *p2,
+                p3: *p3,
+                t1: *t1,
+                t2: *t2,
+                t3: *t3,
+                texture,
+            },
+            Element::CustomPlugin { .. } => panic!("Cannot clone a Custom Plugin Element!"),
+        }
+    }
+}
+
 pub trait CustomPlugin {
     fn draw(
         &mut self,
