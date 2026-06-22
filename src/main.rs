@@ -7,7 +7,7 @@
 use nalgebra::{Vector2, Vector3};
 
 use crate::{
-    gui::{Anchor, Button, ColorRectanglePrimitive, Container, Layout, Menu, Node, NodeType}, ingame_ui::draw_ui, input_manager::InputManager, nadk::{
+    gui::{Anchor, Button, ColorRectanglePrimitive, Container, Layout, Menu, Node, NodeType, TextPrimitive}, ingame_ui::draw_ui, input_manager::InputManager, nadk::{
         display::{self, COLOR_BLACK, COLOR_BLUE, COLOR_GREEN, COLOR_RED, COLOR_WHITE, Color565, ScreenRect},
         time::{self, wait_milliseconds},
         utils::wait_ok_released,
@@ -86,7 +86,7 @@ fn main() {
     let mut time_manager = TimingManager::new();
 
     let texture = Texture { width: 512, height: 512, data: bytemuck::cast_slice(TEXTURE) };
-    let mut renderer = Renderer::new();
+    /*let mut renderer = Renderer::new();
     renderer.load_texture(&texture);
 
     renderer.camera.update_pos(Vector3::new(0.0, 1.0, -2.0));
@@ -110,7 +110,7 @@ fn main() {
     let face = TexturedMesh {
         triangles: bytemuck::cast_slice(&FACE_FACES),
         vertices: bytemuck::cast_slice(&FACE_VERTICIES),
-    };
+    };*/
 
     let mut renderer2d = Renderer2d::new(COLOR_BLACK);
 
@@ -139,7 +139,7 @@ fn main() {
             break;
         }
         let delta = time_manager.get_delta_time();
-        renderer.camera.update(delta, &input_manager);
+        //renderer.camera.update(delta, &input_manager);
 
         /*renderer.draw_textured_mesh(&face);
         renderer.draw_textured_mesh(&hair);
@@ -151,20 +151,39 @@ fn main() {
 
 
         let primitive1 = ColorRectanglePrimitive {
-            pos: Vector2::new(10, 10),
+            pos: Vector2::new(0, 0),
             size: Vector2::new(100, 20),
             color: COLOR_RED
         };
 
-        let top_lvl_container: [NodeType; 1] = [
-            NodeType::Primitive(&primitive1)
+        let primitive2 = TextPrimitive {
+            pos: Vector2::new(0, 0),
+            text: "Hello !",
+            font: &font,
+            font_color: COLOR_BLACK,
+            background_color: None,
+        };
+
+        let primitive3 = TextPrimitive {
+            pos: Vector2::new(-50, -50),
+            text: &frame_time,
+            font: &font,
+            font_color: COLOR_WHITE,
+            background_color: None,
+        };
+
+        let top_lvl_container: [NodeType; _] = [
+            NodeType::Primitive(&primitive1),
+            NodeType::Primitive(&primitive2),
+            NodeType::Primitive(&primitive3)
         ];
 
         let menu = Menu {
             base_node: Container {
                 children: &top_lvl_container,
-                layout: Layout::Anchor(Anchor::TopLeft),
-                pos: Vector2::new(10, 100),
+                layout: Layout::Anchor(Anchor::Center),
+                pos: Vector2::new(0, 0),
+                size: Some(Vector2::new(320, 240))
             },
         };
 
