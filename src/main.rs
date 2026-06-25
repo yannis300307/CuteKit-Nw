@@ -7,7 +7,7 @@
 use nalgebra::{Vector2, Vector3};
 
 use crate::{
-    gui::{Anchor, Button, ColorRectanglePrimitive, Container, Layout, Menu, Node, NodeType, TextPrimitive}, ingame_ui::draw_ui, input_manager::InputManager, nadk::{
+    gui::{Anchor, Button, ColorRectanglePrimitive, Container, Layout, Margin, Menu, Node, NodeType, Primitive, TextPrimitive, TransparentSpritePrimitive}, ingame_ui::draw_ui, input_manager::InputManager, nadk::{
         display::{self, COLOR_BLACK, COLOR_BLUE, COLOR_GREEN, COLOR_RED, COLOR_WHITE, Color565, ScreenRect},
         time::{self, wait_milliseconds},
         utils::wait_ok_released,
@@ -164,24 +164,23 @@ fn main() {
             background_color: None,
         };
 
-        let primitive3 = TextPrimitive {
-            pos: Vector2::new(-50, -50),
-            text: &frame_time,
-            font: &font,
-            font_color: COLOR_WHITE,
-            background_color: None,
+        let button_children: [&dyn Primitive; _]  = [&primitive1, &primitive2];
+
+        let button1 = Button {
+            children: &button_children,
+            pos: Vector2::new(0, 0),
+            layout: Layout::Expand(true, false, Margin { top: 5, bottom: 5, right: 5, left: 5 }),
         };
 
         let top_lvl_container: [NodeType; _] = [
-            NodeType::Primitive(&primitive1),
-            NodeType::Primitive(&primitive2),
-            NodeType::Primitive(&primitive3)
+            NodeType::Normal(&button1),
+            NodeType::Normal(&button1),
         ];
 
         let menu = Menu {
             base_node: Container {
                 children: &top_lvl_container,
-                layout: Layout::Anchor(Anchor::Center),
+                layout: Layout::Expand(true, false, Margin::new(5, 5, 5, 5)),
                 pos: Vector2::new(0, 0),
                 size: Some(Vector2::new(320, 240))
             },

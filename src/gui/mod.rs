@@ -24,6 +24,34 @@ macro_rules! default_primitive_node {
 }
 
 #[derive(Clone, Copy)]
+pub struct Margin {
+    pub top: isize,
+    pub bottom: isize,
+    pub right: isize,
+    pub left: isize,
+}
+
+impl Margin {
+    pub fn none() -> Self {
+        Margin {
+            top: 0,
+            bottom: 0,
+            right: 0,
+            left: 0,
+        }
+    }
+
+    pub fn new(top: isize, bottom: isize, right: isize, left: isize) -> Self {
+        Margin {
+            top,
+            bottom,
+            right,
+            left,
+        }
+    }
+}
+
+#[derive(Clone, Copy)]
 pub enum Anchor {
     Center,
     Top,
@@ -38,10 +66,10 @@ pub enum Anchor {
 
 #[derive(Clone, Copy)]
 pub enum Layout {
-    Expand(bool, bool),
+    Expand(bool, bool, Margin),
     Absolute,
     Anchor(Anchor),
-    Flex,
+    Flex(Margin),
     None,
 }
 
@@ -163,7 +191,7 @@ impl<'a> Node<'a> for Container<'a> {
                     max_size.x = size.x;
                 }
                 if size.y > max_size.y {
-                    max_size.x = size.x;
+                    max_size.y = size.y;
                 }
             }
             max_size
@@ -188,7 +216,7 @@ impl<'a> Node<'a> for Button<'a> {
                 max_size.x = size.x;
             }
             if size.y > max_size.y {
-                max_size.x = size.x;
+                max_size.y = size.y;
             }
         }
         max_size
@@ -222,7 +250,7 @@ impl<'a> Primitive<'a> for ColorRectanglePrimitive {
             size.x = width as u16;
         }
         if let Some(height) = force_height {
-            size.x = height as u16;
+            size.y = height as u16;
         }
         Element::ColorRectangle {
             pos: if let Some(pos) = force_pos {
@@ -251,11 +279,18 @@ impl<'a> Primitive<'a> for TransparentSpritePrimitive<'a> {
     fn get_element(
         &self,
         force_pos: Option<Vector2<isize>>,
-        force_width: Option<isize>,
-        force_height: Option<isize>,
+        _force_width: Option<isize>,
+        _force_height: Option<isize>,
         anchor_point: Vector2<isize>,
     ) -> Element<'a> {
-        todo!()
+        Element::TransparentSprite {
+            pos: if let Some(pos) = force_pos {
+                pos
+            } else {
+                self.pos + anchor_point
+            },
+            texture: self.texture,
+        }
     }
 }
 
@@ -278,7 +313,23 @@ impl<'a> Primitive<'a> for TransparentScaledSpritePrimitive<'a> {
         force_height: Option<isize>,
         anchor_point: Vector2<isize>,
     ) -> Element<'a> {
-        todo!()
+        let mut size = self.size;
+        if let Some(width) = force_width {
+            size.x = width as u16;
+        }
+        if let Some(height) = force_height {
+            size.y = height as u16;
+        }
+        Element::TransparentScaledSprite {
+            pos: if let Some(pos) = force_pos {
+                pos
+            } else {
+                self.pos + anchor_point
+            },
+            size,
+            texture: self.texture,
+            scale_mode: self.scale_mode,
+        }
     }
 }
 
@@ -301,7 +352,23 @@ impl<'a> Primitive<'a> for NinePartsRectanglePrimitive<'a> {
         force_height: Option<isize>,
         anchor_point: Vector2<isize>,
     ) -> Element<'a> {
-        todo!()
+        let mut size = self.size;
+        if let Some(width) = force_width {
+            size.x = width as u16;
+        }
+        if let Some(height) = force_height {
+            size.y = height as u16;
+        }
+        Element::NinePartsRectangle {
+            parts: self.parts,
+            pos: if let Some(pos) = force_pos {
+                pos
+            } else {
+                self.pos + anchor_point
+            },
+            size,
+            scaling_mode: self.scaling_mode,
+        }
     }
 }
 
@@ -320,11 +387,19 @@ impl<'a> Primitive<'a> for CirclePrimitive {
     fn get_element(
         &self,
         force_pos: Option<Vector2<isize>>,
-        force_width: Option<isize>,
-        force_height: Option<isize>,
+        _force_width: Option<isize>,
+        _force_height: Option<isize>,
         anchor_point: Vector2<isize>,
     ) -> Element<'a> {
-        todo!()
+        Element::Circle {
+            center: if let Some(pos) = force_pos {
+                pos
+            } else {
+                self.center + anchor_point
+            },
+            radius: self.radius,
+            color: self.color,
+        }
     }
 }
 
@@ -347,7 +422,23 @@ impl<'a> Primitive<'a> for RoundedRectanglePrimitive {
         force_height: Option<isize>,
         anchor_point: Vector2<isize>,
     ) -> Element<'a> {
-        todo!()
+        let mut size = self.size;
+        if let Some(width) = force_width {
+            size.x = width as u16;
+        }
+        if let Some(height) = force_height {
+            size.y = height as u16;
+        }
+        Element::RoundedRectangle {
+            pos: if let Some(pos) = force_pos {
+                pos
+            } else {
+                self.pos + anchor_point
+            },
+            size,
+            corner_radius: self.corner_radius,
+            color: self.color,
+        }
     }
 }
 
@@ -369,8 +460,8 @@ impl<'a> Primitive<'a> for TextPrimitive<'a> {
     fn get_element(
         &self,
         force_pos: Option<Vector2<isize>>,
-        force_width: Option<isize>,
-        force_height: Option<isize>,
+        _force_width: Option<isize>,
+        _force_height: Option<isize>,
         anchor_point: Vector2<isize>,
     ) -> Element<'a> {
         Element::Text {
@@ -457,11 +548,26 @@ impl<'a> Primitive<'a> for TexturedTrianglePrimitive<'a> {
     fn get_element(
         &self,
         force_pos: Option<Vector2<isize>>,
-        force_width: Option<isize>,
-        force_height: Option<isize>,
+        _force_width: Option<isize>,
+        _force_height: Option<isize>,
         anchor_point: Vector2<isize>,
     ) -> Element<'a> {
-        todo!()
+        let anchor = if let Some(pos) = force_pos {
+            pos
+        } else {
+            anchor_point
+        }
+        .map(|x| x as i16);
+
+        Element::TexturedTriangle {
+            p1: self.p1 + anchor,
+            p2: self.p2 + anchor,
+            p3: self.p3 + anchor,
+            t1: self.t1,
+            t2: self.t2,
+            t3: self.t3,
+            texture: self.texture,
+        }
     }
 }
 
@@ -474,20 +580,26 @@ impl<'a> Menu<'a> {
         draw_queue: &mut DrawQueue<'a, SIZE>,
         parent: &'b dyn Node<'a>,
         child: &dyn Primitive<'a>,
+        start_offset: &mut Vector2<isize>,
     ) -> Result<(), ()> {
-        let mut anchor_point = Vector2::repeat(0);
+        let mut anchor_point = *start_offset;
         let mut force_pos = None;
         let mut force_width = None;
         let mut force_height = None;
         match parent.get_layout() {
-            Layout::Expand(width, height) => {
-                let self_size = parent.get_size();
+            Layout::Expand(width, height, margin) => {
+                let parent_size = parent.get_size();
+                let child_size = child.get_size();
                 if width {
-                    force_width = Some(self_size.x);
+                    force_width = Some(parent_size.x - margin.left - margin.right);
+                    start_offset.y += child_size.y + margin.top + margin.bottom;
                 }
                 if height {
-                    force_height = Some(self_size.y);
+                    force_height = Some(parent_size.y - margin.top - margin.bottom);
+                    start_offset.x += child_size.x + margin.left + margin.right;
                 }
+                anchor_point.x += margin.left;
+                anchor_point.y += margin.top;
             }
             Layout::Absolute => { /* Well... Nothing to change. */ }
             Layout::Anchor(anchor) => {
@@ -524,7 +636,11 @@ impl<'a> Menu<'a> {
                     Anchor::BottomRight => parent_anchor + parent_size - child_size,
                 }
             }
-            Layout::Flex => todo!(),
+            Layout::Flex(margin) => {
+                anchor_point.x += margin.left;
+                anchor_point.y += margin.top;
+                todo!()
+            }
             Layout::None => {
                 return Ok(());
             }
@@ -538,21 +654,24 @@ impl<'a> Menu<'a> {
         &self,
         draw_queue: &mut DrawQueue<'a, SIZE>,
         object: &'b dyn Node<'a>,
+        start_offset: &mut Vector2<isize>,
     ) -> Result<(), ()> {
         let children: ChildrenType<'a, 'b> = object.get_children();
         match children {
             ChildrenType::Primitives(elements) => {
+                let mut sub_start_offset = *start_offset;
                 for child in elements.iter() {
-                    Self::add_child_to_queue(draw_queue, object, *child)?;
+                    Self::add_child_to_queue(draw_queue, object, *child, &mut sub_start_offset)?;
                 }
             }
 
             ChildrenType::Nodes(nodes) => {
+                let mut sub_start_offset = *start_offset;
                 for child in nodes.iter() {
                     match child {
-                        NodeType::Normal(node) => self.render_object(draw_queue, *node)?,
+                        NodeType::Normal(node) => self.render_object(draw_queue, *node, &mut sub_start_offset)?,
                         NodeType::Primitive(primitive) => {
-                            Self::add_child_to_queue(draw_queue, object, *primitive)?;
+                            Self::add_child_to_queue(draw_queue, object, *primitive, &mut sub_start_offset)?;
                         }
                     };
                 }
@@ -565,6 +684,7 @@ impl<'a> Menu<'a> {
         &self,
         draw_queue: &mut DrawQueue<'a, SIZE>,
     ) -> Result<(), ()> {
-        self.render_object(draw_queue, &self.base_node)
+        let mut start_offset = Vector2::repeat(0);
+        self.render_object(draw_queue, &self.base_node, &mut start_offset)
     }
 }
