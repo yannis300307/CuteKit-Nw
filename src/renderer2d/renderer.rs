@@ -166,14 +166,14 @@ impl<'a> Renderer2d {
             pos.y = 0;
         }
         if end.x >= SCREEN_TILE_WIDTH as isize {
-            end.x = SCREEN_TILE_WIDTH as isize - 1;
+            end.x = SCREEN_TILE_WIDTH as isize;
         }
         if end.y >= SCREEN_TILE_HEIGHT as isize {
-            end.y = SCREEN_TILE_HEIGHT as isize - 1;
+            end.y = SCREEN_TILE_HEIGHT as isize;
         }
 
-        for y in pos.y..=end.y {
-            for x in pos.x..=end.x {
+        for y in pos.y..end.y {
+            for x in pos.x..end.x {
                 self.draw_pixel(x as usize, y as usize, color);
             }
         }

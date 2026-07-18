@@ -7,11 +7,32 @@
 use nalgebra::{Vector2, Vector3};
 
 use crate::{
-    gui::{Anchor, Button, ColorRectanglePrimitive, Container, Layout, Margin, Menu, Node, NodeType, Primitive, TextPrimitive, TransparentSpritePrimitive}, ingame_ui::draw_ui, input_manager::InputManager, nadk::{
-        display::{self, COLOR_BLACK, COLOR_BLUE, COLOR_GREEN, COLOR_RED, COLOR_WHITE, Color565, ScreenRect},
+    gui::v2::{
+        Anchor, ColorRectanglePrimitive, Container, Layout, Margin, Menu, Node, NodeType,
+        Primitive,
+    },
+    ingame_ui::draw_ui,
+    input_manager::InputManager,
+    nadk::{
+        display::{
+            self, COLOR_BLACK, COLOR_BLUE, COLOR_GREEN, COLOR_RED, COLOR_WHITE, Color565,
+            ScreenRect,
+        },
         time::{self, wait_milliseconds},
         utils::wait_ok_released,
-    }, renderer::{Renderer, mesh::{FlatMesh, TexturedMesh}}, renderer2d::{draw_queue::DrawQueue, elements::{Element, Font, ScaleMode, Texture}, nine_parts_rectangle::NinePartsTexture, renderer::Renderer2d, sprite::TransparentTexture}, timing::TimingManager
+    },
+    renderer::{
+        Renderer,
+        mesh::{FlatMesh, TexturedMesh},
+    },
+    renderer2d::{
+        draw_queue::DrawQueue,
+        elements::{Element, Font, ScaleMode, Texture},
+        nine_parts_rectangle::NinePartsTexture,
+        renderer::Renderer2d,
+        sprite::TransparentTexture,
+    },
+    timing::TimingManager,
 };
 
 use include_bytes_aligned::include_bytes_aligned;
@@ -20,10 +41,10 @@ use include_bytes_aligned::include_bytes_aligned;
 mod nadk;
 
 mod constants;
+mod gui;
 mod input_manager;
 mod renderer;
 mod timing;
-mod gui;
 
 mod ingame_ui;
 mod renderer2d;
@@ -85,7 +106,11 @@ fn main() {
     let mut input_manager = InputManager::new();
     let mut time_manager = TimingManager::new();
 
-    let texture = Texture { width: 512, height: 512, data: bytemuck::cast_slice(TEXTURE) };
+    let texture = Texture {
+        width: 512,
+        height: 512,
+        data: bytemuck::cast_slice(TEXTURE),
+    };
     /*let mut renderer = Renderer::new();
     renderer.load_texture(&texture);
 
@@ -116,8 +141,14 @@ fn main() {
 
     let mut a = 0;
 
-    let font = Font { data: include_bytes!("../target/assets/font.bin"), font_image_width: 1235, char_width: 13, char_height: 16, chars: " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~" };
-    
+    let font = Font {
+        data: include_bytes!("../target/assets/font.bin"),
+        font_image_width: 1235,
+        char_width: 13,
+        char_height: 16,
+        chars: " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~",
+    };
+
     let nine_parts_texture = TransparentTexture {
         data: bytemuck::cast_slice(include_bytes!("../target/assets/9parts.bin")),
         width: 60,
@@ -130,7 +161,6 @@ fn main() {
         top_border_size: 20,
         bottom_border_size: 20,
     };
-
 
     loop {
         time_manager.update();
@@ -149,40 +179,50 @@ fn main() {
 
         let frame_time = heapless::format!(30; "time: {}", time_manager.get_frame_time()).unwrap();
 
-
         let primitive1 = ColorRectanglePrimitive {
-            pos: Vector2::new(0, 0),
             size: Vector2::new(100, 20),
-            color: COLOR_RED
+            color: COLOR_RED,
+            layout_override: Layout::None,
+        };
+        let primitive2 = ColorRectanglePrimitive {
+            size: Vector2::new(100, 20),
+            color: COLOR_BLUE,
+            layout_override: Layout::None,
         };
 
-        let primitive2 = TextPrimitive {
-            pos: Vector2::new(0, 0),
-            text: "Hello !",
-            font: &font,
-            font_color: COLOR_BLACK,
-            background_color: None,
+        let primitive3 = ColorRectanglePrimitive {
+            size: Vector2::new(30, 100),
+            color: COLOR_GREEN,
+            layout_override: Layout::None,
         };
 
-        let button_children: [&dyn Primitive; _]  = [&primitive1, &primitive2];
-
-        let button1 = Button {
-            children: &button_children,
-            pos: Vector2::new(0, 0),
-            layout: Layout::Expand(true, false, Margin { top: 5, bottom: 5, right: 5, left: 5 }),
+        let primitive4 = ColorRectanglePrimitive {
+            size: Vector2::new(30, 100),
+            color: COLOR_WHITE,
+            layout_override: Layout::None,
         };
 
-        let top_lvl_container: [NodeType; _] = [
-            NodeType::Normal(&button1),
-            NodeType::Normal(&button1),
-        ];
+        let primitive5 = ColorRectanglePrimitive {
+            size: Vector2::new(100, 30),
+            color: COLOR_RED,
+            layout_override: Layout::None,
+        };
+
+        let container1_children: [NodeType; _] = [NodeType::Primitive(&primitive3), NodeType::Primitive(&primitive4)];
+
+        let container1 = Container {
+            children: &container1_children,
+            align: gui::v2::AlignDirection::Right,
+            layout_override: Layout::None,
+        };
+
+        let top_lvl_container: [NodeType; _] = [NodeType::Primitive(&primitive1), NodeType::Primitive(&primitive2), NodeType::Container(&container1), NodeType::Primitive(&primitive5)];
 
         let menu = Menu {
             base_node: Container {
                 children: &top_lvl_container,
-                layout: Layout::Expand(true, false, Margin::new(5, 5, 5, 5)),
-                pos: Vector2::new(0, 0),
-                size: Some(Vector2::new(320, 240))
+                align: gui::v2::AlignDirection::Down,
+                layout_override: Layout::None,
             },
         };
 
@@ -191,6 +231,6 @@ fn main() {
         menu.render(&mut draw_queue).unwrap();
 
         renderer2d.draw(&mut draw_queue);
-
+        time::wait_milliseconds(50);
     }
 }
