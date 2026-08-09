@@ -7,7 +7,7 @@
 use nalgebra::{Vector2, Vector3};
 
 use crate::{
-    gui::v2::{
+    gui::{
         Anchor, ColorRectanglePrimitive, Container, Layout, Margin, Menu, Node, NodeType,
         Primitive,
     },
@@ -27,7 +27,7 @@ use crate::{
     },
     renderer2d::{
         draw_queue::DrawQueue,
-        elements::{Element, Font, ScaleMode, Texture},
+        elements::{CustomPlugin, Element, Font, ScaleMode, Texture},
         nine_parts_rectangle::NinePartsTexture,
         renderer::Renderer2d,
         sprite::TransparentTexture,
@@ -53,8 +53,8 @@ setup_allocator!();
 
 configure_app!(b"Numcraft\0", 9, "../target/assets/icon.nwi", 3437);
 
-// Hey you reading the commit history of the repo! If you're wondering why these files are not included in the repo,
-// it's because the model used to develop the 3D engine was not open source. So We can't redistribute it under the GPL 3 license.
+// Hey you reading code in the repo! If you're wondering why these files are not included in the repo,
+// it's because the model used to develop the 3D engine was not open source. So we can't redistribute it under the GPL 3 license.
 // However, you can still replace the model with your own converted model. Have a good day!
 static BODY_VERTICIES: &'static [u8] = include_bytes_aligned!(
     4,
@@ -106,12 +106,12 @@ fn main() {
     let mut input_manager = InputManager::new();
     let mut time_manager = TimingManager::new();
 
-    let texture = Texture {
+    /*let texture = Texture {
         width: 512,
         height: 512,
         data: bytemuck::cast_slice(TEXTURE),
     };
-    /*let mut renderer = Renderer::new();
+    let mut renderer = Renderer::new();
     renderer.load_texture(&texture);
 
     renderer.camera.update_pos(Vector3::new(0.0, 1.0, -2.0));
@@ -169,9 +169,9 @@ fn main() {
             break;
         }
         let delta = time_manager.get_delta_time();
-        //renderer.camera.update(delta, &input_manager);
+        /*renderer.camera.update(delta, &input_manager);
 
-        /*renderer.draw_textured_mesh(&face);
+        renderer.draw_textured_mesh(&face);
         renderer.draw_textured_mesh(&hair);
         renderer.draw_textured_mesh(&body);
         renderer.draw_textured_mesh(&zip);
@@ -212,25 +212,33 @@ fn main() {
 
         let container1 = Container {
             children: &container1_children,
-            align: gui::v2::AlignDirection::Right,
+            align: gui::AlignDirection::Right,
             layout_override: Layout::None,
+            expand: true
         };
 
-        let top_lvl_container: [NodeType; _] = [NodeType::Primitive(&primitive1), NodeType::Primitive(&primitive2), NodeType::Container(&container1), NodeType::Primitive(&primitive5)];
+        let top_lvl_container: [NodeType; _] = [NodeType::Primitive(&primitive1), NodeType::Primitive(&primitive2), NodeType::Container(&container1), NodeType::Primitive(&primitive5), NodeType::Container(&container1), NodeType::Primitive(&primitive2)];
 
         let menu = Menu {
             base_node: Container {
                 children: &top_lvl_container,
-                align: gui::v2::AlignDirection::Down,
+                align: gui::AlignDirection::Down,
                 layout_override: Layout::None,
+                expand: true
             },
         };
 
         let mut draw_queue: DrawQueue<'_, 100> = DrawQueue::new();
 
+
+        //draw_queue.add_plugin(&mut renderer).unwrap();
+
+        println!("frame");
         menu.render(&mut draw_queue).unwrap();
 
         renderer2d.draw(&mut draw_queue);
-        time::wait_milliseconds(50);
+
+
+        time::wait_milliseconds(16);
     }
 }

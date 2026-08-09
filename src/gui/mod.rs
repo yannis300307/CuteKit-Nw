@@ -1,5 +1,3 @@
-pub mod v2;
-
 use nalgebra::Vector2;
 use crate::{
     constants::rendering::{SCREEN_HEIGHT, SCREEN_WIDTH}, nadk::display::Color565, renderer2d::{
@@ -82,14 +80,14 @@ enum ChildrenType<'a, 'b> {
 
 pub trait Node<'a> {
     fn get_layout_ovewrite(&self) -> Layout;
-    fn get_size(&self) -> Vector2<isize>;
+    fn get_size(&self, force_size: (Option<isize>, Option<isize>)) -> Vector2<isize>;
 }
 
 pub trait ContainerNode<'a>: Node<'a> {
     fn get_children<'b>(&'b self) -> ChildrenType<'a, 'b>;
     fn get_align_direction(&self) -> AlignDirection;
-    fn get_last_element_offset(&self) -> Vector2<isize>;
-    fn get_last_element_size(&self) -> Option<Vector2<isize>>;
+    fn get_expand(&self) -> bool;
+    fn get_expand_remaining_space(&self, max_size: Vector2<isize>, force_size: (Option<isize>, Option<isize>)) -> Vector2<isize>;
 }
 
 pub trait Primitive<'a>: Node<'a> {
@@ -105,6 +103,7 @@ pub struct Container<'a> {
     pub children: &'a [NodeType<'a>],
     pub align: AlignDirection,
     pub layout_override: Layout,
+    pub expand: bool,
 }
 
 pub struct ColorRectanglePrimitive {
@@ -121,37 +120,33 @@ impl<'a> ContainerNode<'a> for Container<'a> {
     fn get_align_direction(&self) -> AlignDirection {
        self.align
     }
-
-    fn get_last_element_offset(&self) -> Vector2<isize> {
-        let mut max_size = Vector2::new(0, 0);
-        if self.children.is_empty() {
-            return max_size;
-        }
-        for child in self.children.iter().take(self.children.len() - 1) {
-            let size = match child {
-                NodeType::Primitive(primitive) => primitive.get_size(),
-                NodeType::Container(container_node) => container_node.get_size(),
-            };
-            if size.x > max_size.x {
-                max_size.x = size.x;
-            }
-            if size.y > max_size.y {
-                max_size.y = size.y;
-            }
-        }
-        max_size
+    
+    fn get_expand(&self) -> bool {
+        self.expand
     }
+    
+    fn get_expand_remaining_space(&self, max_size: Vector2<isize>, force_size: (Option<isize>, Option<isize>)) -> Vector2<isize> {
+        let mut non_expand_size = Vector2::repeat(0);
+        let mut expandable_count = 0;
 
-    fn get_last_element_size(&self) -> Option<Vector2<isize>> {
-        match self.get_children() {
-            ChildrenType::Nodes(nodes) => {
-                match nodes.last()? {
-                    NodeType::Primitive(node) => Some(node.get_size()),
-                    NodeType::Container(node) => Some(node.get_size()),
-                }
-            },
-            ChildrenType::Primitives(nodes) => Some(nodes.last()?.get_size()),
-            ChildrenType::None => Some(Vector2::new(0, 0)),
+        for element in self.children.iter() {
+            non_expand_size += match element {
+                NodeType::Primitive(node) => node.get_size(force_size),
+                NodeType::Container(node) => {
+                    if node.get_expand() {
+                        expandable_count += 1;
+                        Vector2::repeat(0)
+                    } else {
+                        node.get_size(force_size)
+                    }
+                },
+            }
+        };
+        if expandable_count > 0 {
+            (max_size - non_expand_size) / expandable_count
+        }
+        else {
+            Vector2::repeat(0)
         }
     }
 }
@@ -161,27 +156,38 @@ impl<'a> Node<'a> for Container<'a> {
         self.layout_override
     }
 
-    fn get_size(&self) -> Vector2<isize> {
-        let mut max_size = Vector2::new(0, 0);
+    fn get_size(&self, force_size: (Option<isize>, Option<isize>)) -> Vector2<isize> {
+        let mut total_size = Vector2::new(0, 0);
         for child in self.children.iter() {
             let size = match child {
-                NodeType::Primitive(primitive) => primitive.get_size(),
-                NodeType::Container(container_node) => container_node.get_size(),
+                NodeType::Primitive(primitive) => primitive.get_size(force_size),
+                NodeType::Container(container_node) => container_node.get_size(force_size),
             };
-            if size.x > max_size.x {
-                max_size.x = size.x;
-            }
-            if size.y > max_size.y {
-                max_size.y = size.y;
+            match self.get_align_direction() {
+                AlignDirection::Down | AlignDirection::Up => {
+                    total_size.y += size.y;
+                    // Because the elements are aligned, the size of the container is the size of the largest element
+                    if size.x > total_size.x {
+                        total_size.x = size.x;
+                    }
+                },
+                AlignDirection::Right | AlignDirection::Left => {
+                    total_size.x += size.x;
+                    // Because the elements are aligned, the size of the container is the size of the largest element
+                    if size.y > total_size.y {
+                        total_size.y = size.y;
+                    }
+                },
+                _ => todo!(),
             }
         }
-        max_size
+        Vector2::new(force_size.0.unwrap_or(total_size.x), force_size.1.unwrap_or(total_size.y))
     }
 }
 
 impl<'a> Node<'a> for ColorRectanglePrimitive {
-    fn get_size(&self) -> Vector2<isize> {
-        self.size.map(|x| x as isize)
+    fn get_size(&self, force_size: (Option<isize>, Option<isize>)) -> Vector2<isize> {
+        Vector2::new(force_size.0.unwrap_or(self.size.x as isize), force_size.1.unwrap_or(self.size.y as isize))
     }
     
     fn get_layout_ovewrite(&self) -> Layout {
@@ -220,9 +226,47 @@ impl<'a> Menu<'a> {
     fn render_primitive<'b, const SIZE: usize>(draw_queue: &mut DrawQueue<'a, SIZE>, primitive: &dyn Primitive<'a>, offset: Vector2<isize>, force_size: (Option<isize>, Option<isize>)) -> Result<Vector2<isize>, ()> {
         let element: Element<'a> = primitive.get_element(offset, force_size.0, force_size.1);
         draw_queue.queue_element(element)?;
-        let size = primitive.get_size();
+        let size = primitive.get_size(force_size);
 
-        Ok(size)
+        Ok(Vector2::new(force_size.0.unwrap_or(size.x), force_size.1.unwrap_or(size.y)))
+    }
+
+    fn render_container_child<'b, const SIZE: usize>(
+        draw_queue: &mut DrawQueue<'a, SIZE>,
+        container: &dyn ContainerNode<'a>,
+        node: &NodeType<'a>,
+        mut offset: Vector2<isize>, 
+        child_force_size: (Option<isize>, Option<isize>), 
+        child_force_size_expanded: (Option<isize>, Option<isize>),
+        force_size: (Option<isize>, Option<isize>)
+    ) -> Result<Vector2<isize>, ()> {
+        let size = 
+        match node {
+            NodeType::Primitive(primitive) => {
+                Self::render_primitive(draw_queue, *primitive, offset, child_force_size)?
+            },
+            NodeType::Container(container) => {
+                Self::render_container(draw_queue, *container, offset, if container.get_expand() {child_force_size_expanded} else {force_size})?
+            },
+        };
+        match container.get_align_direction() {
+            AlignDirection::Down | AlignDirection::Up => offset.y += size.y,
+            AlignDirection::Right | AlignDirection::Left => offset.x += size.x,
+            _ => (),
+        }
+
+        Ok(offset)
+    }
+
+    fn render_primitive_container_child<'b, const SIZE: usize>(draw_queue: &mut DrawQueue<'a, SIZE>, container: &dyn ContainerNode<'a>, node: &&dyn Primitive<'a>, mut offset: Vector2<isize>, child_force_size: (Option<isize>, Option<isize>)) -> Result<Vector2<isize>, ()> {
+        let size = Self::render_primitive(draw_queue, *node, offset, child_force_size)?;
+        match container.get_align_direction() {
+            AlignDirection::Down | AlignDirection::Up => offset.y += size.y,
+            AlignDirection::Right | AlignDirection::Left => offset.x += size.x,
+            _ => (),
+        }
+
+        Ok(offset)
     }
 
     fn render_container<'b, const SIZE: usize>(draw_queue: &mut DrawQueue<'a, SIZE>, container: &dyn ContainerNode<'a>, mut offset: Vector2<isize>, force_size: (Option<isize>, Option<isize>)) -> Result<Vector2<isize>, ()> {
@@ -232,65 +276,67 @@ impl<'a> Menu<'a> {
             AlignDirection::None => todo!(),
         };
 
-        let last_element_offset = container.get_last_element_offset();
-        let last_element_size = container.get_last_element_size().unwrap_or(Vector2::repeat(0));
+        let default_size = container.get_size((None, None));
+        let mut size = default_size;
 
-        let width = if let Some(width) = force_size.0 {
-            width - last_element_size.x
-        } else {
-            last_element_offset.x
-        };
+        // If the parent of the container doesn't apply a size constraint, the size remains the some of children of that container
+        if let Some(width) = force_size.0 {
+            size.x = width;
+        }
+        if let Some(height) = force_size.1 {
+            size.y = height;
+        }
 
-        let height = if let Some(height) = force_size.1 {
-            height - last_element_size.y
-        } else {
-            last_element_offset.y
-        };
+        // The size available for each expanded containers
+        let expand_size = container.get_expand_remaining_space(Vector2::new(force_size.0.unwrap_or(0), force_size.1.unwrap_or(0)), (None, None));
 
-        offset = match container.get_align_direction() {
-            AlignDirection::Down => offset,
-            AlignDirection::Up => Vector2::new(offset.x, offset.y + height),
-            AlignDirection::Right => Vector2::new(offset.x + width, offset.y),
-            AlignDirection::Left => offset,
+        let mut child_force_size_expanded: (Option<isize>, Option<isize>) = match container.get_align_direction() {
+            AlignDirection::Up | AlignDirection::Down => (force_size.0, Some(expand_size.y)),
+            AlignDirection::Right | AlignDirection::Left => (Some(expand_size.x), force_size.1),
             AlignDirection::None => todo!(),
         };
 
+
+        offset = match container.get_align_direction() {
+            AlignDirection::Down => offset,
+            // Calculate the offset to align the elements to the bottom
+            AlignDirection::Up => Vector2::new(offset.x, offset.y + size.y - default_size.y),
+            AlignDirection::Right => offset,
+            // Same to align to the right
+            AlignDirection::Left => Vector2::new(offset.x + size.x - default_size.x, offset.y),
+            AlignDirection::None => todo!(),
+        };
+
+                println!("{:?}", default_size);
+
+
         match container.get_children() {
             ChildrenType::Nodes(nodes) => {
-                for node in nodes {
-                    let size = 
-                    match node {
-                        NodeType::Primitive(primitive) => {
-                            Self::render_primitive(draw_queue, *primitive, offset, child_force_size)?
-                        },
-                        NodeType::Container(container) => {
-                            Self::render_container(draw_queue, *container, offset, force_size)?
-                        },
-                    };
-                    match container.get_align_direction() {
-                        AlignDirection::Down => offset.y += size.y,
-                        AlignDirection::Up => offset.y -= size.y,
-                        AlignDirection::Right => offset.x -= size.x,
-                        AlignDirection::Left => offset.x += size.x,
-                        AlignDirection::None => todo!(),
-                    }
+                // If the direction is Left or Up, we simply reverse the iterator
+                match container.get_align_direction() {
+                    AlignDirection::Left | AlignDirection::Up => for node in nodes.iter().rev() {
+                            offset = Self::render_container_child(draw_queue, container, node, offset, child_force_size, child_force_size_expanded, force_size)?
+                        }
+                    _ => for node in nodes.iter() {
+                            offset = Self::render_container_child(draw_queue, container, node, offset, child_force_size, child_force_size_expanded, force_size)?
+                        }
                 }
             },
             ChildrenType::Primitives(nodes) => {
-                for node in nodes {
-                    let size = Self::render_primitive(draw_queue, *node, offset, child_force_size)?;
-                    match container.get_align_direction() {
-                        AlignDirection::Down => offset.y += size.y,
-                        AlignDirection::Up => offset.y -= size.y,
-                        AlignDirection::Right => offset.x -= size.x,
-                        AlignDirection::Left => offset.x += size.x,
-                        AlignDirection::None => todo!(),
+                match container.get_align_direction() {
+                    // If the direction is Left or Up, we simply reverse the iterator
+                    AlignDirection::Left | AlignDirection::Up => for node in nodes.iter().rev() {
+                        offset = Self::render_primitive_container_child(draw_queue, container, node, offset, child_force_size)?;
+                    }
+                    _ => for node in nodes.iter() {
+                        offset = Self::render_primitive_container_child(draw_queue, container, node, offset, child_force_size)?;
                     }
                 }
             },
             ChildrenType::None => {},
         }
-        Ok(offset)
+        let actual_size = Vector2::new(force_size.0.unwrap_or(offset.x), force_size.1.unwrap_or(offset.y));
+        Ok(actual_size)
     }
     
     pub fn render<const SIZE: usize>(

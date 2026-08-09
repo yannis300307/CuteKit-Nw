@@ -1,8 +1,14 @@
 # 3D Renderer
 
-A 3D renderer made for extremelly limited hardware.
+A 3D renderer made for extremelly limited hardware. Made for the Numworks calculator.
 
-The renderer is based on NumcraftRust.
+The renderer is based on Numcraft.
+
+## DISCLAIMER
+
+### My engine is not production ready yet! Please wait for this notice to be removed before using the engine in your games as it will be updated very often with breaking changes. Moreover, some features are not usable yet.
+
+### The code also contains temporary testing and is not usable as a lib.
 
 ## Setup the build environment
 
@@ -60,7 +66,7 @@ just sim 5
 ```
 
 ### AI usage
-AI was used to fix little bugs in the code. There is nearly no AI written code in this project.
+AI was only used for debugging purpose. Nearly 100% of the code is handwritten.
 
 ## Legal info
 NumWorks is a registered trademark.
