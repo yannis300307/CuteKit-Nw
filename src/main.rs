@@ -8,8 +8,7 @@ use nalgebra::{Vector2, Vector3};
 
 use crate::{
     gui::{
-        Anchor, ColorRectanglePrimitive, Container, Layout, Margin, Menu, Node, NodeType,
-        Primitive,
+        Anchor, Container, Layout, Margin, Menu, Node, NodeType, Primitive, elements::{ColorRectanglePrimitive, NinePartsRectanglePrimitive, RoundedRectanglePrimitive, TextPrimitive, TransparentScaledSpritePrimitive}
     },
     ingame_ui::draw_ui,
     input_manager::InputManager,
@@ -106,12 +105,12 @@ fn main() {
     let mut input_manager = InputManager::new();
     let mut time_manager = TimingManager::new();
 
-    /*let texture = Texture {
+    let texture = Texture {
         width: 512,
         height: 512,
         data: bytemuck::cast_slice(TEXTURE),
     };
-    let mut renderer = Renderer::new();
+    /*let mut renderer = Renderer::new();
     renderer.load_texture(&texture);
 
     renderer.camera.update_pos(Vector3::new(0.0, 1.0, -2.0));
@@ -184,28 +183,33 @@ fn main() {
             color: COLOR_RED,
             layout_override: Layout::None,
         };
-        let primitive2 = ColorRectanglePrimitive {
-            size: Vector2::new(100, 20),
-            color: COLOR_BLUE,
+        let primitive2 = TextPrimitive {
             layout_override: Layout::None,
+            text: "Hello, world!",
+            font: &font,
+            font_color: COLOR_WHITE,
+            background_color: None,
         };
 
-        let primitive3: ColorRectanglePrimitive = ColorRectanglePrimitive {
+        let primitive3 = TransparentScaledSpritePrimitive {
             size: Vector2::new(30, 30),
-            color: COLOR_GREEN,
             layout_override: Layout::None,
+            texture: &nine_parts_texture,
+            scale_mode: ScaleMode::Stretch,
         };
 
-        let primitive4 = ColorRectanglePrimitive {
+        let primitive4 = RoundedRectanglePrimitive {
             size: Vector2::new(30, 30),
             color: COLOR_WHITE,
             layout_override: Layout::None,
+            corner_radius: 10.0,
         };
 
-        let primitive5 = ColorRectanglePrimitive {
-            size: Vector2::new(100, 30),
-            color: COLOR_RED,
+        let primitive5 = NinePartsRectanglePrimitive {
+            size: Vector2::new(100, 50),
             layout_override: Layout::None,
+            parts: &parts,
+            scaling_mode: ScaleMode::Tile,
         };
 
         let container2_children: [NodeType; _] = [NodeType::Primitive(&primitive1), NodeType::Primitive(&primitive2)];
@@ -227,7 +231,6 @@ fn main() {
             expand: false,
             id: 3
         };
-
 
         let container1_children: [NodeType; _] = [NodeType::Primitive(&primitive3), NodeType::Primitive(&primitive4), NodeType::Container(&container2), NodeType::Container(&container3)];
 
