@@ -89,6 +89,7 @@ pub trait ContainerNode<'a>: Node<'a> {
     fn get_expand(&self) -> bool;
     fn get_expand_remaining_space(&self, max_size: Vector2<isize>, force_size: (Option<isize>, Option<isize>)) -> Vector2<isize>;
     fn get_content_size(&self, force_size: (Option<isize>, Option<isize>)) -> Vector2<isize>;
+    fn get_id(&self) -> usize;
 }
 
 pub trait Primitive<'a>: Node<'a> {
@@ -105,6 +106,7 @@ pub struct Container<'a> {
     pub align: AlignDirection,
     pub layout_override: Layout,
     pub expand: bool,
+    pub id: usize,
 }
 
 pub struct ColorRectanglePrimitive {
@@ -215,6 +217,10 @@ impl<'a> ContainerNode<'a> for Container<'a> {
         } else {
             total_size
         }
+    }
+    
+    fn get_id(&self) -> usize {
+        self.id
     }
 }
 
@@ -330,7 +336,7 @@ impl<'a> Menu<'a> {
 
     fn render_container_child<'b, const SIZE: usize>(
         draw_queue: &mut DrawQueue<'a, SIZE>,
-        container: &dyn ContainerNode<'a>,
+        parent_container: &dyn ContainerNode<'a>,
         node: &NodeType<'a>,
         mut offset: Vector2<isize>, 
         child_force_size: (Option<isize>, Option<isize>), 
@@ -343,10 +349,20 @@ impl<'a> Menu<'a> {
                 Self::render_primitive(draw_queue, *primitive, offset, child_force_size)?
             },
             NodeType::Container(container) => {
-                Self::render_container(draw_queue, *container, offset, if container.get_expand() {child_force_size_expanded} else {force_size})?
+                let target_size = if container.get_expand() {
+                    child_force_size_expanded
+                } else {
+                    match container.get_align_direction() {
+                        AlignDirection::Down | AlignDirection::Up => (force_size.0, None),
+                        AlignDirection::Right | AlignDirection::Left => (None, force_size.1),
+                        _ => todo!(),
+                    }
+                };
+
+                Self::render_container(draw_queue, *container, offset, target_size)?
             },
         };
-        match container.get_align_direction() {
+        match parent_container.get_align_direction() {
             AlignDirection::Down | AlignDirection::Up => offset.y += size.y,
             AlignDirection::Right | AlignDirection::Left => offset.x += size.x,
             _ => (),
@@ -403,8 +419,6 @@ impl<'a> Menu<'a> {
             AlignDirection::Left => Vector2::new(offset.x + size.x - default_size.x, offset.y),
             AlignDirection::None => todo!(),
         };
-
-        println!("{:?}", default_size);
 
         match container.get_children() {
             ChildrenType::Nodes(nodes) => {

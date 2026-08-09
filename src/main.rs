@@ -214,16 +214,18 @@ fn main() {
             children: &container2_children,
             align: gui::AlignDirection::Up,
             layout_override: Layout::None,
-            expand: true
+            expand: true,
+            id: 2
         };
 
         let container3_children: [NodeType; _] = [NodeType::Primitive(&primitive4), NodeType::Primitive(&primitive3)];
 
         let container3 = Container {
             children: &container3_children,
-            align: gui::AlignDirection::Up,
+            align: gui::AlignDirection::Right,
             layout_override: Layout::None,
-            expand: true
+            expand: false,
+            id: 3
         };
 
 
@@ -233,7 +235,8 @@ fn main() {
             children: &container1_children,
             align: gui::AlignDirection::Right,
             layout_override: Layout::None,
-            expand: true
+            expand: true,
+            id: 1
         };
 
 
@@ -244,7 +247,8 @@ fn main() {
                 children: &top_lvl_container,
                 align: gui::AlignDirection::Up,
                 layout_override: Layout::None,
-                expand: true
+                expand: true,
+                id: 0
             },
         };
 
@@ -253,11 +257,10 @@ fn main() {
 
         //draw_queue.add_plugin(&mut renderer).unwrap();
 
-        println!("frame");
         menu.render(&mut draw_queue).unwrap();
 
         renderer2d.draw(&mut draw_queue);
-
+        println!("fps : {}", time_manager.get_fps());
 
         time::wait_milliseconds(16);
     }
