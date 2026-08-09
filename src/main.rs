@@ -190,14 +190,14 @@ fn main() {
             layout_override: Layout::None,
         };
 
-        let primitive3 = ColorRectanglePrimitive {
-            size: Vector2::new(30, 100),
+        let primitive3: ColorRectanglePrimitive = ColorRectanglePrimitive {
+            size: Vector2::new(30, 30),
             color: COLOR_GREEN,
             layout_override: Layout::None,
         };
 
         let primitive4 = ColorRectanglePrimitive {
-            size: Vector2::new(30, 100),
+            size: Vector2::new(30, 30),
             color: COLOR_WHITE,
             layout_override: Layout::None,
         };
@@ -208,7 +208,26 @@ fn main() {
             layout_override: Layout::None,
         };
 
-        let container1_children: [NodeType; _] = [NodeType::Primitive(&primitive3), NodeType::Primitive(&primitive4)];
+        let container2_children: [NodeType; _] = [NodeType::Primitive(&primitive1), NodeType::Primitive(&primitive2)];
+
+        let container2 = Container {
+            children: &container2_children,
+            align: gui::AlignDirection::Up,
+            layout_override: Layout::None,
+            expand: true
+        };
+
+        let container3_children: [NodeType; _] = [NodeType::Primitive(&primitive4), NodeType::Primitive(&primitive3)];
+
+        let container3 = Container {
+            children: &container3_children,
+            align: gui::AlignDirection::Up,
+            layout_override: Layout::None,
+            expand: true
+        };
+
+
+        let container1_children: [NodeType; _] = [NodeType::Primitive(&primitive3), NodeType::Primitive(&primitive4), NodeType::Container(&container2), NodeType::Container(&container3)];
 
         let container1 = Container {
             children: &container1_children,
@@ -217,12 +236,13 @@ fn main() {
             expand: true
         };
 
-        let top_lvl_container: [NodeType; _] = [NodeType::Primitive(&primitive1), NodeType::Primitive(&primitive2), NodeType::Container(&container1), NodeType::Primitive(&primitive5), NodeType::Container(&container1), NodeType::Primitive(&primitive2)];
+
+        let top_lvl_container: [NodeType; _] = [NodeType::Primitive(&primitive1), NodeType::Primitive(&primitive2), NodeType::Container(&container1), NodeType::Primitive(&primitive5)];
 
         let menu = Menu {
             base_node: Container {
                 children: &top_lvl_container,
-                align: gui::AlignDirection::Down,
+                align: gui::AlignDirection::Up,
                 layout_override: Layout::None,
                 expand: true
             },

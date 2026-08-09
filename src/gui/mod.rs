@@ -88,6 +88,7 @@ pub trait ContainerNode<'a>: Node<'a> {
     fn get_align_direction(&self) -> AlignDirection;
     fn get_expand(&self) -> bool;
     fn get_expand_remaining_space(&self, max_size: Vector2<isize>, force_size: (Option<isize>, Option<isize>)) -> Vector2<isize>;
+    fn get_content_size(&self, force_size: (Option<isize>, Option<isize>)) -> Vector2<isize>;
 }
 
 pub trait Primitive<'a>: Node<'a> {
@@ -131,13 +132,21 @@ impl<'a> ContainerNode<'a> for Container<'a> {
 
         for element in self.children.iter() {
             non_expand_size += match element {
-                NodeType::Primitive(node) => node.get_size(force_size),
+                NodeType::Primitive(node) => {
+                    match self.get_align_direction() {
+                        AlignDirection::Down | AlignDirection::Up =>
+                            node.get_size((force_size.0, None)),
+                        AlignDirection::Left | AlignDirection::Right =>
+                            node.get_size((None, force_size.1)),
+                        _ => todo!()
+                    }
+                },
                 NodeType::Container(node) => {
                     if node.get_expand() {
                         expandable_count += 1;
                         Vector2::repeat(0)
                     } else {
-                        node.get_size(force_size)
+                        node.get_size((None, None))
                     }
                 },
             }
@@ -149,19 +158,30 @@ impl<'a> ContainerNode<'a> for Container<'a> {
             Vector2::repeat(0)
         }
     }
-}
+    
+    fn get_content_size(&self, force_size: (Option<isize>, Option<isize>)) -> Vector2<isize> {
+        let child_force_size = match self.get_align_direction() {
+            AlignDirection::Down | AlignDirection::Up =>
+                (force_size.0, None),
+            AlignDirection::Left | AlignDirection::Right =>
+                (None, force_size.1),
+            _ => todo!()
+        };
 
-impl<'a> Node<'a> for Container<'a> {
-    fn get_layout_ovewrite(&self) -> Layout {
-        self.layout_override
-    }
-
-    fn get_size(&self, force_size: (Option<isize>, Option<isize>)) -> Vector2<isize> {
         let mut total_size = Vector2::new(0, 0);
+        let mut max_direction = false;
         for child in self.children.iter() {
-            let size = match child {
-                NodeType::Primitive(primitive) => primitive.get_size(force_size),
-                NodeType::Container(container_node) => container_node.get_size(force_size),
+            let size;
+            match child {
+                NodeType::Primitive(primitive) => {
+                   size =  primitive.get_size(child_force_size);
+                },
+                NodeType::Container(container_node) => {
+                    if container_node.get_expand() {
+                        max_direction = true;
+                    }
+                    size = container_node.get_size(child_force_size);
+                },
             };
             match self.get_align_direction() {
                 AlignDirection::Down | AlignDirection::Up => {
@@ -181,7 +201,84 @@ impl<'a> Node<'a> for Container<'a> {
                 _ => todo!(),
             }
         }
-        Vector2::new(force_size.0.unwrap_or(total_size.x), force_size.1.unwrap_or(total_size.y))
+        // The container contains an expanded child so its size in its flow direction is the maximum_size
+        if max_direction {
+            match self.get_align_direction() {
+                AlignDirection::Down | AlignDirection::Up => {
+                    Vector2::new(total_size.x, force_size.1.unwrap_or(total_size.y))
+                },
+                AlignDirection::Right | AlignDirection::Left => {
+                    Vector2::new(force_size.0.unwrap_or(total_size.x), total_size.y)
+                },
+                _ => todo!(),
+            }
+        } else {
+            total_size
+        }
+    }
+}
+
+impl<'a> Node<'a> for Container<'a> {
+    fn get_layout_ovewrite(&self) -> Layout {
+        self.layout_override
+    }
+
+    fn get_size(&self, force_size: (Option<isize>, Option<isize>)) -> Vector2<isize> {
+        let child_force_size = match self.get_align_direction() {
+            AlignDirection::Down | AlignDirection::Up =>
+                (force_size.0, None),
+            AlignDirection::Left | AlignDirection::Right =>
+                (None, force_size.1),
+            _ => todo!()
+        };
+
+        let mut total_size = Vector2::new(0, 0);
+        let mut max_direction = false;
+        for child in self.children.iter() {
+            let size;
+            match child {
+                NodeType::Primitive(primitive) => {
+                   size =  primitive.get_size(child_force_size);
+                },
+                NodeType::Container(container_node) => {
+                    if container_node.get_expand() {
+                        max_direction = true;
+                    }
+                    size = container_node.get_size(child_force_size);
+                },
+            };
+            match self.get_align_direction() {
+                AlignDirection::Down | AlignDirection::Up => {
+                    total_size.y += size.y;
+                    // Because the elements are aligned, the size of the container is the size of the largest element
+                    if size.x > total_size.x {
+                        total_size.x = size.x;
+                    }
+                },
+                AlignDirection::Right | AlignDirection::Left => {
+                    total_size.x += size.x;
+                    // Because the elements are aligned, the size of the container is the size of the largest element
+                    if size.y > total_size.y {
+                        total_size.y = size.y;
+                    }
+                },
+                _ => todo!(),
+            }
+        }
+        // The container contains an expanded child so its size in its flow direction is the maximum_size
+        if max_direction {
+            match self.get_align_direction() {
+                AlignDirection::Down | AlignDirection::Up => {
+                    Vector2::new(total_size.x, force_size.1.unwrap_or(total_size.y))
+                },
+                AlignDirection::Right | AlignDirection::Left => {
+                    Vector2::new(force_size.0.unwrap_or(total_size.x), total_size.y)
+                },
+                _ => todo!(),
+            }
+        } else {
+            Vector2::new(force_size.0.unwrap_or(total_size.x), force_size.1.unwrap_or(total_size.y))
+        }
     }
 }
 
@@ -276,7 +373,7 @@ impl<'a> Menu<'a> {
             AlignDirection::None => todo!(),
         };
 
-        let default_size = container.get_size((None, None));
+        let default_size = container.get_content_size(force_size);
         let mut size = default_size;
 
         // If the parent of the container doesn't apply a size constraint, the size remains the some of children of that container
@@ -288,7 +385,7 @@ impl<'a> Menu<'a> {
         }
 
         // The size available for each expanded containers
-        let expand_size = container.get_expand_remaining_space(Vector2::new(force_size.0.unwrap_or(0), force_size.1.unwrap_or(0)), (None, None));
+        let expand_size = container.get_expand_remaining_space(Vector2::new(force_size.0.unwrap_or(0), force_size.1.unwrap_or(0)), force_size);
 
         let mut child_force_size_expanded: (Option<isize>, Option<isize>) = match container.get_align_direction() {
             AlignDirection::Up | AlignDirection::Down => (force_size.0, Some(expand_size.y)),
@@ -307,8 +404,7 @@ impl<'a> Menu<'a> {
             AlignDirection::None => todo!(),
         };
 
-                println!("{:?}", default_size);
-
+        println!("{:?}", default_size);
 
         match container.get_children() {
             ChildrenType::Nodes(nodes) => {
