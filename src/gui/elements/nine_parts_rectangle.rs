@@ -17,10 +17,14 @@ pub struct NinePartsRectanglePrimitive<'a> {
 
 impl<'a> Node<'a> for NinePartsRectanglePrimitive<'a> {
     fn get_size(&self, force_size: (Option<isize>, Option<isize>)) -> Vector2<isize> {
-        Vector2::new(
-            force_size.0.unwrap_or(self.size.x as isize),
-            force_size.1.unwrap_or(self.size.y as isize),
-        )
+        if let Layout::Relative(..) = self.layout_override {
+            self.size.map(|x| x as isize)
+        } else {
+            Vector2::new(
+                force_size.0.unwrap_or(self.size.x as isize),
+                force_size.1.unwrap_or(self.size.y as isize),
+            )
+        }
     }
 
     fn get_layout_ovewrite(&self) -> Layout {
@@ -36,11 +40,13 @@ impl<'a> Primitive<'a> for NinePartsRectanglePrimitive<'a> {
         height: Option<isize>,
     ) -> Element<'a> {
         let mut size = self.size;
-        if let Some(width) = width {
-            size.x = width as u16;
-        }
-        if let Some(height) = height {
-            size.y = height as u16;
+        if let Layout::None | Layout::Transparent = self.layout_override {
+            if let Some(width) = width {
+                size.x = width as u16;
+            }
+            if let Some(height) = height {
+                size.y = height as u16;
+            }
         }
         Element::NinePartsRectangle {
             parts: self.parts,

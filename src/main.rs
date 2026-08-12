@@ -8,7 +8,11 @@ use nalgebra::{Vector2, Vector3};
 
 use crate::{
     gui::{
-        Anchor, Container, Layout, Margin, Menu, Node, NodeType, Primitive, elements::{ColorRectanglePrimitive, NinePartsRectanglePrimitive, RoundedRectanglePrimitive, TextPrimitive, TransparentScaledSpritePrimitive}
+        Anchor, Container, Layout, Margin, Menu, Node, NodeType, Primitive,
+        elements::{
+            ColorRectanglePrimitive, NinePartsRectanglePrimitive, RoundedRectanglePrimitive,
+            TextPrimitive, TransparentScaledSpritePrimitive,
+        },
     },
     ingame_ui::draw_ui,
     input_manager::InputManager,
@@ -178,92 +182,43 @@ fn main() {
 
         let frame_time = heapless::format!(30; "time: {}", time_manager.get_frame_time()).unwrap();
 
-        let primitive1 = ColorRectanglePrimitive {
-            size: Vector2::new(100, 20),
-            color: COLOR_RED,
-            layout_override: Layout::None,
-        };
-        let primitive2 = TextPrimitive {
-            layout_override: Layout::None,
-            text: "Hello, world!",
-            font: &font,
-            font_color: COLOR_WHITE,
-            background_color: None,
-        };
-
-        let primitive3 = TransparentScaledSpritePrimitive {
-            size: Vector2::new(30, 30),
-            layout_override: Layout::None,
-            texture: &nine_parts_texture,
-            scale_mode: ScaleMode::Stretch,
-        };
-
-        let primitive4 = RoundedRectanglePrimitive {
-            size: Vector2::new(30, 30),
-            color: COLOR_WHITE,
-            layout_override: Layout::None,
-            corner_radius: 10.0,
-        };
-
-        let primitive5 = NinePartsRectanglePrimitive {
-            size: Vector2::new(100, 50),
-            layout_override: Layout::None,
-            parts: &parts,
-            scaling_mode: ScaleMode::Tile,
-        };
-
-        let container2_children: [NodeType; _] = [NodeType::Primitive(&primitive1), NodeType::Primitive(&primitive2)];
-
-        let container2 = Container {
-            children: &container2_children,
-            align: gui::AlignDirection::Up,
-            layout_override: Layout::None,
-            expand: true,
-            id: 2
-        };
-
-        let container3_children: [NodeType; _] = [NodeType::Primitive(&primitive4), NodeType::Primitive(&primitive3)];
-
-        let container3 = Container {
-            children: &container3_children,
-            align: gui::AlignDirection::Right,
-            layout_override: Layout::None,
-            expand: false,
-            id: 3
-        };
-
-        let container1_children: [NodeType; _] = [NodeType::Primitive(&primitive3), NodeType::Primitive(&primitive4), NodeType::Container(&container2), NodeType::Container(&container3)];
-
-        let container1 = Container {
-            children: &container1_children,
-            align: gui::AlignDirection::Right,
-            layout_override: Layout::None,
-            expand: true,
-            id: 1
-        };
-
-
-        let top_lvl_container: [NodeType; _] = [NodeType::Primitive(&primitive1), NodeType::Primitive(&primitive2), NodeType::Container(&container1), NodeType::Primitive(&primitive5)];
-
         let menu = Menu {
             base_node: Container {
-                children: &top_lvl_container,
+                children: &[NodeType::Container(&Container {
+                    children: &[NodeType::Primitive(&ColorRectanglePrimitive {
+                        size: Vector2::new(100, 20),
+                        color: COLOR_RED,
+                        layout_override: Layout::None,
+                    })],
+                    align: gui::AlignDirection::Down,
+                    layout_override: Layout::Relative(Anchor::TopRight, Vector2::new(-100, 10)), // TODO: Fix anchors on containers
+                    expand: true,
+                    id: 1,
+                })],
                 align: gui::AlignDirection::Up,
                 layout_override: Layout::None,
                 expand: true,
-                id: 0
+                id: 0,
             },
         };
 
         let mut draw_queue: DrawQueue<'_, 100> = DrawQueue::new();
 
-
         //draw_queue.add_plugin(&mut renderer).unwrap();
 
         menu.render(&mut draw_queue).unwrap();
 
+        draw_queue
+            .add_text(
+                Vector2::new(10, 10),
+                &frame_time,
+                &font,
+                COLOR_BLUE,
+                Some(COLOR_WHITE),
+            )
+            .unwrap();
+
         renderer2d.draw(&mut draw_queue);
-        println!("fps : {}", time_manager.get_fps());
 
         time::wait_milliseconds(16);
     }
