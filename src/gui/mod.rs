@@ -409,13 +409,18 @@ impl<'a> Menu<'a> {
                 }
             }
             NodeType::Container(container) => {
-                let target_size = if container.get_expand() {
-                    child_force_size_expanded
+                let target_size = 
+                if let Layout::Relative(..) = container.get_layout_ovewrite() {
+                    (None, None)
                 } else {
-                    match container.get_align_direction() {
-                        AlignDirection::Down | AlignDirection::Up => (force_size.0, None),
-                        AlignDirection::Right | AlignDirection::Left => (None, force_size.1),
-                        _ => todo!(),
+                    if container.get_expand() {
+                        child_force_size_expanded
+                    } else {
+                        match container.get_align_direction() {
+                            AlignDirection::Down | AlignDirection::Up => (force_size.0, None),
+                            AlignDirection::Right | AlignDirection::Left => (None, force_size.1),
+                            _ => todo!(),
+                        }
                     }
                 };
 
@@ -471,8 +476,13 @@ impl<'a> Menu<'a> {
         draw_queue: &mut DrawQueue<'a, SIZE>,
         container: &dyn ContainerNode<'a>,
         mut offset: Vector2<isize>,
-        force_size: (Option<isize>, Option<isize>),
+        mut force_size: (Option<isize>, Option<isize>),
     ) -> Result<Vector2<isize>, ()> {
+        if let Layout::Relative(..) = container.get_layout_ovewrite() {
+            // Ignore the force_size as the element is detached from the flow
+            force_size = (None, None);
+        }
+
         let child_force_size: (Option<isize>, Option<isize>) = match container.get_align_direction()
         {
             AlignDirection::Up | AlignDirection::Down => (force_size.0, None),

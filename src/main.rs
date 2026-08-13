@@ -184,18 +184,68 @@ fn main() {
 
         let menu = Menu {
             base_node: Container {
-                children: &[NodeType::Container(&Container {
-                    children: &[NodeType::Primitive(&ColorRectanglePrimitive {
-                        size: Vector2::new(100, 20),
-                        color: COLOR_RED,
+                children: &[
+                    NodeType::Primitive(&ColorRectanglePrimitive {
+                        size: Vector2::new(0, 30),
+                        color: Color565::from_rgb888(180, 180, 255),
+                        layout_override: Layout::Transparent,
+                    }),
+                    NodeType::Primitive(&TextPrimitive {
+                        text: "Some text",
+                        font: &font,
+                        font_color: COLOR_RED,
+                        background_color: Some(COLOR_BLUE),
                         layout_override: Layout::None,
-                    })],
-                    align: gui::AlignDirection::Down,
-                    layout_override: Layout::Relative(Anchor::TopRight, Vector2::new(-100, 10)), // TODO: Fix anchors on containers
-                    expand: true,
-                    id: 1,
-                })],
-                align: gui::AlignDirection::Up,
+                    }),
+                    NodeType::Container(&Container {
+                        children: &[
+                            NodeType::Primitive(&ColorRectanglePrimitive {
+                                size: Vector2::new(100, 200),
+                                color: Color565::from_rgb888(150, 150, 50),
+                                layout_override: Layout::None,
+                            }),
+                            NodeType::Primitive(&ColorRectanglePrimitive {
+                                size: Vector2::new(100, 200),
+                                color: Color565::from_rgb888(50, 150, 150),
+                                layout_override: Layout::None,
+                            }),
+                        ],
+                        align: gui::AlignDirection::Left,
+                        layout_override: Layout::None,
+                        expand: true,
+                        id: 2,
+                    }),
+                    NodeType::Container(&Container {
+                        children: &[
+                            NodeType::Primitive(&ColorRectanglePrimitive {
+                                size: Vector2::new(200, 40),
+                                color: COLOR_WHITE,
+                                layout_override: Layout::None,
+                            }),
+                            NodeType::Primitive(&TextPrimitive {
+                                text: "Another text",
+                                font: &font,
+                                font_color: COLOR_BLACK,
+                                background_color: None,
+                                layout_override: Layout::Relative(
+                                    Anchor::Center,
+                                    Vector2::repeat(0),
+                                ),
+                            }),
+                        ],
+                        align: gui::AlignDirection::Down,
+                        layout_override: Layout::Relative(Anchor::Center, Vector2::new(0, 0)),
+                        expand: true,
+                        id: 1,
+                    }),
+                    NodeType::Primitive(&RoundedRectanglePrimitive {
+                        size: Vector2::new(100, 30),
+                        corner_radius: 10.0,
+                        color: COLOR_BLUE,
+                        layout_override: Layout::Relative(Anchor::BottomLeft, Vector2::new(10, -10)),
+                    }),
+                ],
+                align: gui::AlignDirection::Down,
                 layout_override: Layout::None,
                 expand: true,
                 id: 0,
@@ -208,15 +258,15 @@ fn main() {
 
         menu.render(&mut draw_queue).unwrap();
 
-        draw_queue
-            .add_text(
-                Vector2::new(10, 10),
-                &frame_time,
-                &font,
-                COLOR_BLUE,
-                Some(COLOR_WHITE),
-            )
-            .unwrap();
+        /*draw_queue
+        .add_text(
+            Vector2::new(10, 10),
+            &frame_time,
+            &font,
+            COLOR_BLUE,
+            Some(COLOR_WHITE),
+        )
+        .unwrap();*/
 
         renderer2d.draw(&mut draw_queue);
 
