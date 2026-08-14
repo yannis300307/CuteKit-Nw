@@ -8,11 +8,10 @@ use nalgebra::{Vector2, Vector3};
 
 use crate::{
     gui::{
-        Anchor, Container, Layout, Margin, Menu, Node, NodeType, Primitive,
+        Menu,
         elements::{
-            ColorRectanglePrimitive, NinePartsRectanglePrimitive, RoundedRectanglePrimitive,
-            TextPrimitive, TransparentScaledSpritePrimitive,
-        },
+            ColorRectanglePrimitive, Container, NinePartsRectanglePrimitive, RoundedRectanglePrimitive, TextPrimitive, TransparentScaledSpritePrimitive
+        }, enums::{Anchor, Layout, NodeType},
     },
     ingame_ui::draw_ui,
     input_manager::InputManager,
@@ -210,7 +209,7 @@ fn main() {
                                 layout_override: Layout::None,
                             }),
                         ],
-                        align: gui::AlignDirection::Left,
+                        align: gui::enums::AlignDirection::Left,
                         layout_override: Layout::None,
                         expand: true,
                         id: 2,
@@ -233,7 +232,7 @@ fn main() {
                                 ),
                             }),
                         ],
-                        align: gui::AlignDirection::Down,
+                        align: gui::enums::AlignDirection::Down,
                         layout_override: Layout::Relative(Anchor::Center, Vector2::new(0, 0)),
                         expand: true,
                         id: 1,
@@ -245,7 +244,7 @@ fn main() {
                         layout_override: Layout::Relative(Anchor::BottomLeft, Vector2::new(10, -10)),
                     }),
                 ],
-                align: gui::AlignDirection::Down,
+                align: gui::enums::AlignDirection::Down,
                 layout_override: Layout::None,
                 expand: true,
                 id: 0,
