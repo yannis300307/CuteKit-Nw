@@ -53,12 +53,12 @@ mod renderer2d;
 
 setup_allocator!();
 
-configure_app!(b"Numcraft\0", 9, "../target/assets/icon.nwi", 3437);
+configure_app!(b"CuteKitTest\0", 12, "../target/assets/icon.nwi", 3437);
 
 // Hey you reading code in the repo! If you're wondering why these files are not included in the repo,
 // it's because the model used to develop the 3D engine was not open source. So we can't redistribute it under the GPL 3 license.
 // However, you can still replace the model with your own converted model. Have a good day!
-static BODY_VERTICIES: &'static [u8] = include_bytes_aligned!(
+/*static BODY_VERTICIES: &'static [u8] = include_bytes_aligned!(
     4,
     "../assets/model/Anime_character_optimised_body_verticies.bin"
 );
@@ -95,9 +95,9 @@ static FACE_VERTICIES: &'static [u8] = include_bytes_aligned!(
 static FACE_FACES: &'static [u8] = include_bytes_aligned!(
     4,
     "../assets/model/Anime_character_optimised_face_faces.bin"
-);
+);*/
 
-static TEXTURE: &[u8] = include_bytes_aligned!(4, "../target/assets/texture.bin");
+//static TEXTURE: &[u8] = include_bytes_aligned!(4, "../target/assets/texture.bin");
 
 #[unsafe(no_mangle)]
 fn main() {
@@ -108,11 +108,11 @@ fn main() {
     let mut input_manager = InputManager::new();
     let mut time_manager = TimingManager::new();
 
-    let texture = Texture {
+    /*let texture = Texture {
         width: 512,
         height: 512,
         data: bytemuck::cast_slice(TEXTURE),
-    };
+    };*/
     /*let mut renderer = Renderer::new();
     renderer.load_texture(&texture);
 
