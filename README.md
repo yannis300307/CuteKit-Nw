@@ -8,7 +8,7 @@ The 3D renderer is based on my Numcraft project but has been highly reworked.
 
 ### My engine is not production ready yet! Please wait for this notice to be removed before using the engine in your games as it will be updated very often with breaking changes. Moreover, some features are not usable yet.
 
-### The code also contains temporary testing and is not usable as a lib.
+### The code also contains temporary testing code and is not usable as a lib.
 
 ## Setup the build environment
 
