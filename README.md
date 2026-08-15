@@ -1,8 +1,8 @@
-# 3D Renderer
+# CuteKit (Nw)
 
-A 3D renderer made for extremelly limited hardware. Made for the Numworks calculator.
+A rendering toolkit for extremelly limited hardware featuring a 2D drawing abstraction layer, a layout system for GUIs and a fully textured 3D renderer. Made for the Numworks calculator.
 
-The renderer is based on Numcraft.
+The 3D renderer is based on my Numcraft project but has been highly reworked.
 
 ## DISCLAIMER
 
@@ -14,7 +14,7 @@ The renderer is based on Numcraft.
 
 ### For Debian based Linux distros
 
-You can use the new installer. Run `bash ./setup.sh` and the installer should install everything for you. (Not widely tested. Use it at your own risk.)
+You can use the installer. Run `bash ./setup.sh` and the installer should install everything for you. (Not widely tested. Use it at your own risk.)
 
 ### Other distros and Macos
 
@@ -70,3 +70,6 @@ AI was only used for debugging purpose. Nearly 100% of the code is handwritten.
 
 ## Legal info
 NumWorks is a registered trademark.
+
+
+Thanks to [Daemo](https://github.com/DaemonicGh) for helping me finding a name for the project.
