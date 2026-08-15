@@ -1,7 +1,7 @@
 use nalgebra::Vector2;
 
 use crate::{
-    gui::{Layout, Node, Primitive},
+    gui::{Layout, Node, Primitive, margin::Margin},
     renderer2d::{
         elements::{Element, ScaleMode},
         sprite::TransparentTexture,
@@ -13,6 +13,7 @@ pub struct TransparentScaledSpritePrimitive<'a> {
     pub texture: &'a TransparentTexture,
     pub scale_mode: ScaleMode,
     pub layout_override: Layout,
+    pub margin: Margin,
 }
 
 impl<'a> Node<'a> for TransparentScaledSpritePrimitive<'a> {
@@ -29,6 +30,10 @@ impl<'a> Node<'a> for TransparentScaledSpritePrimitive<'a> {
 
     fn get_layout_ovewrite(&self) -> Layout {
         self.layout_override
+    }
+
+    fn get_margin(&self) -> Margin {
+        self.margin
     }
 }
 

@@ -1,12 +1,13 @@
 use nalgebra::Vector2;
 
-use crate::gui::{AlignDirection, ChildrenType, Layout, Node, NodeType, traits::ContainerNode};
+use crate::gui::{AlignDirection, ChildrenType, Layout, Node, NodeType, margin::Margin, traits::ContainerNode};
 
 pub struct Container<'a> {
     pub children: &'a [NodeType<'a>],
     pub align: AlignDirection,
     pub layout_override: Layout,
     pub expand: bool,
+    pub margin: Margin,
     pub id: usize,
 }
 
@@ -220,6 +221,10 @@ impl<'a> Node<'a> for Container<'a> {
                 force_size.1.unwrap_or(total_size.y),
             )
         }
+    }
+
+    fn get_margin(&self) -> Margin {
+        self.margin
     }
 }
 

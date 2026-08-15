@@ -1,10 +1,11 @@
 use nalgebra::Vector2;
 
-use crate::{gui::enums::{AlignDirection, ChildrenType, Layout}, renderer2d::elements::Element};
+use crate::{gui::{enums::{AlignDirection, ChildrenType, Layout}, margin::Margin}, renderer2d::elements::Element};
 
 pub trait Node<'a> {
     fn get_layout_ovewrite(&self) -> Layout;
     fn get_size(&self, force_size: (Option<isize>, Option<isize>)) -> Vector2<isize>;
+    fn get_margin(&self) -> Margin;
 }
 
 pub trait ContainerNode<'a>: Node<'a> {

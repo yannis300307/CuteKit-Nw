@@ -1,7 +1,7 @@
 use nalgebra::Vector2;
 
 use crate::{
-    gui::{Layout, Node, Primitive},
+    gui::{Layout, Node, Primitive, margin::Margin},
     renderer2d::{
         elements::{Element, ScaleMode},
         nine_parts_rectangle::NinePartsTexture,
@@ -13,6 +13,7 @@ pub struct NinePartsRectanglePrimitive<'a> {
     pub size: Vector2<u16>,
     pub scaling_mode: ScaleMode,
     pub layout_override: Layout,
+    pub margin: Margin,
 }
 
 impl<'a> Node<'a> for NinePartsRectanglePrimitive<'a> {
@@ -29,6 +30,10 @@ impl<'a> Node<'a> for NinePartsRectanglePrimitive<'a> {
 
     fn get_layout_ovewrite(&self) -> Layout {
         self.layout_override
+    }
+
+    fn get_margin(&self) -> Margin {
+        self.margin
     }
 }
 

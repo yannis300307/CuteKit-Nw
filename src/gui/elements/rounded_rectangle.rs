@@ -1,7 +1,7 @@
 use nalgebra::Vector2;
 
 use crate::{
-    gui::{Layout, Node, Primitive},
+    gui::{Layout, Node, Primitive, margin::Margin},
     nadk::display::Color565,
     renderer2d::elements::Element,
 };
@@ -11,6 +11,7 @@ pub struct RoundedRectanglePrimitive {
     pub corner_radius: f32,
     pub color: Color565,
     pub layout_override: Layout,
+    pub margin: Margin,
 }
 
 impl<'a> Node<'a> for RoundedRectanglePrimitive {
@@ -27,6 +28,10 @@ impl<'a> Node<'a> for RoundedRectanglePrimitive {
 
     fn get_layout_ovewrite(&self) -> Layout {
         self.layout_override
+    }
+
+    fn get_margin(&self) -> Margin {
+        self.margin
     }
 }
 

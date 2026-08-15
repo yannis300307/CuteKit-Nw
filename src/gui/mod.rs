@@ -178,7 +178,7 @@ impl<'a> Menu<'a> {
         let default_size = container.get_content_size(force_size);
         let mut container_size = default_size;
 
-        // If the parent of the container doesn't apply a size constraint, the size remains the some of children of that container
+        // If the parent of the container doesn't apply a size constraint, the size remains the sum of children of that container
         if let Some(width) = force_size.0 {
             container_size.x = width;
         }
@@ -195,7 +195,7 @@ impl<'a> Menu<'a> {
         let mut child_force_size_expanded: (Option<isize>, Option<isize>) =
             match container.get_align_direction() {
                 AlignDirection::Up | AlignDirection::Down => (force_size.0, Some(expand_size.y)),
-                AlignDirection::Right | AlignDirection::Left => (Some(expand_size.x), force_size.1),
+                AlignDirection::Right | AlignDirection::Left => (Some(expand_size.x), force_size.1), 
                 AlignDirection::None => todo!(),
             };
 

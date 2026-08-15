@@ -11,7 +11,7 @@ use crate::{
         Menu,
         elements::{
             ColorRectanglePrimitive, Container, NinePartsRectanglePrimitive, RoundedRectanglePrimitive, TextPrimitive, TransparentScaledSpritePrimitive
-        }, enums::{Anchor, Layout, NodeType},
+        }, enums::{Anchor, Layout, NodeType}, margin::Margin,
     },
     ingame_ui::draw_ui,
     input_manager::InputManager,
@@ -188,6 +188,7 @@ fn main() {
                         size: Vector2::new(0, 30),
                         color: Color565::from_rgb888(180, 180, 255),
                         layout_override: Layout::Transparent,
+                        margin: Margin::uniform(5),
                     }),
                     NodeType::Primitive(&TextPrimitive {
                         text: "Some text",
@@ -195,6 +196,7 @@ fn main() {
                         font_color: COLOR_RED,
                         background_color: Some(COLOR_BLUE),
                         layout_override: Layout::None,
+                        margin: Margin::uniform(5),
                     }),
                     NodeType::Container(&Container {
                         children: &[
@@ -202,16 +204,19 @@ fn main() {
                                 size: Vector2::new(100, 200),
                                 color: Color565::from_rgb888(150, 150, 50),
                                 layout_override: Layout::None,
+                                margin: Margin::uniform(5),
                             }),
                             NodeType::Primitive(&ColorRectanglePrimitive {
                                 size: Vector2::new(100, 200),
                                 color: Color565::from_rgb888(50, 150, 150),
                                 layout_override: Layout::None,
+                                margin: Margin::uniform(5),
                             }),
                         ],
                         align: gui::enums::AlignDirection::Left,
                         layout_override: Layout::None,
                         expand: true,
+                        margin: Margin::uniform(5),
                         id: 2,
                     }),
                     NodeType::Container(&Container {
@@ -220,12 +225,14 @@ fn main() {
                                 size: Vector2::new(200, 40),
                                 color: COLOR_WHITE,
                                 layout_override: Layout::None,
+                                margin: Margin::uniform(5),
                             }),
                             NodeType::Primitive(&TextPrimitive {
                                 text: "Another text",
                                 font: &font,
                                 font_color: COLOR_BLACK,
                                 background_color: None,
+                                margin: Margin::uniform(5),
                                 layout_override: Layout::Relative(
                                     Anchor::Center,
                                     Vector2::repeat(0),
@@ -235,6 +242,7 @@ fn main() {
                         align: gui::enums::AlignDirection::Down,
                         layout_override: Layout::Relative(Anchor::Center, Vector2::new(0, 0)),
                         expand: true,
+                        margin: Margin::uniform(5),
                         id: 1,
                     }),
                     NodeType::Primitive(&RoundedRectanglePrimitive {
@@ -242,11 +250,13 @@ fn main() {
                         corner_radius: 10.0,
                         color: COLOR_BLUE,
                         layout_override: Layout::Relative(Anchor::BottomLeft, Vector2::new(10, -10)),
+                        margin: Margin::uniform(5),
                     }),
                 ],
                 align: gui::enums::AlignDirection::Down,
                 layout_override: Layout::None,
                 expand: true,
+                margin: Margin::uniform(5),
                 id: 0,
             },
         };

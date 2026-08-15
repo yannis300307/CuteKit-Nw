@@ -16,6 +16,15 @@ impl Margin {
         }
     }
 
+    pub fn uniform(size: isize) -> Self {
+        Margin {
+            top: size,
+            bottom: size,
+            right: size,
+            left: size,
+        }
+    }
+
     pub fn new(top: isize, bottom: isize, right: isize, left: isize) -> Self {
         Margin {
             top,
