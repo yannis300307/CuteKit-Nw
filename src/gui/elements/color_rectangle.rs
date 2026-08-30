@@ -42,7 +42,7 @@ impl<'a> Primitive<'a> for ColorRectanglePrimitive {
         height: Option<isize>,
     ) -> Element<'a> {
         let mut size = self.size;
-        if let Layout::None | Layout::Transparent = self.layout_override {
+        if let Layout::Default | Layout::Transparent = self.layout_override {
             if let Some(width) = width {
                 size.x = width as u16;
             }

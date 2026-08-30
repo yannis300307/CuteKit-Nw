@@ -39,7 +39,7 @@ impl<'a> ContainerNode<'a> for Container<'a> {
             non_expand_size += match element {
                 NodeType::Primitive(node) => {
                     // Ignore anchored and transparent layout
-                    if let Layout::None = node.get_layout_ovewrite() {
+                    if let Layout::Default = node.get_layout_ovewrite() {
                         let mut element_size = match self.get_align_direction() {
                             AlignDirection::Down | AlignDirection::Up => {
                                 node.get_size((force_size.0, None))
@@ -62,7 +62,7 @@ impl<'a> ContainerNode<'a> for Container<'a> {
                     }
                 }
                 NodeType::Container(node) => {
-                    if let Layout::None = node.get_layout_ovewrite() {
+                    if let Layout::Default = node.get_layout_ovewrite() {
                         if node.get_expand() {
                             expandable_count += 1;
                             let mut element_size = Vector2::repeat(0);
@@ -125,7 +125,7 @@ impl<'a> ContainerNode<'a> for Container<'a> {
             let mut size;
             match child {
                 NodeType::Primitive(primitive) => {
-                    if let Layout::None = primitive.get_layout_ovewrite() {
+                    if let Layout::Default = primitive.get_layout_ovewrite() {
                         size = primitive.get_size(child_force_size);
                     } else {
                         size = Vector2::repeat(0);
@@ -138,7 +138,7 @@ impl<'a> ContainerNode<'a> for Container<'a> {
                     }
                 }
                 NodeType::Container(container_node) => {
-                    if let Layout::None = container_node.get_layout_ovewrite() {
+                    if let Layout::Default = container_node.get_layout_ovewrite() {
                         if container_node.get_expand() {
                             max_direction = true;
                         }
@@ -156,14 +156,14 @@ impl<'a> ContainerNode<'a> for Container<'a> {
             };
             match self.get_align_direction() {
                 AlignDirection::Down | AlignDirection::Up => {
-                    total_size.y += size.y + last_margin;
+                    total_size.y += size.y;
                     // Because the elements are aligned, the size of the container is the size of the largest element
                     if size.x > total_size.x {
                         total_size.x = size.x;
                     }
                 }
                 AlignDirection::Right | AlignDirection::Left => {
-                    total_size.x += size.x + last_margin;
+                    total_size.x += size.x;
                     // Because the elements are aligned, the size of the container is the size of the largest element
                     if size.y > total_size.y {
                         total_size.y = size.y;
@@ -172,6 +172,13 @@ impl<'a> ContainerNode<'a> for Container<'a> {
                 _ => todo!(),
             }
         }
+        // Add the remaining margin to the size of the container
+        match self.get_align_direction() {
+            AlignDirection::Down | AlignDirection::Up => total_size.x += last_margin,
+            AlignDirection::Right | AlignDirection::Left => total_size.y += last_margin,
+            _ => todo!(),
+        }
+
         // The container contains an expanded child so its size in its flow direction is the maximum size
         if max_direction {
             match self.get_align_direction() {
@@ -217,7 +224,7 @@ impl<'a> Node<'a> for Container<'a> {
             let mut size;
             match child {
                 NodeType::Primitive(primitive) => {
-                    if let Layout::None = primitive.get_layout_ovewrite() {
+                    if let Layout::Default = primitive.get_layout_ovewrite() {
                         size = primitive.get_size(child_force_size);
                     } else {
                         size = Vector2::repeat(0)
@@ -230,7 +237,7 @@ impl<'a> Node<'a> for Container<'a> {
                     }
                 }
                 NodeType::Container(container_node) => {
-                    if let Layout::None = container_node.get_layout_ovewrite() {
+                    if let Layout::Default = container_node.get_layout_ovewrite() {
                         if container_node.get_expand() {
                             max_direction = true;
                         }
@@ -248,14 +255,14 @@ impl<'a> Node<'a> for Container<'a> {
             };
             match self.get_align_direction() {
                 AlignDirection::Down | AlignDirection::Up => {
-                    total_size.y += size.y + last_margin;
+                    total_size.y += size.y;
                     // Because the elements are aligned, the size of the container is the size of the largest element
                     if size.x > total_size.x {
                         total_size.x = size.x;
                     }
                 }
                 AlignDirection::Right | AlignDirection::Left => {
-                    total_size.x += size.x + last_margin;
+                    total_size.x += size.x;
                     // Because the elements are aligned, the size of the container is the size of the largest element
                     if size.y > total_size.y {
                         total_size.y = size.y;
@@ -264,6 +271,13 @@ impl<'a> Node<'a> for Container<'a> {
                 _ => todo!(),
             }
         }
+        // Add the remaining margin to the size of the container
+        match self.get_align_direction() {
+            AlignDirection::Down | AlignDirection::Up => total_size.x += last_margin,
+            AlignDirection::Right | AlignDirection::Left => total_size.y += last_margin,
+            _ => todo!(),
+        }
+
         // The container contains an expanded child so its size in its flow direction is the maximum_size
         if max_direction {
             match self.get_align_direction() {

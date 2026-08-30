@@ -10,8 +10,11 @@ use crate::{
     gui::{
         Menu,
         elements::{
-            ColorRectanglePrimitive, Container, NinePartsRectanglePrimitive, RoundedRectanglePrimitive, TextPrimitive, TransparentScaledSpritePrimitive
-        }, enums::{Anchor, Layout, NodeType}, margin::Margin,
+            ColorRectanglePrimitive, Container, NinePartsRectanglePrimitive,
+            RoundedRectanglePrimitive, TextPrimitive, TransparentScaledSpritePrimitive,
+        },
+        enums::{Anchor, Layout, NodeType},
+        margin::Margin,
     },
     ingame_ui::draw_ui,
     input_manager::InputManager,
@@ -187,24 +190,25 @@ fn main() {
                     NodeType::Primitive(&ColorRectanglePrimitive {
                         size: Vector2::new(0, 30),
                         color: Color565::from_rgb888(180, 180, 255),
-                        layout_override: Layout::None,
+                        layout_override: Layout::Default,
                         margin: Margin::uniform(5),
                     }),
                     NodeType::Primitive(&ColorRectanglePrimitive {
                         size: Vector2::new(0, 30),
                         color: Color565::from_rgb888(0, 0, 255),
-                        layout_override: Layout::None,
+                        layout_override: Layout::Default,
                         margin: Margin::uniform(5),
                     }),
+                    
                     NodeType::Primitive(&ColorRectanglePrimitive {
                         size: Vector2::new(0, 30),
                         color: Color565::from_rgb888(255, 0, 0),
-                        layout_override: Layout::None,
+                        layout_override: Layout::Default,
                         margin: Margin::uniform(5),
                     }),
                 ],
-                align: gui::enums::AlignDirection::Down,
-                layout_override: Layout::None,
+                align: gui::enums::AlignDirection::Up,
+                layout_override: Layout::Default,
                 expand: true,
                 margin: Margin::uniform(5),
                 id: 0,

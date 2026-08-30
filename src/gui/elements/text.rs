@@ -48,7 +48,7 @@ impl<'a> Primitive<'a> for TextPrimitive<'a> {
         width: Option<isize>,
         height: Option<isize>,
     ) -> Element<'a> {
-        if let Layout::None | Layout::Transparent = self.layout_override {
+        if let Layout::Default | Layout::Transparent = self.layout_override {
             if let Some(width) = width {
                 let actual_lenght = (self.text.len() * self.font.char_width as usize) as isize;
                 pos.x += (width - actual_lenght) / 2;

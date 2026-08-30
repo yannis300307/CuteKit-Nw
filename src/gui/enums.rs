@@ -21,7 +21,7 @@ pub enum Layout {
     Relative(Anchor, Vector2<isize>),
     /// Keeps the element in flow but removes its bounding box. Elements can flow over it. It can be used to stack elements in a div.
     Transparent,
-    None,
+    Default,
 }
 
 #[derive(Clone, Copy)]
