@@ -68,7 +68,7 @@ impl<'a> Menu<'a> {
         parent_container: &dyn ContainerNode<'a>,
         node: &NodeType<'a>,
         mut offset: Vector2<isize>,
-        child_force_size: (Option<isize>, Option<isize>),
+        mut child_force_size: (Option<isize>, Option<isize>),
         child_force_size_expanded: (Option<isize>, Option<isize>),
         force_size: (Option<isize>, Option<isize>),
         parent_container_pos: Vector2<isize>,
@@ -101,6 +101,10 @@ impl<'a> Menu<'a> {
                                 };
                                 offset.y += actual_margin;
                                 pos.y += actual_margin;
+                                pos.x += margin.left;
+                                if let Some(width) = &mut child_force_size.0 {
+                                    *width -= margin.left + margin.right;
+                                }
                             }
                             AlignDirection::Right | AlignDirection::Left => {
                                 let actual_margin = if margin.left > *last_margin {
@@ -110,8 +114,11 @@ impl<'a> Menu<'a> {
                                 };
                                 offset.x += actual_margin;
                                 pos.x += actual_margin;
+                                pos.y += margin.top;
+                                if let Some(height) = &mut child_force_size.1 {
+                                    *height -= margin.top + margin.bottom;
+                                }
                             }
-                            _ => (),
                         },
                         _ => (),
                     }
@@ -122,7 +129,6 @@ impl<'a> Menu<'a> {
                     Layout::Default => match parent_container.get_align_direction() {
                         AlignDirection::Down | AlignDirection::Up => offset.y += size.y,
                         AlignDirection::Right | AlignDirection::Left => offset.x += size.x,
-                        _ => (),
                     },
                     _ => (),
                 }
@@ -137,7 +143,6 @@ impl<'a> Menu<'a> {
                             AlignDirection::Right | AlignDirection::Left => {
                                 *last_margin = margin.right
                             }
-                            _ => (),
                         },
                         _ => (),
                     }
@@ -145,6 +150,7 @@ impl<'a> Menu<'a> {
             }
             NodeType::Container(container) => {
                 let margin = container.get_margin();
+                let mut pos = offset;
 
                 let target_size = if let Layout::Relative(..) = container.get_layout_ovewrite() {
                     (None, None)
@@ -153,21 +159,42 @@ impl<'a> Menu<'a> {
                     match container.get_layout_ovewrite() {
                         Layout::Default => match parent_container.get_align_direction() {
                             AlignDirection::Down | AlignDirection::Up => {
-                                offset.y += if margin.top > *last_margin {
+                                // We need to increment both offset and pos as render_primitive only uses pos
+                                let actual_margin = if margin.top > *last_margin {
                                     margin.top
                                 } else {
                                     *last_margin
+                                };
+                                offset.y += actual_margin;
+                                pos.y += actual_margin;
+                                pos.x += margin.left;
+                                if let Some(width) = &mut child_force_size.0 {
+                                    *width -= margin.left + margin.right;
                                 }
                             }
                             AlignDirection::Right | AlignDirection::Left => {
-                                offset.x += if margin.left > *last_margin {
+                                let actual_margin = if margin.left > *last_margin {
                                     margin.left
                                 } else {
                                     *last_margin
+                                };
+                                offset.x += actual_margin;
+                                pos.x += actual_margin;
+                                pos.y += margin.top;
+                                if let Some(height) = &mut child_force_size.1 {
+                                    *height -= margin.top + margin.bottom;
                                 }
                             }
-                            _ => (),
                         },
+                        Layout::Relative(anchor, anchor_offset) => {
+                            pos = Self::get_anchor_offset_pos(
+                                *container,
+                                anchor,
+                                anchor_offset,
+                                parent_container_pos,
+                                parent_container_size,
+                            );
+                        }
                         _ => (),
                     };
 
@@ -177,21 +204,9 @@ impl<'a> Menu<'a> {
                         match container.get_align_direction() {
                             AlignDirection::Down | AlignDirection::Up => (force_size.0, None),
                             AlignDirection::Right | AlignDirection::Left => (None, force_size.1),
-                            _ => todo!(),
                         }
                     }
                 };
-
-                let mut pos = offset;
-                if let Layout::Relative(anchor, anchor_offset) = container.get_layout_ovewrite() {
-                    pos = Self::get_anchor_offset_pos(
-                        *container,
-                        anchor,
-                        anchor_offset,
-                        parent_container_pos,
-                        parent_container_size,
-                    );
-                }
 
                 let size = Self::render_container(draw_queue, *container, pos, target_size)?;
                 // Ignore offset when transparent or anchored
@@ -199,7 +214,6 @@ impl<'a> Menu<'a> {
                     Layout::Default => match parent_container.get_align_direction() {
                         AlignDirection::Down | AlignDirection::Up => offset.y += size.y,
                         AlignDirection::Right | AlignDirection::Left => offset.x += size.x,
-                        _ => (),
                     },
                     _ => (),
                 }
@@ -214,7 +228,6 @@ impl<'a> Menu<'a> {
                             AlignDirection::Right | AlignDirection::Left => {
                                 *last_margin = margin.right
                             }
-                            _ => (),
                         },
                         _ => (),
                     }
@@ -230,51 +243,59 @@ impl<'a> Menu<'a> {
         container: &dyn ContainerNode<'a>,
         node: &&dyn Primitive<'a>,
         mut offset: Vector2<isize>,
-        child_force_size: (Option<isize>, Option<isize>),
+        mut child_force_size: (Option<isize>, Option<isize>),
         last_margin: &mut isize,
     ) -> Result<Vector2<isize>, ()> {
+        let mut pos = offset;
         let margin = node.get_margin();
         // Offset the node with the margin. Use the margin of the last element if it's higher than the current node's
         match node.get_layout_ovewrite() {
             Layout::Default => match container.get_align_direction() {
                 AlignDirection::Down | AlignDirection::Up => {
-                    offset.y += if margin.top > *last_margin {
+                    // We need to increment both offset and pos as render_primitive only uses pos
+                    let actual_margin = if margin.top > *last_margin {
                         margin.top
                     } else {
                         *last_margin
+                    };
+                    offset.y += actual_margin;
+                    pos.y += actual_margin;
+                    pos.x += margin.left;
+                    if let Some(width) = &mut child_force_size.0 {
+                        *width -= margin.left + margin.right;
                     }
-                } // Maybe the inverse for Up/Down - Right/Left ?
+                }
                 AlignDirection::Right | AlignDirection::Left => {
-                    offset.x += if margin.left > *last_margin {
+                    let actual_margin = if margin.left > *last_margin {
                         margin.left
                     } else {
                         *last_margin
+                    };
+                    offset.x += actual_margin;
+                    pos.x += actual_margin;
+                    pos.y += margin.top;
+                    if let Some(height) = &mut child_force_size.1 {
+                        *height -= margin.top + margin.bottom;
                     }
                 }
-                _ => (),
             },
             _ => (),
         }
-        let size = Self::render_primitive(draw_queue, *node, offset, child_force_size)?;
+        let size = Self::render_primitive(draw_queue, *node, pos, child_force_size)?;
         // Ignore offset when transparent of anchored
         match node.get_layout_ovewrite() {
             Layout::Default => match container.get_align_direction() {
                 AlignDirection::Down | AlignDirection::Up => offset.y += size.y,
                 AlignDirection::Right | AlignDirection::Left => offset.x += size.x,
-                _ => (),
             },
             _ => (),
         }
 
         // Layouts others than Default are ignored because they shouldn't have effect on the flow
         if let Layout::Default = node.get_layout_ovewrite() {
-            match node.get_layout_ovewrite() {
-                Layout::Default => match container.get_align_direction() {
-                    AlignDirection::Down | AlignDirection::Up => *last_margin = margin.bottom,
-                    AlignDirection::Right | AlignDirection::Left => *last_margin = margin.right,
-                    _ => (),
-                },
-                _ => (),
+            match container.get_align_direction() {
+                AlignDirection::Down | AlignDirection::Up => *last_margin = margin.bottom,
+                AlignDirection::Right | AlignDirection::Left => *last_margin = margin.right,
             }
         }
 
@@ -296,7 +317,6 @@ impl<'a> Menu<'a> {
         {
             AlignDirection::Up | AlignDirection::Down => (force_size.0, None),
             AlignDirection::Right | AlignDirection::Left => (None, force_size.1),
-            AlignDirection::None => todo!(),
         };
 
         let container_pos = offset;
@@ -322,7 +342,6 @@ impl<'a> Menu<'a> {
             match container.get_align_direction() {
                 AlignDirection::Up | AlignDirection::Down => (force_size.0, Some(expand_size.y)),
                 AlignDirection::Right | AlignDirection::Left => (Some(expand_size.x), force_size.1),
-                AlignDirection::None => todo!(),
             };
 
         offset = match container.get_align_direction() {
@@ -336,7 +355,6 @@ impl<'a> Menu<'a> {
             AlignDirection::Left => {
                 Vector2::new(offset.x + container_size.x - default_size.x, offset.y)
             }
-            AlignDirection::None => todo!(),
         };
 
         let mut last_margin = 0;

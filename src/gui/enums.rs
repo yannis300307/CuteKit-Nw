@@ -30,7 +30,6 @@ pub enum AlignDirection {
     Up,
     Right,
     Left,
-    None,
 }
 
 pub enum NodeType<'a> {

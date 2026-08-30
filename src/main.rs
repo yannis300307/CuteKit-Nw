@@ -14,7 +14,7 @@ use crate::{
             RoundedRectanglePrimitive, TextPrimitive, TransparentScaledSpritePrimitive,
         },
         enums::{Anchor, Layout, NodeType},
-        margin::Margin,
+        margin::Margin, traits::{ContainerNode, Node},
     },
     ingame_ui::draw_ui,
     input_manager::InputManager,
@@ -188,32 +188,27 @@ fn main() {
             base_node: Container {
                 children: &[
                     NodeType::Primitive(&ColorRectanglePrimitive {
-                        size: Vector2::new(0, 30),
-                        color: Color565::from_rgb888(180, 180, 255),
+                        size: Vector2::new(0, 20),
+                        color: Color565::from_rgb888(255, 0, 0),
                         layout_override: Layout::Default,
                         margin: Margin::uniform(5),
                     }),
                     NodeType::Primitive(&ColorRectanglePrimitive {
-                        size: Vector2::new(0, 30),
-                        color: Color565::from_rgb888(0, 0, 255),
-                        layout_override: Layout::Default,
-                        margin: Margin::uniform(5),
-                    }),
-                    
-                    NodeType::Primitive(&ColorRectanglePrimitive {
-                        size: Vector2::new(0, 30),
+                        size: Vector2::new(0, 20),
                         color: Color565::from_rgb888(255, 0, 0),
                         layout_override: Layout::Default,
                         margin: Margin::uniform(5),
                     }),
                 ],
-                align: gui::enums::AlignDirection::Up,
+                align: gui::enums::AlignDirection::Down,
                 layout_override: Layout::Default,
                 expand: true,
-                margin: Margin::uniform(5),
+                margin: Margin::uniform(0),
                 id: 0,
             },
         };
+
+        let size = menu.base_node.get_content_size((Some(320), Some(240)));
 
         let mut draw_queue: DrawQueue<'_, 100> = DrawQueue::new();
 

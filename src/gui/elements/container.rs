@@ -47,13 +47,11 @@ impl<'a> ContainerNode<'a> for Container<'a> {
                             AlignDirection::Left | AlignDirection::Right => {
                                 node.get_size((None, force_size.1))
                             }
-                            _ => todo!(),
                         };
                         let margin = node.get_margin();
                         match self.get_align_direction() {
                             AlignDirection::Down | AlignDirection::Up => {element_size.y += if margin.top > last_margin { margin.top } else { last_margin }; last_margin = margin.bottom; },
                             AlignDirection::Right | AlignDirection::Left => {element_size.x += if margin.left > last_margin { margin.left } else { last_margin }; last_margin = margin.right; },
-                            _ => (),
                         }
 
                         element_size
@@ -70,7 +68,6 @@ impl<'a> ContainerNode<'a> for Container<'a> {
                             match self.get_align_direction() {
                                 AlignDirection::Down | AlignDirection::Up => {element_size.y += if margin.top > last_margin { margin.top } else { last_margin }; last_margin = margin.bottom; },
                                 AlignDirection::Right | AlignDirection::Left => {element_size.x += if margin.left > last_margin { margin.left } else { last_margin }; last_margin = margin.right; },
-                                _ => (),
                             }
 
                             element_size
@@ -80,7 +77,6 @@ impl<'a> ContainerNode<'a> for Container<'a> {
                             match self.get_align_direction() {
                                 AlignDirection::Down | AlignDirection::Up => {element_size.y += if margin.top > last_margin { margin.top } else { last_margin }; last_margin = margin.bottom; },
                                 AlignDirection::Right | AlignDirection::Left => {element_size.x += if margin.left > last_margin { margin.left } else { last_margin }; last_margin = margin.right; },
-                                _ => (),
                             }
 
                             element_size
@@ -95,7 +91,6 @@ impl<'a> ContainerNode<'a> for Container<'a> {
         match self.get_align_direction() {
             AlignDirection::Down | AlignDirection::Up => { non_expand_size.y += last_margin },
             AlignDirection::Right | AlignDirection::Left => { non_expand_size.x += last_margin },
-            _ => (),
         }
 
         if expandable_count > 0 {
@@ -115,7 +110,6 @@ impl<'a> ContainerNode<'a> for Container<'a> {
         match self.get_align_direction() {
             AlignDirection::Down | AlignDirection::Up => (force_size.0, None),
             AlignDirection::Left | AlignDirection::Right => (None, force_size.1),
-            _ => todo!(),
         };
 
         let mut total_size = Vector2::new(0, 0);
@@ -134,7 +128,6 @@ impl<'a> ContainerNode<'a> for Container<'a> {
                     match self.get_align_direction() {
                         AlignDirection::Down | AlignDirection::Up => {size.y += if margin.top > last_margin { margin.top } else { last_margin }; last_margin = margin.bottom; },
                         AlignDirection::Right | AlignDirection::Left => {size.x += if margin.left > last_margin { margin.left } else { last_margin }; last_margin = margin.right; },
-                        _ => (),
                     }
                 }
                 NodeType::Container(container_node) => {
@@ -150,7 +143,6 @@ impl<'a> ContainerNode<'a> for Container<'a> {
                     match self.get_align_direction() {
                         AlignDirection::Down | AlignDirection::Up => {size.y += if margin.top > last_margin { margin.top } else { last_margin }; last_margin = margin.bottom; },
                         AlignDirection::Right | AlignDirection::Left => {size.x += if margin.left > last_margin { margin.left } else { last_margin }; last_margin = margin.right; },
-                        _ => (),
                     }
                 }
             };
@@ -169,14 +161,12 @@ impl<'a> ContainerNode<'a> for Container<'a> {
                         total_size.y = size.y;
                     }
                 }
-                _ => todo!(),
             }
         }
         // Add the remaining margin to the size of the container
         match self.get_align_direction() {
-            AlignDirection::Down | AlignDirection::Up => total_size.x += last_margin,
-            AlignDirection::Right | AlignDirection::Left => total_size.y += last_margin,
-            _ => todo!(),
+            AlignDirection::Down | AlignDirection::Up => total_size.y += last_margin,
+            AlignDirection::Right | AlignDirection::Left => total_size.x += last_margin,
         }
 
         // The container contains an expanded child so its size in its flow direction is the maximum size
@@ -188,7 +178,6 @@ impl<'a> ContainerNode<'a> for Container<'a> {
                 AlignDirection::Right | AlignDirection::Left => {
                     Vector2::new(force_size.0.unwrap_or(total_size.x), total_size.y)
                 }
-                _ => todo!(),
             }
         } else {
             total_size
@@ -214,7 +203,6 @@ impl<'a> Node<'a> for Container<'a> {
         let child_force_size = match self.get_align_direction() {
             AlignDirection::Down | AlignDirection::Up => (force_size.0, None),
             AlignDirection::Left | AlignDirection::Right => (None, force_size.1),
-            _ => todo!(),
         };
 
         let mut total_size = Vector2::new(0, 0);
@@ -233,7 +221,6 @@ impl<'a> Node<'a> for Container<'a> {
                     match self.get_align_direction() {
                         AlignDirection::Down | AlignDirection::Up => {size.y += if margin.top > last_margin { margin.top } else { last_margin }; last_margin = margin.bottom; },
                         AlignDirection::Right | AlignDirection::Left => {size.x += if margin.left > last_margin { margin.left } else { last_margin }; last_margin = margin.right; },
-                        _ => (),
                     }
                 }
                 NodeType::Container(container_node) => {
@@ -249,7 +236,6 @@ impl<'a> Node<'a> for Container<'a> {
                     match self.get_align_direction() {
                         AlignDirection::Down | AlignDirection::Up => {size.y += if margin.top > last_margin { margin.top } else { last_margin }; last_margin = margin.bottom; },
                         AlignDirection::Right | AlignDirection::Left => {size.x += if margin.left > last_margin { margin.left } else { last_margin }; last_margin = margin.right; },
-                        _ => (),
                     }
                 }
             };
@@ -268,14 +254,12 @@ impl<'a> Node<'a> for Container<'a> {
                         total_size.y = size.y;
                     }
                 }
-                _ => todo!(),
             }
         }
         // Add the remaining margin to the size of the container
         match self.get_align_direction() {
-            AlignDirection::Down | AlignDirection::Up => total_size.x += last_margin,
-            AlignDirection::Right | AlignDirection::Left => total_size.y += last_margin,
-            _ => todo!(),
+            AlignDirection::Down | AlignDirection::Up => total_size.y += last_margin,
+            AlignDirection::Right | AlignDirection::Left => total_size.x += last_margin,
         }
 
         // The container contains an expanded child so its size in its flow direction is the maximum_size
@@ -287,7 +271,6 @@ impl<'a> Node<'a> for Container<'a> {
                 AlignDirection::Right | AlignDirection::Left => {
                     Vector2::new(force_size.0.unwrap_or(total_size.x), total_size.y)
                 }
-                _ => todo!(),
             }
         } else {
             Vector2::new(
