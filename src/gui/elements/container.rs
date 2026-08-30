@@ -32,12 +32,15 @@ impl<'a> ContainerNode<'a> for Container<'a> {
         let mut non_expand_size = Vector2::repeat(0);
         let mut expandable_count = 0;
 
+
+        let mut last_margin = 0;
+
         for element in self.children.iter() {
             non_expand_size += match element {
                 NodeType::Primitive(node) => {
                     // Ignore anchored and transparent layout
                     if let Layout::None = node.get_layout_ovewrite() {
-                        match self.get_align_direction() {
+                        let mut element_size = match self.get_align_direction() {
                             AlignDirection::Down | AlignDirection::Up => {
                                 node.get_size((force_size.0, None))
                             }
@@ -45,7 +48,15 @@ impl<'a> ContainerNode<'a> for Container<'a> {
                                 node.get_size((None, force_size.1))
                             }
                             _ => todo!(),
+                        };
+                        let margin = node.get_margin();
+                        match self.get_align_direction() {
+                            AlignDirection::Down | AlignDirection::Up => {element_size.y += if margin.top > last_margin { margin.top } else { last_margin }; last_margin = margin.bottom; },
+                            AlignDirection::Right | AlignDirection::Left => {element_size.x += if margin.left > last_margin { margin.left } else { last_margin }; last_margin = margin.right; },
+                            _ => (),
                         }
+
+                        element_size
                     } else {
                         Vector2::repeat(0)
                     }
@@ -54,9 +65,25 @@ impl<'a> ContainerNode<'a> for Container<'a> {
                     if let Layout::None = node.get_layout_ovewrite() {
                         if node.get_expand() {
                             expandable_count += 1;
-                            Vector2::repeat(0)
+                            let mut element_size = Vector2::repeat(0);
+                            let margin = node.get_margin();
+                            match self.get_align_direction() {
+                                AlignDirection::Down | AlignDirection::Up => {element_size.y += if margin.top > last_margin { margin.top } else { last_margin }; last_margin = margin.bottom; },
+                                AlignDirection::Right | AlignDirection::Left => {element_size.x += if margin.left > last_margin { margin.left } else { last_margin }; last_margin = margin.right; },
+                                _ => (),
+                            }
+
+                            element_size
                         } else {
-                            node.get_size((None, None))
+                            let mut element_size = node.get_size((None, None));
+                            let margin = node.get_margin();
+                            match self.get_align_direction() {
+                                AlignDirection::Down | AlignDirection::Up => {element_size.y += if margin.top > last_margin { margin.top } else { last_margin }; last_margin = margin.bottom; },
+                                AlignDirection::Right | AlignDirection::Left => {element_size.x += if margin.left > last_margin { margin.left } else { last_margin }; last_margin = margin.right; },
+                                _ => (),
+                            }
+
+                            element_size
                         }
                     } else {
                         Vector2::repeat(0)
@@ -64,6 +91,13 @@ impl<'a> ContainerNode<'a> for Container<'a> {
                 }
             }
         }
+
+        match self.get_align_direction() {
+            AlignDirection::Down | AlignDirection::Up => { non_expand_size.y += last_margin },
+            AlignDirection::Right | AlignDirection::Left => { non_expand_size.x += last_margin },
+            _ => (),
+        }
+
         if expandable_count > 0 {
             (max_size - non_expand_size) / expandable_count
         } else {
@@ -86,14 +120,21 @@ impl<'a> ContainerNode<'a> for Container<'a> {
 
         let mut total_size = Vector2::new(0, 0);
         let mut max_direction = false;
+        let mut last_margin = 0;
         for child in self.children.iter() {
-            let size;
+            let mut size;
             match child {
                 NodeType::Primitive(primitive) => {
                     if let Layout::None = primitive.get_layout_ovewrite() {
                         size = primitive.get_size(child_force_size);
                     } else {
-                        size = Vector2::repeat(0)
+                        size = Vector2::repeat(0);
+                    }
+                    let margin = primitive.get_margin();
+                    match self.get_align_direction() {
+                        AlignDirection::Down | AlignDirection::Up => {size.y += if margin.top > last_margin { margin.top } else { last_margin }; last_margin = margin.bottom; },
+                        AlignDirection::Right | AlignDirection::Left => {size.x += if margin.left > last_margin { margin.left } else { last_margin }; last_margin = margin.right; },
+                        _ => (),
                     }
                 }
                 NodeType::Container(container_node) => {
@@ -103,20 +144,26 @@ impl<'a> ContainerNode<'a> for Container<'a> {
                         }
                         size = container_node.get_size(child_force_size);
                     } else {
-                        size = Vector2::repeat(0)
+                        size = Vector2::repeat(0);
+                    }
+                    let margin = container_node.get_margin();
+                    match self.get_align_direction() {
+                        AlignDirection::Down | AlignDirection::Up => {size.y += if margin.top > last_margin { margin.top } else { last_margin }; last_margin = margin.bottom; },
+                        AlignDirection::Right | AlignDirection::Left => {size.x += if margin.left > last_margin { margin.left } else { last_margin }; last_margin = margin.right; },
+                        _ => (),
                     }
                 }
             };
             match self.get_align_direction() {
                 AlignDirection::Down | AlignDirection::Up => {
-                    total_size.y += size.y;
+                    total_size.y += size.y + last_margin;
                     // Because the elements are aligned, the size of the container is the size of the largest element
                     if size.x > total_size.x {
                         total_size.x = size.x;
                     }
                 }
                 AlignDirection::Right | AlignDirection::Left => {
-                    total_size.x += size.x;
+                    total_size.x += size.x + last_margin;
                     // Because the elements are aligned, the size of the container is the size of the largest element
                     if size.y > total_size.y {
                         total_size.y = size.y;
@@ -165,14 +212,21 @@ impl<'a> Node<'a> for Container<'a> {
 
         let mut total_size = Vector2::new(0, 0);
         let mut max_direction = false;
+        let mut last_margin = 0;
         for child in self.children.iter() {
-            let size;
+            let mut size;
             match child {
                 NodeType::Primitive(primitive) => {
                     if let Layout::None = primitive.get_layout_ovewrite() {
                         size = primitive.get_size(child_force_size);
                     } else {
                         size = Vector2::repeat(0)
+                    }
+                    let margin = primitive.get_margin();
+                    match self.get_align_direction() {
+                        AlignDirection::Down | AlignDirection::Up => {size.y += if margin.top > last_margin { margin.top } else { last_margin }; last_margin = margin.bottom; },
+                        AlignDirection::Right | AlignDirection::Left => {size.x += if margin.left > last_margin { margin.left } else { last_margin }; last_margin = margin.right; },
+                        _ => (),
                     }
                 }
                 NodeType::Container(container_node) => {
@@ -184,18 +238,24 @@ impl<'a> Node<'a> for Container<'a> {
                     } else {
                         size = Vector2::repeat(0)
                     }
+                    let margin = container_node.get_margin();
+                    match self.get_align_direction() {
+                        AlignDirection::Down | AlignDirection::Up => {size.y += if margin.top > last_margin { margin.top } else { last_margin }; last_margin = margin.bottom; },
+                        AlignDirection::Right | AlignDirection::Left => {size.x += if margin.left > last_margin { margin.left } else { last_margin }; last_margin = margin.right; },
+                        _ => (),
+                    }
                 }
             };
             match self.get_align_direction() {
                 AlignDirection::Down | AlignDirection::Up => {
-                    total_size.y += size.y;
+                    total_size.y += size.y + last_margin;
                     // Because the elements are aligned, the size of the container is the size of the largest element
                     if size.x > total_size.x {
                         total_size.x = size.x;
                     }
                 }
                 AlignDirection::Right | AlignDirection::Left => {
-                    total_size.x += size.x;
+                    total_size.x += size.x + last_margin;
                     // Because the elements are aligned, the size of the container is the size of the largest element
                     if size.y > total_size.y {
                         total_size.y = size.y;
