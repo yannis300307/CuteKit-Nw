@@ -179,6 +179,40 @@ impl<'a> Renderer2d {
         }
     }
 
+    fn draw_rectangle_outline(
+        &mut self,
+        mut pos: Vector2<isize>,
+        size: Vector2<isize>,
+        color: Color565,
+        thickness: isize,
+    ) {
+        let mut end = pos + size;
+        if end.x < 0
+            || end.y < 0
+            || pos.x > SCREEN_TILE_WIDTH as isize
+            || pos.y > SCREEN_TILE_HEIGHT as isize
+        {
+            return;
+        }
+
+        self.draw_rectangle(pos, Vector2::new(size.x, thickness), color);
+        self.draw_rectangle(
+            Vector2::new(pos.x, pos.y + size.y - thickness),
+            Vector2::new(size.x, thickness),
+            color,
+        );
+        self.draw_rectangle(
+            Vector2::new(pos.x, pos.y + thickness),
+            Vector2::new(thickness, size.y - thickness * 2),
+            color,
+        );
+        self.draw_rectangle(
+            Vector2::new(pos.x + size.x - thickness, pos.y + thickness),
+            Vector2::new(thickness, size.y - thickness * 2),
+            color,
+        );
+    }
+
     #[inline]
     fn draw_horizontal_line(
         &mut self,
@@ -386,6 +420,19 @@ impl<'a> Renderer2d {
             match element {
                 Element::ColorRectangle { pos, size, color } => {
                     self.draw_rectangle(*pos - buffer_offset, size.map(|x| x as isize), *color);
+                }
+                Element::ColorRectangleOutline {
+                    pos,
+                    size,
+                    color,
+                    thickness,
+                } => {
+                    self.draw_rectangle_outline(
+                        *pos - buffer_offset,
+                        size.map(|x| x as isize),
+                        *color,
+                        *thickness as isize,
+                    );
                 }
                 Element::TransparentSprite { pos, texture } => self.draw_region(
                     texture,

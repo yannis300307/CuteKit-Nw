@@ -22,6 +22,8 @@ pub mod traits;
 
 pub struct Menu<'a> {
     pub base_node: Container<'a>,
+    pub selected_node: usize,
+    pub default_hover_marker: bool,
 }
 
 impl<'a> Menu<'a> {

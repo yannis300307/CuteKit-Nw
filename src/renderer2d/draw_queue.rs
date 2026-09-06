@@ -38,6 +38,21 @@ impl<'a, const SIZE: usize> DrawQueue<'a, SIZE> {
         self.queue_element(Element::ColorRectangle { pos, size, color })
     }
 
+    pub fn add_outline_rectangle(
+        &mut self,
+        pos: Vector2<isize>,
+        size: Vector2<u16>,
+        color: Color565,
+        thickness: u16,
+    ) -> Result<(), ()> {
+        self.queue_element(Element::ColorRectangleOutline {
+            pos,
+            size,
+            color,
+            thickness,
+        })
+    }
+
     pub fn add_circle(
         &mut self,
         center: Vector2<isize>,

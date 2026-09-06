@@ -192,12 +192,15 @@ fn main() {
                         color: Color565::from_rgb888(255, 0, 0),
                         layout_override: Layout::Default,
                         margin: Margin::uniform(5),
+                        outline_thickness: None,
                     }),
                     NodeType::Primitive(&ColorRectanglePrimitive {
                         size: Vector2::new(0, 20),
                         color: Color565::from_rgb888(255, 0, 0),
                         layout_override: Layout::Default,
                         margin: Margin::uniform(5),
+                        outline_thickness: None,
+                        
                     }),
                 ],
                 align: gui::enums::AlignDirection::Down,
@@ -206,6 +209,8 @@ fn main() {
                 margin: Margin::uniform(0),
                 id: 0,
             },
+            selected_node: 0,
+            default_hover_marker: true,
         };
 
         let size = menu.base_node.get_content_size((Some(320), Some(240)));

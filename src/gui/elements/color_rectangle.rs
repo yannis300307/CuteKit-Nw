@@ -11,6 +11,7 @@ pub struct ColorRectanglePrimitive {
     pub color: Color565,
     pub layout_override: Layout,
     pub margin: Margin,
+    pub outline_thickness: Option<u16>,
 }
 
 impl<'a> Node<'a> for ColorRectanglePrimitive {
@@ -51,10 +52,19 @@ impl<'a> Primitive<'a> for ColorRectanglePrimitive {
             }
         }
         let pos = pos; // TODO: update with layout ovewrite
-        Element::ColorRectangle {
-            pos,
-            size,
-            color: self.color,
+        if let Some(thickness) = self.outline_thickness {
+            Element::ColorRectangleOutline {
+                pos,
+                size,
+                color: self.color,
+                thickness,
+            }
+        } else {
+            Element::ColorRectangle {
+                pos,
+                size,
+                color: self.color,
+            }
         }
     }
 }

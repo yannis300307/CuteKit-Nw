@@ -45,6 +45,13 @@ pub enum Element<'a> {
         size: Vector2<u16>,
         color: Color565,
     },
+    /// A rectangle outline. Very fast to draw. The thickness will expand to the inside.
+    ColorRectangleOutline {
+        pos: Vector2<isize>,
+        size: Vector2<u16>,
+        color: Color565,
+        thickness: u16,
+    },
     /// A textured non-scaled rectangle. Also known as a sprite.
     /// Use ScaledSprite to change the scaling of the texture.
     /// Quite Fast to draw.
@@ -120,6 +127,17 @@ impl<'a> Clone for Element<'a> {
                 pos: *pos,
                 size: *size,
                 color: *color,
+            },
+            Element::ColorRectangleOutline {
+                pos,
+                size,
+                color,
+                thickness,
+            } => Element::ColorRectangleOutline {
+                pos: *pos,
+                size: *size,
+                color: *color,
+                thickness: *thickness,
             },
             Element::TransparentSprite { pos, texture } => {
                 Element::TransparentSprite { pos: *pos, texture }
