@@ -2,7 +2,7 @@ use crate::{
     constants::rendering::{SCREEN_HEIGHT, SCREEN_WIDTH},
     gui::{
         elements::Container,
-        enums::{AlignDirection, Anchor, ChildrenType, Layout, NodeType},
+        enums::{AlignDirection, Anchor, ChildrenType, Layout},
         traits::{ContainerNode, Node, Primitive},
     },
     nadk::display::Color565,
@@ -68,7 +68,7 @@ impl<'a> Menu<'a> {
     fn render_container_child<'b, const SIZE: usize>(
         draw_queue: &mut DrawQueue<'a, SIZE>,
         parent_container: &dyn ContainerNode<'a>,
-        node: &NodeType<'a>,
+        node: &'a dyn Node<'a>,
         mut offset: Vector2<isize>,
         mut child_force_size: (Option<isize>, Option<isize>),
         child_force_size_expanded: (Option<isize>, Option<isize>),
@@ -77,14 +77,13 @@ impl<'a> Menu<'a> {
         parent_container_size: Vector2<isize>,
         last_margin: &mut isize,
     ) -> Result<Vector2<isize>, ()> {
-        match node {
-            NodeType::Primitive(primitive) => {
+            if let Some(primitive) = node.as_primitive() {
                 let mut pos = offset;
                 let margin = primitive.get_margin();
                 // Replace the pos with the anchored pos
                 if let Layout::Relative(anchor, anchor_offset) = primitive.get_layout_ovewrite() {
                     pos = Self::get_anchor_offset_pos(
-                        *primitive,
+                        primitive,
                         anchor,
                         anchor_offset,
                         parent_container_pos,
@@ -125,7 +124,7 @@ impl<'a> Menu<'a> {
                         _ => (),
                     }
                 }
-                let size = Self::render_primitive(draw_queue, *primitive, pos, child_force_size)?;
+                let size = Self::render_primitive(draw_queue, primitive, pos, child_force_size)?;
                 // Ignore offset when transparent or anchored
                 match primitive.get_layout_ovewrite() {
                     Layout::Default => match parent_container.get_align_direction() {
@@ -150,7 +149,7 @@ impl<'a> Menu<'a> {
                     }
                 }
             }
-            NodeType::Container(container) => {
+            if let Some(container) = node.as_container() {
                 let margin = container.get_margin();
                 let mut pos = offset;
 
@@ -190,7 +189,7 @@ impl<'a> Menu<'a> {
                         },
                         Layout::Relative(anchor, anchor_offset) => {
                             pos = Self::get_anchor_offset_pos(
-                                *container,
+                                container,
                                 anchor,
                                 anchor_offset,
                                 parent_container_pos,
@@ -210,7 +209,7 @@ impl<'a> Menu<'a> {
                     }
                 };
 
-                let size = Self::render_container(draw_queue, *container, pos, target_size)?;
+                let size = Self::render_container(draw_queue, container, pos, target_size)?;
                 // Ignore offset when transparent or anchored
                 match container.get_layout_ovewrite() {
                     Layout::Default => match parent_container.get_align_direction() {
@@ -233,7 +232,6 @@ impl<'a> Menu<'a> {
                         },
                         _ => (),
                     }
-                }
             }
         };
 
@@ -306,7 +304,7 @@ impl<'a> Menu<'a> {
 
     fn render_container<'b, const SIZE: usize>(
         draw_queue: &mut DrawQueue<'a, SIZE>,
-        container: &dyn ContainerNode<'a>,
+        container: &'a dyn ContainerNode<'a>,
         mut offset: Vector2<isize>,
         mut force_size: (Option<isize>, Option<isize>),
     ) -> Result<Vector2<isize>, ()> {
@@ -370,7 +368,7 @@ impl<'a> Menu<'a> {
                             offset = Self::render_container_child(
                                 draw_queue,
                                 container,
-                                node,
+                                *node,
                                 offset,
                                 child_force_size,
                                 child_force_size_expanded,
@@ -386,7 +384,7 @@ impl<'a> Menu<'a> {
                             offset = Self::render_container_child(
                                 draw_queue,
                                 container,
-                                node,
+                                *node,
                                 offset,
                                 child_force_size,
                                 child_force_size_expanded,
@@ -439,7 +437,7 @@ impl<'a> Menu<'a> {
     }
 
     pub fn render<const SIZE: usize>(
-        &self,
+        &'a self,
         draw_queue: &mut DrawQueue<'a, SIZE>,
     ) -> Result<(), ()> {
         Self::render_container(

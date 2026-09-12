@@ -1,9 +1,9 @@
 use nalgebra::Vector2;
 
-use crate::gui::{AlignDirection, ChildrenType, Layout, Node, NodeType, margin::Margin, traits::ContainerNode};
+use crate::gui::{AlignDirection, ChildrenType, Layout, Node, margin::Margin, traits::ContainerNode};
 
 pub struct Container<'a> {
-    pub children: &'a [NodeType<'a>],
+    pub children: &'a [&'a dyn Node<'a>],
     pub align: AlignDirection,
     pub layout_override: Layout,
     pub expand: bool,
@@ -25,7 +25,7 @@ impl<'a> ContainerNode<'a> for Container<'a> {
     }
 
     fn get_expand_remaining_space(
-        &self,
+        &'a self,
         max_size: Vector2<isize>,
         force_size: (Option<isize>, Option<isize>),
     ) -> Vector2<isize> {
@@ -36,8 +36,8 @@ impl<'a> ContainerNode<'a> for Container<'a> {
         let mut last_margin = 0;
 
         for element in self.children.iter() {
-            non_expand_size += match element {
-                NodeType::Primitive(node) => {
+            non_expand_size += 
+                if let Some(node) = element.as_primitive() {
                     // Ignore anchored and transparent layout
                     if let Layout::Default = node.get_layout_ovewrite() {
                         let mut element_size = match self.get_align_direction() {
@@ -59,7 +59,7 @@ impl<'a> ContainerNode<'a> for Container<'a> {
                         Vector2::repeat(0)
                     }
                 }
-                NodeType::Container(node) => {
+                else if let Some(node) = element.as_container() {
                     if let Layout::Default = node.get_layout_ovewrite() {
                         if node.get_expand() {
                             expandable_count += 1;
@@ -84,9 +84,10 @@ impl<'a> ContainerNode<'a> for Container<'a> {
                     } else {
                         Vector2::repeat(0)
                     }
+                } else {
+                    Vector2::zeros()
                 }
             }
-        }
 
         match self.get_align_direction() {
             AlignDirection::Down | AlignDirection::Up => { non_expand_size.y += last_margin },
@@ -100,7 +101,7 @@ impl<'a> ContainerNode<'a> for Container<'a> {
         }
     }
 
-    fn get_content_size(&self, mut force_size: (Option<isize>, Option<isize>)) -> Vector2<isize> {
+    fn get_content_size(&'a self, mut force_size: (Option<isize>, Option<isize>)) -> Vector2<isize> {
         if let Layout::Relative(..) = self.get_layout_ovewrite() {
             // Ignore the force_size as the element is detached from the flow
             force_size = (None, None);
@@ -116,36 +117,34 @@ impl<'a> ContainerNode<'a> for Container<'a> {
         let mut max_direction = false;
         let mut last_margin = 0;
         for child in self.children.iter() {
-            let mut size;
-            match child {
-                NodeType::Primitive(primitive) => {
-                    if let Layout::Default = primitive.get_layout_ovewrite() {
-                        size = primitive.get_size(child_force_size);
-                    } else {
-                        size = Vector2::repeat(0);
-                    }
-                    let margin = primitive.get_margin();
-                    match self.get_align_direction() {
-                        AlignDirection::Down | AlignDirection::Up => {size.y += if margin.top > last_margin { margin.top } else { last_margin }; last_margin = margin.bottom; },
-                        AlignDirection::Right | AlignDirection::Left => {size.x += if margin.left > last_margin { margin.left } else { last_margin }; last_margin = margin.right; },
-                    }
+            let mut size = Vector2::zeros();
+            if let Some(primitive) = child.as_primitive() {
+                if let Layout::Default = primitive.get_layout_ovewrite() {
+                    size = primitive.get_size(child_force_size);
+                } else {
+                    size = Vector2::repeat(0);
                 }
-                NodeType::Container(container_node) => {
-                    if let Layout::Default = container_node.get_layout_ovewrite() {
-                        if container_node.get_expand() {
-                            max_direction = true;
-                        }
-                        size = container_node.get_size(child_force_size);
-                    } else {
-                        size = Vector2::repeat(0);
-                    }
-                    let margin = container_node.get_margin();
-                    match self.get_align_direction() {
-                        AlignDirection::Down | AlignDirection::Up => {size.y += if margin.top > last_margin { margin.top } else { last_margin }; last_margin = margin.bottom; },
-                        AlignDirection::Right | AlignDirection::Left => {size.x += if margin.left > last_margin { margin.left } else { last_margin }; last_margin = margin.right; },
-                    }
+                let margin = primitive.get_margin();
+                match self.get_align_direction() {
+                    AlignDirection::Down | AlignDirection::Up => {size.y += if margin.top > last_margin { margin.top } else { last_margin }; last_margin = margin.bottom; },
+                    AlignDirection::Right | AlignDirection::Left => {size.x += if margin.left > last_margin { margin.left } else { last_margin }; last_margin = margin.right; },
                 }
-            };
+            }
+            if let Some(container_node) = child.as_container() {
+                if let Layout::Default = container_node.get_layout_ovewrite() {
+                    if container_node.get_expand() {
+                        max_direction = true;
+                    }
+                    size = container_node.get_size(child_force_size);
+                } else {
+                    size = Vector2::repeat(0);
+                }
+                let margin = container_node.get_margin();
+                match self.get_align_direction() {
+                    AlignDirection::Down | AlignDirection::Up => {size.y += if margin.top > last_margin { margin.top } else { last_margin }; last_margin = margin.bottom; },
+                    AlignDirection::Right | AlignDirection::Left => {size.x += if margin.left > last_margin { margin.left } else { last_margin }; last_margin = margin.right; },
+                }
+            }
             match self.get_align_direction() {
                 AlignDirection::Down | AlignDirection::Up => {
                     total_size.y += size.y;
@@ -183,10 +182,6 @@ impl<'a> ContainerNode<'a> for Container<'a> {
             total_size
         }
     }
-
-    fn get_id(&self) -> usize {
-        self.id
-    }
 }
 
 impl<'a> Node<'a> for Container<'a> {
@@ -209,36 +204,34 @@ impl<'a> Node<'a> for Container<'a> {
         let mut max_direction = false;
         let mut last_margin = 0;
         for child in self.children.iter() {
-            let mut size;
-            match child {
-                NodeType::Primitive(primitive) => {
-                    if let Layout::Default = primitive.get_layout_ovewrite() {
-                        size = primitive.get_size(child_force_size);
-                    } else {
-                        size = Vector2::repeat(0)
-                    }
-                    let margin = primitive.get_margin();
-                    match self.get_align_direction() {
-                        AlignDirection::Down | AlignDirection::Up => {size.y += if margin.top > last_margin { margin.top } else { last_margin }; last_margin = margin.bottom; },
-                        AlignDirection::Right | AlignDirection::Left => {size.x += if margin.left > last_margin { margin.left } else { last_margin }; last_margin = margin.right; },
-                    }
+            let mut size = Vector2::zeros();
+            if let Some(primitive) = child.as_primitive() {
+                if let Layout::Default = primitive.get_layout_ovewrite() {
+                    size = primitive.get_size(child_force_size);
+                } else {
+                    size = Vector2::repeat(0)
                 }
-                NodeType::Container(container_node) => {
-                    if let Layout::Default = container_node.get_layout_ovewrite() {
-                        if container_node.get_expand() {
-                            max_direction = true;
-                        }
-                        size = container_node.get_size(child_force_size);
-                    } else {
-                        size = Vector2::repeat(0)
-                    }
-                    let margin = container_node.get_margin();
-                    match self.get_align_direction() {
-                        AlignDirection::Down | AlignDirection::Up => {size.y += if margin.top > last_margin { margin.top } else { last_margin }; last_margin = margin.bottom; },
-                        AlignDirection::Right | AlignDirection::Left => {size.x += if margin.left > last_margin { margin.left } else { last_margin }; last_margin = margin.right; },
-                    }
+                let margin = primitive.get_margin();
+                match self.get_align_direction() {
+                    AlignDirection::Down | AlignDirection::Up => {size.y += if margin.top > last_margin { margin.top } else { last_margin }; last_margin = margin.bottom; },
+                    AlignDirection::Right | AlignDirection::Left => {size.x += if margin.left > last_margin { margin.left } else { last_margin }; last_margin = margin.right; },
                 }
-            };
+            }
+            if let Some(container_node) = child.as_container() {
+                if let Layout::Default = container_node.get_layout_ovewrite() {
+                    if container_node.get_expand() {
+                        max_direction = true;
+                    }
+                    size = container_node.get_size(child_force_size);
+                } else {
+                    size = Vector2::repeat(0)
+                }
+                let margin = container_node.get_margin();
+                match self.get_align_direction() {
+                    AlignDirection::Down | AlignDirection::Up => {size.y += if margin.top > last_margin { margin.top } else { last_margin }; last_margin = margin.bottom; },
+                    AlignDirection::Right | AlignDirection::Left => {size.x += if margin.left > last_margin { margin.left } else { last_margin }; last_margin = margin.right; },
+                }
+            }
             match self.get_align_direction() {
                 AlignDirection::Down | AlignDirection::Up => {
                     total_size.y += size.y;
@@ -283,5 +276,14 @@ impl<'a> Node<'a> for Container<'a> {
     fn get_margin(&self) -> Margin {
         self.margin
     }
+
+    fn as_primitive(&'a self) -> Option<&'a dyn crate::gui::traits::Primitive<'a>> {
+        None
+    }
+
+    fn as_container(&'a self) -> Option<&'a dyn crate::gui::traits::ContainerNode<'a>> {
+        Some(self)
+    }
 }
+
 

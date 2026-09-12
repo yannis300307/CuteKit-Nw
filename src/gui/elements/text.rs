@@ -39,6 +39,14 @@ impl<'a> Node<'a> for TextPrimitive<'a> {
     fn get_margin(&self) -> Margin {
         self.margin
     }
+
+    fn as_primitive(&'a self) -> Option<&'a dyn Primitive<'a>> {
+        Some(self)
+    }
+
+    fn as_container(&'a self) -> Option<&'a dyn crate::gui::traits::ContainerNode<'a>> {
+        None
+    }
 }
 
 impl<'a> Primitive<'a> for TextPrimitive<'a> {

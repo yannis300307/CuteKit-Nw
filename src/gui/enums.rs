@@ -1,6 +1,6 @@
 use nalgebra::Vector2;
 
-use crate::gui::{Primitive, traits::ContainerNode};
+use crate::gui::{Primitive, traits::{ContainerNode, Node}};
 
 #[derive(Clone, Copy)]
 pub enum Anchor {
@@ -32,13 +32,8 @@ pub enum AlignDirection {
     Left,
 }
 
-pub enum NodeType<'a> {
-    Primitive(&'a dyn Primitive<'a>),
-    Container(&'a dyn ContainerNode<'a>),
-}
-
 pub enum ChildrenType<'a, 'b> {
-    Nodes(&'b [NodeType<'a>]),
+    Nodes(&'b [&'a dyn Node<'a>]),
     Primitives(&'b [&'b dyn Primitive<'a>]),
     None,
 }

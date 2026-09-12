@@ -13,8 +13,9 @@ use crate::{
             ColorRectanglePrimitive, Container, NinePartsRectanglePrimitive,
             RoundedRectanglePrimitive, TextPrimitive, TransparentScaledSpritePrimitive,
         },
-        enums::{Anchor, Layout, NodeType},
-        margin::Margin, traits::{ContainerNode, Node},
+        enums::{Anchor, Layout},
+        margin::Margin,
+        traits::{ContainerNode, Node},
     },
     ingame_ui::draw_ui,
     input_manager::InputManager,
@@ -187,21 +188,43 @@ fn main() {
         let menu = Menu {
             base_node: Container {
                 children: &[
-                    NodeType::Primitive(&ColorRectanglePrimitive {
+                    &ColorRectanglePrimitive {
                         size: Vector2::new(0, 20),
                         color: Color565::from_rgb888(255, 0, 0),
                         layout_override: Layout::Default,
                         margin: Margin::uniform(5),
                         outline_thickness: None,
-                    }),
-                    NodeType::Primitive(&ColorRectanglePrimitive {
+                    },
+                    &ColorRectanglePrimitive {
                         size: Vector2::new(0, 20),
                         color: Color565::from_rgb888(255, 0, 0),
                         layout_override: Layout::Default,
                         margin: Margin::uniform(5),
                         outline_thickness: None,
-                        
-                    }),
+                    },
+                    &Container {
+                        children: &[
+                            &ColorRectanglePrimitive {
+                                size: Vector2::new(30, 20),
+                                color: Color565::from_rgb888(255, 0, 0),
+                                layout_override: Layout::Default,
+                                margin: Margin::uniform(5),
+                                outline_thickness: None,
+                            },
+                            &ColorRectanglePrimitive {
+                                size: Vector2::new(30, 20),
+                                color: Color565::from_rgb888(255, 0, 0),
+                                layout_override: Layout::Default,
+                                margin: Margin::uniform(5),
+                                outline_thickness: None,
+                            },
+                        ],
+                        align: gui::enums::AlignDirection::Right,
+                        layout_override: Layout::Default,
+                        expand: false, // TODO: margin is not respected at the bottom when expand is false
+                        margin: Margin::none(),
+                        id: 0,
+                    },
                 ],
                 align: gui::enums::AlignDirection::Down,
                 layout_override: Layout::Default,
