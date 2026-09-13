@@ -4,6 +4,7 @@ mod nine_parts_rectangle;
 mod rounded_rectangle;
 mod text;
 mod container;
+mod button;
 
 pub use color_rectangle::ColorRectanglePrimitive;
 pub use transparent_scaled_sprite::TransparentScaledSpritePrimitive;

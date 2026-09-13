@@ -1,16 +1,18 @@
 use nalgebra::Vector2;
 
-use crate::gui::{AlignDirection, ChildrenType, Layout, Node, margin::Margin, traits::ContainerNode};
+use crate::{gui::{enums::{AlignDirection, Layout}, margin::Margin, traits::{ContainerNode, InteractiveNode, Node}}, nadk::keyboard};
 
-pub struct Container<'a> {
+pub struct Button<'a> {
     pub children: &'a [&'a dyn Node<'a>],
     pub align: AlignDirection,
     pub layout_override: Layout,
     pub expand: bool,
     pub margin: Margin,
+    pub id: usize,
 }
 
-impl<'a> ContainerNode<'a> for Container<'a> {
+
+impl<'a> ContainerNode<'a> for Button<'a> {
     fn get_children<'b>(&'b self) -> &'b [&'a dyn Node<'a>] {
         self.children
     }
@@ -24,7 +26,25 @@ impl<'a> ContainerNode<'a> for Container<'a> {
     }
 }
 
-impl<'a> Node<'a> for Container<'a> {
+impl<'a> InteractiveNode<'a> for Button<'a> {
+    fn handle_key_down(&mut self, key: crate::nadk::keyboard::Key) -> Option<usize> {
+        None
+    }
+    
+    fn handle_key_up(&mut self, key: crate::nadk::keyboard::Key) -> Option<usize> {
+        match key {
+            keyboard::Key::Ok => Some(0),
+            _ => None
+        }
+    }
+    
+    fn get_id(&self) -> usize {
+        self.id
+    }
+}
+
+// TODO: remove duplicate with Container
+impl<'a> Node<'a> for Button<'a> {
     fn get_layout_ovewrite(&self) -> Layout {
         self.layout_override
     }

@@ -205,7 +205,7 @@ fn main() {
                     &Container {
                         children: &[
                             &ColorRectanglePrimitive {
-                                size: Vector2::new(30, 20),
+                                size: Vector2::new(30, 50),
                                 color: Color565::from_rgb888(255, 0, 0),
                                 layout_override: Layout::Default,
                                 margin: Margin::uniform(5),
@@ -231,7 +231,6 @@ fn main() {
                         layout_override: Layout::Default,
                         expand: false,
                         margin: Margin::uniform(10),
-                        id: 0,
                     },
                     &ColorRectanglePrimitive {
                         size: Vector2::new(30, 40),
@@ -245,7 +244,6 @@ fn main() {
                 layout_override: Layout::Default,
                 expand: true,
                 margin: Margin::uniform(0),
-                id: 0,
             },
             selected_node: 0,
             default_hover_marker: true,

@@ -240,71 +240,6 @@ impl<'a> Menu<'a> {
         Ok(offset)
     }
 
-    fn render_primitive_container_child<'b, const SIZE: usize>(
-        draw_queue: &mut DrawQueue<'a, SIZE>,
-        container: &dyn ContainerNode<'a>,
-        node: &&dyn Primitive<'a>,
-        mut offset: Vector2<isize>,
-        mut child_force_size: (Option<isize>, Option<isize>),
-        last_margin: &mut isize,
-    ) -> Result<Vector2<isize>, ()> {
-        let mut pos = offset;
-        let margin = node.get_margin();
-        // Offset the node with the margin. Use the margin of the last element if it's higher than the current node's
-        match node.get_layout_ovewrite() {
-            Layout::Default => match container.get_align_direction() {
-                AlignDirection::Down | AlignDirection::Up => {
-                    // We need to increment both offset and pos as render_primitive only uses pos
-                    let actual_margin = if margin.top > *last_margin {
-                        margin.top
-                    } else {
-                        *last_margin
-                    };
-                    offset.y += actual_margin;
-                    pos.y += actual_margin;
-                    pos.x += margin.left;
-                    if let Some(width) = &mut child_force_size.0 {
-                        *width -= margin.left + margin.right;
-                    }
-                }
-                AlignDirection::Right | AlignDirection::Left => {
-                    let actual_margin = if margin.left > *last_margin {
-                        margin.left
-                    } else {
-                        *last_margin
-                    };
-                    offset.x += actual_margin;
-                    pos.x += actual_margin;
-                    pos.y += margin.top;
-                    if let Some(height) = &mut child_force_size.1 {
-                        *height -= margin.top + margin.bottom;
-                    }
-                }
-            },
-            _ => (),
-        }
-
-        let size = Self::render_primitive(draw_queue, *node, pos, child_force_size)?;
-        // Ignore offset when transparent or anchored
-        match node.get_layout_ovewrite() {
-            Layout::Default => match container.get_align_direction() {
-                AlignDirection::Down | AlignDirection::Up => offset.y += size.y,
-                AlignDirection::Right | AlignDirection::Left => offset.x += size.x,
-            },
-            _ => (),
-        }
-
-        // Layouts others than Default are ignored because they shouldn't have effect on the flow
-        if let Layout::Default = node.get_layout_ovewrite() {
-            match container.get_align_direction() {
-                AlignDirection::Down | AlignDirection::Up => *last_margin = margin.bottom,
-                AlignDirection::Right | AlignDirection::Left => *last_margin = margin.right,
-            }
-        }
-
-        Ok(offset)
-    }
-
     fn render_container<'b, const SIZE: usize>(
         draw_queue: &mut DrawQueue<'a, SIZE>,
         container: &'a dyn ContainerNode<'a>,
@@ -366,88 +301,54 @@ impl<'a> Menu<'a> {
 
         let mut last_margin = 0;
 
-        match container.get_children() {
-            ChildrenType::Nodes(nodes) => {
-                // If the direction is Left or Up, we simply reverse the iterator
-                match container.get_align_direction() {
-                    AlignDirection::Left | AlignDirection::Up => {
-                        for node in nodes.iter().rev() {
-                            offset = Self::render_container_child(
-                                draw_queue,
-                                container,
-                                *node,
-                                offset,
-                                child_force_size,
-                                child_force_size_expanded,
-                                force_size,
-                                container_pos,
-                                container_size,
-                                &mut last_margin,
-                            )?;
-                            
-                            if let Some(width) = &mut force_size.0 {    
-                                *width = container_size.x - (offset.x - container_pos.x);
-                            }
-                            if let Some(height) = &mut force_size.1 {
-                                *height = container_size.y - (offset.y - container_pos.y);
-                            }
-                        }
+        // If the direction is Left or Up, we simply reverse the iterator
+        match container.get_align_direction() {
+            AlignDirection::Left | AlignDirection::Up => {
+                for node in container.get_children().iter().rev() {
+                    offset = Self::render_container_child(
+                        draw_queue,
+                        container,
+                        *node,
+                        offset,
+                        child_force_size,
+                        child_force_size_expanded,
+                        force_size,
+                        container_pos,
+                        container_size,
+                        &mut last_margin,
+                    )?;
+                    
+                    if let Some(width) = &mut force_size.0 {    
+                        *width = container_size.x - (offset.x - container_pos.x);
                     }
-                    _ => {
-                        for node in nodes.iter() {
-                            offset = Self::render_container_child(
-                                draw_queue,
-                                container,
-                                *node,
-                                offset,
-                                child_force_size,
-                                child_force_size_expanded,
-                                force_size,
-                                container_pos,
-                                container_size,
-                                &mut last_margin,
-                            )?;
+                    if let Some(height) = &mut force_size.1 {
+                        *height = container_size.y - (offset.y - container_pos.y);
+                    }
+                }
+            }
+            _ => {
+                for node in container.get_children().iter() {
+                    offset = Self::render_container_child(
+                        draw_queue,
+                        container,
+                        *node,
+                        offset,
+                        child_force_size,
+                        child_force_size_expanded,
+                        force_size,
+                        container_pos,
+                        container_size,
+                        &mut last_margin,
+                    )?;
 
-                            if let Some(width) = &mut force_size.0 {
-                                *width = container_size.x - (offset.x - container_pos.x);
-                            }
-                            if let Some(height) = &mut force_size.1 {
-                                *height = container_size.y - (offset.y - container_pos.y);
-                            }
-                        }
+                    if let Some(width) = &mut force_size.0 {
+                        *width = container_size.x - (offset.x - container_pos.x);
+                    }
+                    if let Some(height) = &mut force_size.1 {
+                        *height = container_size.y - (offset.y - container_pos.y);
                     }
                 }
             }
-            ChildrenType::Primitives(nodes) => {
-                match container.get_align_direction() {
-                    // If the direction is Left or Up, we simply reverse the iterator
-                    AlignDirection::Left | AlignDirection::Up => {
-                        for node in nodes.iter().rev() {
-                            offset = Self::render_primitive_container_child(
-                                draw_queue,
-                                container,
-                                node,
-                                offset,
-                                child_force_size,
-                                &mut last_margin,
-                            )?;
-                        }
-                    }
-                    _ => {
-                        for node in nodes.iter() {
-                            offset = Self::render_primitive_container_child(
-                                draw_queue,
-                                container,
-                                node,
-                                offset,
-                                child_force_size,
-                                &mut last_margin,
-                            )?;
-                        }
-                    }
-                }
-            }
-            ChildrenType::None => {}
         }
         let actual_size = Vector2::new(
             // We have to substract the offset of the container itself to get its actual offset.
