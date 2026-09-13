@@ -218,12 +218,27 @@ fn main() {
                                 margin: Margin::uniform(5),
                                 outline_thickness: None,
                             },
+                            &ColorRectanglePrimitive {
+                                size: Vector2::new(30, 20),
+                                color: Color565::from_rgb888(255, 0, 0),
+                                layout_override: Layout::Default,
+                                margin: Margin::uniform(5),
+                                outline_thickness: None,
+                            },
+                            
                         ],
                         align: gui::enums::AlignDirection::Right,
                         layout_override: Layout::Default,
-                        expand: false, // TODO: margin is not respected at the bottom when expand is false
-                        margin: Margin::none(),
+                        expand: false,
+                        margin: Margin::uniform(10),
                         id: 0,
+                    },
+                    &ColorRectanglePrimitive {
+                        size: Vector2::new(30, 40),
+                        color: Color565::from_rgb888(255, 0, 0),
+                        layout_override: Layout::Default,
+                        margin: Margin::uniform(5),
+                        outline_thickness: None,
                     },
                 ],
                 align: gui::enums::AlignDirection::Down,
@@ -235,8 +250,6 @@ fn main() {
             selected_node: 0,
             default_hover_marker: true,
         };
-
-        let size = menu.base_node.get_content_size((Some(320), Some(240)));
 
         let mut draw_queue: DrawQueue<'_, 100> = DrawQueue::new();
 

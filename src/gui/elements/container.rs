@@ -149,15 +149,31 @@ impl<'a> ContainerNode<'a> for Container<'a> {
                 AlignDirection::Down | AlignDirection::Up => {
                     total_size.y += size.y;
                     // Because the elements are aligned, the size of the container is the size of the largest element
-                    if size.x > total_size.x {
-                        total_size.x = size.x;
+                    if force_size.0.is_none(){
+                        let margin = child.get_margin();
+                        // In case of force_size being None for the other axis, we add the margins as the container is in fit mode
+                        if size.x + margin.left + margin.right > total_size.x {
+                            total_size.x = size.x + margin.left + margin.right;
+                        }
+                    } else {
+                        if size.x > total_size.x {
+                            total_size.x = size.x;
+                        }
                     }
                 }
                 AlignDirection::Right | AlignDirection::Left => {
                     total_size.x += size.x;
                     // Because the elements are aligned, the size of the container is the size of the largest element
-                    if size.y > total_size.y {
-                        total_size.y = size.y;
+                    if force_size.1.is_none() {
+                        let margin = child.get_margin();
+                        // In case of force_size being None for the other axis, we add the margins as the container is in fit mode
+                        if size.y + margin.top + margin.bottom > total_size.y {
+                            total_size.y = size.y + margin.top + margin.bottom;
+                        }
+                    } else {
+                        if size.y > total_size.y {
+                            total_size.y = size.y;
+                        }
                     }
                 }
             }

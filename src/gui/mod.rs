@@ -124,6 +124,7 @@ impl<'a> Menu<'a> {
                         _ => (),
                     }
                 }
+
                 let size = Self::render_primitive(draw_queue, primitive, pos, child_force_size)?;
                 // Ignore offset when transparent or anchored
                 match primitive.get_layout_ovewrite() {
@@ -153,8 +154,9 @@ impl<'a> Menu<'a> {
                 let margin = container.get_margin();
                 let mut pos = offset;
 
-                let target_size = if let Layout::Relative(..) = container.get_layout_ovewrite() {
-                    (None, None)
+                let mut target_size;
+                if let Layout::Relative(..) = container.get_layout_ovewrite() {
+                    target_size = (None, None);
                 } else {
                     // Offset the node with the margin. Use the margin of the last element if it's higher than the current node's
                     match container.get_layout_ovewrite() {
@@ -198,15 +200,15 @@ impl<'a> Menu<'a> {
                         }
                         _ => (),
                     };
-
-                    if container.get_expand() {
+                    target_size = if container.get_expand() {
                         child_force_size_expanded
                     } else {
+                        let fit_size = container.get_content_size((None, None));
                         match container.get_align_direction() {
-                            AlignDirection::Down | AlignDirection::Up => (force_size.0, None),
-                            AlignDirection::Right | AlignDirection::Left => (None, force_size.1),
+                            AlignDirection::Down | AlignDirection::Up => (Some(fit_size.x), None),
+                            AlignDirection::Right | AlignDirection::Left => (None, Some(fit_size.y)),
                         }
-                    }
+                    };
                 };
 
                 let size = Self::render_container(draw_queue, container, pos, target_size)?;
@@ -281,8 +283,9 @@ impl<'a> Menu<'a> {
             },
             _ => (),
         }
+
         let size = Self::render_primitive(draw_queue, *node, pos, child_force_size)?;
-        // Ignore offset when transparent of anchored
+        // Ignore offset when transparent or anchored
         match node.get_layout_ovewrite() {
             Layout::Default => match container.get_align_direction() {
                 AlignDirection::Down | AlignDirection::Up => offset.y += size.y,
@@ -313,7 +316,7 @@ impl<'a> Menu<'a> {
             force_size = (None, None);
         }
 
-        let child_force_size: (Option<isize>, Option<isize>) = match container.get_align_direction()
+        let mut child_force_size: (Option<isize>, Option<isize>) = match container.get_align_direction()
         {
             AlignDirection::Up | AlignDirection::Down => (force_size.0, None),
             AlignDirection::Right | AlignDirection::Left => (None, force_size.1),
@@ -323,6 +326,10 @@ impl<'a> Menu<'a> {
 
         let default_size = container.get_content_size(force_size);
         let mut container_size = default_size;
+
+        let margin = container.get_margin();
+        container_size.x -= margin.left + margin.right;
+        container_size.y -= margin.top + margin.bottom;
 
         // If the parent of the container doesn't apply a size constraint, the size remains the sum of children of that container
         if let Some(width) = force_size.0 {
@@ -376,7 +383,14 @@ impl<'a> Menu<'a> {
                                 container_pos,
                                 container_size,
                                 &mut last_margin,
-                            )?
+                            )?;
+                            
+                            if let Some(width) = &mut force_size.0 {    
+                                *width = container_size.x - (offset.x - container_pos.x);
+                            }
+                            if let Some(height) = &mut force_size.1 {
+                                *height = container_size.y - (offset.y - container_pos.y);
+                            }
                         }
                     }
                     _ => {
@@ -392,7 +406,14 @@ impl<'a> Menu<'a> {
                                 container_pos,
                                 container_size,
                                 &mut last_margin,
-                            )?
+                            )?;
+
+                            if let Some(width) = &mut force_size.0 {
+                                *width = container_size.x - (offset.x - container_pos.x);
+                            }
+                            if let Some(height) = &mut force_size.1 {
+                                *height = container_size.y - (offset.y - container_pos.y);
+                            }
                         }
                     }
                 }
