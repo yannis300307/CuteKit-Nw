@@ -2,6 +2,10 @@ use nalgebra::Vector2;
 
 use crate::{gui::{enums::{AlignDirection, ChildrenType, Layout}, margin::Margin}, nadk, renderer2d::elements::Element};
 
+pub unsafe trait NodeKind<'a>: Node<'a> {
+    const ID: u32;
+}
+
 pub trait Node<'a> {
     fn get_layout_ovewrite(&self) -> Layout;
     fn get_size(&'a self, force_size: (Option<isize>, Option<isize>)) -> Vector2<isize>;
@@ -13,6 +17,29 @@ pub trait Node<'a> {
 
     fn as_container_mut(&'a mut self) -> Option<&'a mut dyn ContainerNode<'a>> { None }
     fn as_interactive_mut(&'a mut self) -> Option<&'a mut dyn InteractiveNode<'a>> { None }
+
+    // The functions bellow are required to downcast the objets to their actual type
+    fn node_id(&self) -> u32;
+    fn get_raw_pointer(&self) -> *const ();
+}
+
+// I'm sorry ...
+pub fn node_downcast_ref<'a, T>(node: &'a dyn Node<'a>) -> Option<&'a T> where T: NodeKind<'a> + Sized {
+    if node.node_id() == T::ID {
+        Some(unsafe { &*(node.get_raw_pointer() as *const T)})
+    }
+    else {
+        None
+    }
+}
+
+pub fn node_downcast_ref_mut<'a, T>(node: &'a mut dyn Node<'a>) -> Option<&'a mut T> where T: NodeKind<'a> + Sized {
+    if node.node_id() == T::ID {
+        Some(unsafe { &mut *(node.get_raw_pointer() as *mut T)})
+    }
+    else {
+        None
+    }
 }
 
 pub trait ContainerNode<'a>: Node<'a> {

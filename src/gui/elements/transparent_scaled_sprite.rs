@@ -1,7 +1,7 @@
 use nalgebra::Vector2;
 
 use crate::{
-    gui::{Layout, Node, Primitive, margin::Margin, traits::{ContainerNode, InteractiveNode}}, renderer2d::{
+    gui::{Layout, Node, Primitive, margin::Margin, traits::{ContainerNode, InteractiveNode, NodeKind}}, renderer2d::{
         elements::{Element, ScaleMode},
         sprite::TransparentTexture,
     },
@@ -38,6 +38,9 @@ impl<'a> Node<'a> for TransparentScaledSpritePrimitive<'a> {
     fn as_primitive(&'a self) -> Option<&'a dyn Primitive<'a>> {
         Some(self)
     }
+
+    fn node_id(&self) -> u32 { 7 }
+    fn get_raw_pointer(&self) -> *const () { self as *const Self as *const ()}
 }
 
 impl<'a> Primitive<'a> for TransparentScaledSpritePrimitive<'a> {
@@ -63,4 +66,8 @@ impl<'a> Primitive<'a> for TransparentScaledSpritePrimitive<'a> {
             scale_mode: self.scale_mode,
         }
     }
+}
+
+unsafe impl<'a> NodeKind<'a> for TransparentScaledSpritePrimitive<'a> {
+    const ID: u32 = 7;
 }

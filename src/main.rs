@@ -12,7 +12,7 @@ use crate::{
     gui::{
         Menu, elements::{
             Button, ColorRectanglePrimitive, Container, NinePartsRectanglePrimitive, RoundedRectanglePrimitive, TextPrimitive, TransparentScaledSpritePrimitive,
-        }, enums::{Anchor, Layout}, margin::Margin, traits::{ContainerNode, Node},
+        }, enums::{Anchor, Layout}, margin::Margin, traits::{ContainerNode, Node, node_downcast_ref_mut},
     }, ingame_ui::draw_ui, input_manager::InputManager, nadk::{
         display::{
             self, COLOR_BLACK, COLOR_BLUE, COLOR_GREEN, COLOR_RED, COLOR_WHITE, Color565,

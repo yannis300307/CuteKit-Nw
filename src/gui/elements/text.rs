@@ -1,7 +1,7 @@
 use nalgebra::Vector2;
 
 use crate::{
-    gui::{Layout, Node, Primitive, margin::Margin, traits::{ContainerNode, InteractiveNode}}, nadk::display::Color565, renderer2d::elements::{Element, Font},
+    gui::{Layout, Node, Primitive, margin::Margin, traits::{ContainerNode, InteractiveNode, NodeKind}}, nadk::display::Color565, renderer2d::elements::{Element, Font},
 };
 
 pub struct TextPrimitive<'a> {
@@ -41,6 +41,9 @@ impl<'a> Node<'a> for TextPrimitive<'a> {
     fn as_primitive(&'a self) -> Option<&'a dyn Primitive<'a>> {
         Some(self)
     }
+
+    fn node_id(&self) -> u32 { 6 }
+    fn get_raw_pointer(&self) -> *const () { self as *const Self as *const ()}
 }
 
 impl<'a> Primitive<'a> for TextPrimitive<'a> {
@@ -67,4 +70,8 @@ impl<'a> Primitive<'a> for TextPrimitive<'a> {
             background_color: self.background_color,
         }
     }
+}
+
+unsafe impl<'a> NodeKind<'a> for TextPrimitive<'a> {
+    const ID: u32 = 6;
 }

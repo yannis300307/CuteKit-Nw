@@ -1,6 +1,6 @@
 use nalgebra::Vector2;
 
-use crate::gui::{AlignDirection, ChildrenType, Layout, Node, margin::Margin, traits::{ContainerNode, InteractiveNode, Primitive}};
+use crate::gui::{AlignDirection, ChildrenType, Layout, Node, margin::Margin, traits::{ContainerNode, InteractiveNode, NodeKind, Primitive}};
 
 pub struct Container<'a> {
     pub children: &'a mut [&'a mut dyn Node<'a>],
@@ -128,6 +128,11 @@ impl<'a> Node<'a> for Container<'a> {
     fn as_container_mut(&'a mut self) -> Option<&'a mut dyn ContainerNode<'a>> {
         Some(self)
     }
+
+    fn node_id(&self) -> u32 { 3 }
+    fn get_raw_pointer(&self) -> *const () { self as *const Self as *const ()}
 }
 
-
+unsafe impl<'a> NodeKind<'a> for Container<'a> {
+    const ID: u32 = 3;
+}

@@ -1,7 +1,7 @@
 use nalgebra::Vector2;
 
 use crate::{
-    gui::{Layout, Node, Primitive, margin::Margin, traits::{ContainerNode, InteractiveNode}}, renderer2d::{
+    gui::{Layout, Node, Primitive, margin::Margin, traits::{ContainerNode, InteractiveNode, NodeKind}}, renderer2d::{
         elements::{Element, ScaleMode},
         nine_parts_rectangle::NinePartsTexture,
     },
@@ -38,6 +38,9 @@ impl<'a> Node<'a> for NinePartsRectanglePrimitive<'a> {
     fn as_primitive(&'a self) -> Option<&'a dyn Primitive<'a>> {
         Some(self)
     }
+
+    fn node_id(&self) -> u32 { 4 }
+    fn get_raw_pointer(&self) -> *const () { self as *const Self as *const ()}
 }
 
 impl<'a> Primitive<'a> for NinePartsRectanglePrimitive<'a> {
@@ -63,4 +66,8 @@ impl<'a> Primitive<'a> for NinePartsRectanglePrimitive<'a> {
             scaling_mode: self.scaling_mode,
         }
     }
+}
+
+unsafe impl<'a> NodeKind<'a> for NinePartsRectanglePrimitive<'a> {
+    const ID: u32 = 4;
 }
