@@ -12,7 +12,7 @@ use crate::{
     gui::{
         Menu, elements::{
             Button, ColorRectanglePrimitive, Container, NinePartsRectanglePrimitive, RoundedRectanglePrimitive, TextPrimitive, TransparentScaledSpritePrimitive,
-        }, enums::{Anchor, Layout}, margin::Margin, traits::{ContainerNode, Node, node_downcast_ref_mut},
+        }, enums::{Anchor, Layout}, margin::Margin, traits::{ContainerNode, Node, node_downcast_ref, node_downcast_ref_mut},
     }, ingame_ui::draw_ui, input_manager::InputManager, nadk::{
         display::{
             self, COLOR_BLACK, COLOR_BLUE, COLOR_GREEN, COLOR_RED, COLOR_WHITE, Color565,
@@ -227,8 +227,7 @@ fn main() {
         default_hover_marker: true,
     };
 
-    menu.selected_node = None;
-
+    let mut c = 0.;
 
     loop {
         time_manager.update();
@@ -247,6 +246,24 @@ fn main() {
 
         let frame_time = heapless::format!(30; "time: {}", time_manager.get_frame_time()).unwrap();
 
+        //TODO: this does not compile
+        /*
+        {
+            let node = &mut *menu.base_node.get_children_mut()[2].as_container_mut().unwrap().get_children_mut()[1];
+            let a: &mut ColorRectanglePrimitive = node_downcast_ref_mut(node).unwrap();
+            let color = convert_hsv_to_rgb((c, 100., 100.));
+            a.color = Color565::from_rgb888(color.0, color.1, color.2);
+        }*/
+
+        {
+            let node = &mut *menu.base_node.get_children_mut()[0];
+            let a: &mut ColorRectanglePrimitive = node_downcast_ref_mut(node).unwrap();
+            let color = (10, 10, 10);
+            a.color = Color565::from_rgb888(color.0, color.1, color.2);
+        }
+
+        c += 2.;
+        if c >= 360. {c = 0.;}
 
         let mut draw_queue: DrawQueue<'_, 100> = DrawQueue::new();
 

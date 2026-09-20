@@ -125,7 +125,7 @@ impl<'a, const SIZE: usize> DrawQueue<'a, SIZE> {
         &mut self,
         pos: Vector2<isize>,
         size: Vector2<u16>,
-        texture: &'a TransparentTexture,
+        texture: &'static TransparentTexture,
         scale_mode: ScaleMode,
     ) -> Result<(), ()> {
         self.queue_element(Element::TransparentScaledSprite {

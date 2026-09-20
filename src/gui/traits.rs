@@ -8,11 +8,11 @@ pub unsafe trait NodeKind<'a>: Node<'a> {
 
 pub trait Node<'a> {
     fn get_layout_ovewrite(&self) -> Layout;
-    fn get_size(&'a self, force_size: (Option<isize>, Option<isize>)) -> Vector2<isize>;
+    fn get_size(&self, force_size: (Option<isize>, Option<isize>)) -> Vector2<isize>;
     fn get_margin(&self) -> Margin;
 
-    fn as_primitive(&'a self) -> Option<&'a dyn Primitive<'a>> { None }
-    fn as_container(&'a self) -> Option<&'a dyn ContainerNode<'a>> { None }
+    fn as_primitive<'child>(&'child self) -> Option<&'child (dyn Primitive<'a> + 'child)> { None }
+    fn as_container<'child>(&'child self) -> Option<&'child (dyn ContainerNode<'a> + 'child)> { None }
     fn as_interactive(&'a self) -> Option<&'a dyn InteractiveNode<'a>> { None }
 
     fn as_container_mut(&'a mut self) -> Option<&'a mut dyn ContainerNode<'a>> { None }
@@ -21,6 +21,7 @@ pub trait Node<'a> {
     // The functions bellow are required to downcast the objets to their actual type
     fn node_id(&self) -> u32;
     fn get_raw_pointer(&self) -> *const ();
+    fn get_raw_pointer_mut(&mut self) -> *mut ();
 }
 
 // I'm sorry ...
@@ -33,9 +34,9 @@ pub fn node_downcast_ref<'a, T>(node: &'a dyn Node<'a>) -> Option<&'a T> where T
     }
 }
 
-pub fn node_downcast_ref_mut<'a, T>(node: &'a mut dyn Node<'a>) -> Option<&'a mut T> where T: NodeKind<'a> + Sized {
+pub fn node_downcast_ref_mut<'a, 'obj, T>(node: &'obj mut (dyn Node<'a> + 'obj)) -> Option<&'obj mut T> where T: NodeKind<'a> + Sized {
     if node.node_id() == T::ID {
-        Some(unsafe { &mut *(node.get_raw_pointer() as *mut T)})
+        Some(unsafe { &mut *(node.get_raw_pointer_mut() as *mut T)})
     }
     else {
         None
@@ -44,11 +45,11 @@ pub fn node_downcast_ref_mut<'a, T>(node: &'a mut dyn Node<'a>) -> Option<&'a mu
 
 pub trait ContainerNode<'a>: Node<'a> {
     fn get_children<'b>(&'b self) -> &'b [&'a mut dyn Node<'a>];
-    fn get_children_mut<'b>(&'b mut self) -> &'b mut [&'a mut dyn Node<'a>];
+    fn get_children_mut(&mut self) -> &mut [&'a mut (dyn Node<'a> + 'a)];
     fn get_align_direction(&self) -> AlignDirection;
     fn get_expand(&self) -> bool;
     fn get_expand_remaining_space(
-        &'a self,
+        &self,
         max_size: Vector2<isize>,
         force_size: (Option<isize>, Option<isize>),
     ) -> Vector2<isize> {
@@ -124,7 +125,7 @@ pub trait ContainerNode<'a>: Node<'a> {
         }
     }
 
-    fn get_content_size(&'a self, mut force_size: (Option<isize>, Option<isize>)) -> Vector2<isize> {
+    fn get_content_size(&self, mut force_size: (Option<isize>, Option<isize>)) -> Vector2<isize> {
         if let Layout::Relative(..) = self.get_layout_ovewrite() {
             // Ignore the force_size as the element is detached from the flow
             force_size = (None, None);
@@ -224,12 +225,12 @@ pub trait ContainerNode<'a>: Node<'a> {
 }
 
 pub trait Primitive<'a>: Node<'a> {
-    fn get_element(
+    fn get_element<'render>(
         &self,
         pos: Vector2<isize>,
         width: Option<isize>,
         height: Option<isize>,
-    ) -> Element<'a>;
+    ) -> Element<'render> where 'a: 'render;
 }
 
 pub trait InteractiveNode<'a>: Node<'a> {

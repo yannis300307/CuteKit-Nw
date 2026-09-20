@@ -22,15 +22,15 @@ pub struct Menu<'a> {
 }
 
 impl<'a> Menu<'a> {
-    fn render_primitive<'b, const SIZE: usize>(
-        draw_queue: &mut DrawQueue<'a, SIZE>,
-        primitive: &'a dyn Primitive<'a>,
+    fn render_primitive<'render, 'b, const SIZE: usize>(
+        draw_queue: &mut DrawQueue<'render, SIZE>,
+        primitive: &'render dyn Primitive<'a>,
         offset: Vector2<isize>,
         force_size: (Option<isize>, Option<isize>),
-    ) -> Result<Vector2<isize>, ()> {
-        let element: Element<'a> = primitive.get_element(offset, force_size.0, force_size.1);
-        draw_queue.queue_element(element)?;
+    ) -> Result<Vector2<isize>, ()> where 'a: 'render {
+        let element: Element<'render> = primitive.get_element(offset, force_size.0, force_size.1);
         let size = primitive.get_size(force_size);
+        draw_queue.queue_element(element)?;
 
         Ok(Vector2::new(
             force_size.0.unwrap_or(size.x),
@@ -39,7 +39,7 @@ impl<'a> Menu<'a> {
     }
 
     fn get_anchor_offset_pos(
-        node: &'a dyn Node<'a>,
+        node: &dyn Node<'a>,
         anchor: Anchor,
         offset: Vector2<isize>,
         parent_container_pos: Vector2<isize>,
@@ -60,10 +60,10 @@ impl<'a> Menu<'a> {
         anchor_pos + offset
     }
 
-    fn render_container_child<'b, const SIZE: usize>(
-        draw_queue: &mut DrawQueue<'a, SIZE>,
+    fn render_container_child<'render, 'b, const SIZE: usize>(
+        draw_queue: &mut DrawQueue<'render, SIZE>,
         parent_container: &dyn ContainerNode<'a>,
-        node: &'a dyn Node<'a>,
+        node: &'render dyn Node<'a>,
         mut offset: Vector2<isize>,
         mut child_force_size: (Option<isize>, Option<isize>),
         child_force_size_expanded: (Option<isize>, Option<isize>),
@@ -235,9 +235,9 @@ impl<'a> Menu<'a> {
         Ok(offset)
     }
 
-    fn render_container<'b, const SIZE: usize>(
-        draw_queue: &mut DrawQueue<'a, SIZE>,
-        container: &'a dyn ContainerNode<'a>,
+    fn render_container<'render, 'b, const SIZE: usize>(
+        draw_queue: &mut DrawQueue<'render, SIZE>,
+        container: &'render dyn ContainerNode<'a>,
         mut offset: Vector2<isize>,
         mut force_size: (Option<isize>, Option<isize>),
     ) -> Result<Vector2<isize>, ()> {
@@ -353,9 +353,9 @@ impl<'a> Menu<'a> {
         Ok(actual_size)
     }
 
-    pub fn render<const SIZE: usize>(
-        &'a self,
-        draw_queue: &mut DrawQueue<'a, SIZE>,
+    pub fn render<'render, const SIZE: usize>(
+        &'render self,
+        draw_queue: &mut DrawQueue<'render, SIZE>,
     ) -> Result<(), ()> {
         Self::render_container(
             draw_queue,

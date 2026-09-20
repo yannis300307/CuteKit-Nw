@@ -17,7 +17,7 @@ impl<'a> ContainerNode<'a> for Button<'a> {
         self.children
     }
 
-    fn get_children_mut<'b>(&'b mut self) -> &'b mut [&'a mut dyn Node<'a>] {
+    fn get_children_mut(&mut self) -> &mut [&'a mut dyn Node<'a>] {
         self.children
     }
 
@@ -53,7 +53,7 @@ impl<'a> Node<'a> for Button<'a> {
         self.layout_override
     }
 
-    fn get_size(&'a self, mut force_size: (Option<isize>, Option<isize>)) -> Vector2<isize> {
+    fn get_size(&self, mut force_size: (Option<isize>, Option<isize>)) -> Vector2<isize> {
         if let Layout::Relative(..) = self.get_layout_ovewrite() {
             // Ignore the force_size as the element is detached from the flow
             force_size = (None, None);
@@ -141,7 +141,7 @@ impl<'a> Node<'a> for Button<'a> {
         self.margin
     }
 
-    fn as_container(&'a self) -> Option<&'a dyn crate::gui::traits::ContainerNode<'a>> {
+    fn as_container<'child>(&'child self) -> Option<&'child (dyn ContainerNode<'a> + 'child)> {
         Some(self)
     }
 
@@ -159,6 +159,7 @@ impl<'a> Node<'a> for Button<'a> {
 
     fn node_id(&self) -> u32 { 1 }
     fn get_raw_pointer(&self) -> *const () { self as *const Self as *const ()}
+    fn get_raw_pointer_mut(&mut self) -> *mut () { self as *mut Self as *mut ()}
 }
 
 unsafe impl<'a> NodeKind<'a> for Button<'a> {

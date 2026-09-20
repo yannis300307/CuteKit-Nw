@@ -35,21 +35,22 @@ impl<'a> Node<'a> for NinePartsRectanglePrimitive<'a> {
         self.margin
     }
 
-    fn as_primitive(&'a self) -> Option<&'a dyn Primitive<'a>> {
+    fn as_primitive<'child>(&'child self) -> Option<&'child (dyn Primitive<'a> + 'child)> {
         Some(self)
     }
 
     fn node_id(&self) -> u32 { 4 }
     fn get_raw_pointer(&self) -> *const () { self as *const Self as *const ()}
+    fn get_raw_pointer_mut(&mut self) -> *mut () { self as *mut Self as *mut ()}
 }
 
 impl<'a> Primitive<'a> for NinePartsRectanglePrimitive<'a> {
-    fn get_element(
+    fn get_element<'render>(
         &self,
         pos: Vector2<isize>,
         width: Option<isize>,
         height: Option<isize>,
-    ) -> Element<'a> {
+    ) -> Element<'render> where 'a: 'render {
         let mut size = self.size;
         if let Layout::Default | Layout::Transparent = self.layout_override {
             if let Some(width) = width {

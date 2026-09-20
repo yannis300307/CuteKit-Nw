@@ -11,12 +11,12 @@ pub struct Container<'a> {
 }
 
 impl<'a> ContainerNode<'a> for Container<'a> {
-    fn get_children<'b>(&'b self) -> &'b [&'a mut dyn Node<'a>] {
+    fn get_children(&self) -> &[&'a mut dyn Node<'a>] {
         self.children
     }
 
-    fn get_children_mut<'b>(&'b mut self) -> &'b mut [&'a mut dyn Node<'a>] {
-        self.children
+    fn get_children_mut(&mut self) -> &mut [&'a mut dyn Node<'a>] {
+        &mut *self.children
     }
 
     fn get_align_direction(&self) -> AlignDirection {
@@ -33,7 +33,7 @@ impl<'a> Node<'a> for Container<'a> {
         self.layout_override
     }
 
-    fn get_size(&'a self, mut force_size: (Option<isize>, Option<isize>)) -> Vector2<isize> {
+    fn get_size(&self, mut force_size: (Option<isize>, Option<isize>)) -> Vector2<isize> {
         if let Layout::Relative(..) = self.get_layout_ovewrite() {
             // Ignore the force_size as the element is detached from the flow
             force_size = (None, None);
@@ -121,7 +121,7 @@ impl<'a> Node<'a> for Container<'a> {
         self.margin
     }
 
-    fn as_container(&'a self) -> Option<&'a dyn ContainerNode<'a>> {
+    fn as_container<'child>(&'child self) -> Option<&'child (dyn ContainerNode<'a> + 'child)> {
         Some(self)
     }
 
@@ -131,6 +131,7 @@ impl<'a> Node<'a> for Container<'a> {
 
     fn node_id(&self) -> u32 { 3 }
     fn get_raw_pointer(&self) -> *const () { self as *const Self as *const ()}
+    fn get_raw_pointer_mut(&mut self) -> *mut () { self as *mut Self as *mut ()}
 }
 
 unsafe impl<'a> NodeKind<'a> for Container<'a> {
