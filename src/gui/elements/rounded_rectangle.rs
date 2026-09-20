@@ -1,9 +1,7 @@
 use nalgebra::Vector2;
 
 use crate::{
-    gui::{Layout, Node, Primitive, margin::Margin},
-    nadk::display::Color565,
-    renderer2d::elements::Element,
+    gui::{Layout, Node, Primitive, margin::Margin, traits::{ContainerNode, InteractiveNode}}, nadk::display::Color565, renderer2d::elements::Element,
 };
 
 pub struct RoundedRectanglePrimitive {
@@ -36,10 +34,6 @@ impl<'a> Node<'a> for RoundedRectanglePrimitive {
 
     fn as_primitive(&'a self) -> Option<&'a dyn Primitive<'a>> {
         Some(self)
-    }
-
-    fn as_container(&'a self) -> Option<&'a dyn crate::gui::traits::ContainerNode<'a>> {
-        None
     }
 }
 

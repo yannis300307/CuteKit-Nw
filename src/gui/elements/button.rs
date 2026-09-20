@@ -3,7 +3,7 @@ use nalgebra::Vector2;
 use crate::{gui::{enums::{AlignDirection, Layout}, margin::Margin, traits::{ContainerNode, InteractiveNode, Node}}, nadk::keyboard};
 
 pub struct Button<'a> {
-    pub children: &'a [&'a dyn Node<'a>],
+    pub children: &'a mut [&'a mut dyn Node<'a>],
     pub align: AlignDirection,
     pub layout_override: Layout,
     pub expand: bool,
@@ -13,7 +13,11 @@ pub struct Button<'a> {
 
 
 impl<'a> ContainerNode<'a> for Button<'a> {
-    fn get_children<'b>(&'b self) -> &'b [&'a dyn Node<'a>] {
+    fn get_children<'b>(&'b self) -> &'b [&'a mut dyn Node<'a>] {
+        self.children
+    }
+
+    fn get_children_mut<'b>(&'b mut self) -> &'b mut [&'a mut dyn Node<'a>] {
         self.children
     }
 
@@ -49,7 +53,7 @@ impl<'a> Node<'a> for Button<'a> {
         self.layout_override
     }
 
-    fn get_size(&self, mut force_size: (Option<isize>, Option<isize>)) -> Vector2<isize> {
+    fn get_size(&'a self, mut force_size: (Option<isize>, Option<isize>)) -> Vector2<isize> {
         if let Layout::Relative(..) = self.get_layout_ovewrite() {
             // Ignore the force_size as the element is detached from the flow
             force_size = (None, None);
@@ -137,11 +141,19 @@ impl<'a> Node<'a> for Button<'a> {
         self.margin
     }
 
-    fn as_primitive(&'a self) -> Option<&'a dyn crate::gui::traits::Primitive<'a>> {
-        None
+    fn as_container(&'a self) -> Option<&'a dyn crate::gui::traits::ContainerNode<'a>> {
+        Some(self)
     }
 
-    fn as_container(&'a self) -> Option<&'a dyn crate::gui::traits::ContainerNode<'a>> {
+    fn as_interactive(&'a self) -> Option<&'a dyn InteractiveNode<'a>> {
+        Some(self)
+    }
+
+    fn as_interactive_mut(&'a mut self) -> Option<&'a mut dyn InteractiveNode<'a>> { 
+        Some(self)
+    }
+
+    fn as_container_mut(&'a mut self) -> Option<&'a mut dyn ContainerNode<'a>> {
         Some(self)
     }
 }

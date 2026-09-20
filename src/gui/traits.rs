@@ -1,20 +1,23 @@
-use core::any::Any;
-
 use nalgebra::Vector2;
 
 use crate::{gui::{enums::{AlignDirection, ChildrenType, Layout}, margin::Margin}, nadk, renderer2d::elements::Element};
 
 pub trait Node<'a> {
     fn get_layout_ovewrite(&self) -> Layout;
-    fn get_size(&self, force_size: (Option<isize>, Option<isize>)) -> Vector2<isize>;
+    fn get_size(&'a self, force_size: (Option<isize>, Option<isize>)) -> Vector2<isize>;
     fn get_margin(&self) -> Margin;
 
-    fn as_primitive(&'a self) -> Option<&'a dyn Primitive<'a>>;
-    fn as_container(&'a self) -> Option<&'a dyn ContainerNode<'a>>;
+    fn as_primitive(&'a self) -> Option<&'a dyn Primitive<'a>> { None }
+    fn as_container(&'a self) -> Option<&'a dyn ContainerNode<'a>> { None }
+    fn as_interactive(&'a self) -> Option<&'a dyn InteractiveNode<'a>> { None }
+
+    fn as_container_mut(&'a mut self) -> Option<&'a mut dyn ContainerNode<'a>> { None }
+    fn as_interactive_mut(&'a mut self) -> Option<&'a mut dyn InteractiveNode<'a>> { None }
 }
 
 pub trait ContainerNode<'a>: Node<'a> {
-    fn get_children<'b>(&'b self) -> &'b [&'a dyn Node<'a>];
+    fn get_children<'b>(&'b self) -> &'b [&'a mut dyn Node<'a>];
+    fn get_children_mut<'b>(&'b mut self) -> &'b mut [&'a mut dyn Node<'a>];
     fn get_align_direction(&self) -> AlignDirection;
     fn get_expand(&self) -> bool;
     fn get_expand_remaining_space(
@@ -23,7 +26,7 @@ pub trait ContainerNode<'a>: Node<'a> {
         force_size: (Option<isize>, Option<isize>),
     ) -> Vector2<isize> {
         let mut non_expand_size = Vector2::repeat(0);
-        let mut expandable_count = 0;
+        let mut expandable_count: isize = 0;
 
 
         let mut last_margin = 0;

@@ -4,41 +4,32 @@
 #![feature(const_trait_impl)]
 #![feature(f16)]
 
+use core::{any::Any, cell::RefCell};
+
 use nalgebra::{Vector2, Vector3};
 
 use crate::{
     gui::{
-        Menu,
-        elements::{
-            ColorRectanglePrimitive, Container, NinePartsRectanglePrimitive,
-            RoundedRectanglePrimitive, TextPrimitive, TransparentScaledSpritePrimitive,
-        },
-        enums::{Anchor, Layout},
-        margin::Margin,
-        traits::{ContainerNode, Node},
-    },
-    ingame_ui::draw_ui,
-    input_manager::InputManager,
-    nadk::{
+        Menu, elements::{
+            Button, ColorRectanglePrimitive, Container, NinePartsRectanglePrimitive, RoundedRectanglePrimitive, TextPrimitive, TransparentScaledSpritePrimitive,
+        }, enums::{Anchor, Layout}, margin::Margin, traits::{ContainerNode, Node},
+    }, ingame_ui::draw_ui, input_manager::InputManager, nadk::{
         display::{
             self, COLOR_BLACK, COLOR_BLUE, COLOR_GREEN, COLOR_RED, COLOR_WHITE, Color565,
             ScreenRect,
         },
         time::{self, wait_milliseconds},
         utils::wait_ok_released,
-    },
-    renderer::{
+    }, renderer::{
         Renderer,
         mesh::{FlatMesh, TexturedMesh},
-    },
-    renderer2d::{
+    }, renderer2d::{
         draw_queue::DrawQueue,
         elements::{CustomPlugin, Element, Font, ScaleMode, Texture},
         nine_parts_rectangle::NinePartsTexture,
         renderer::Renderer2d,
         sprite::TransparentTexture,
-    },
-    timing::TimingManager,
+    }, timing::TimingManager,
 };
 
 use include_bytes_aligned::include_bytes_aligned;
@@ -103,6 +94,7 @@ static FACE_FACES: &'static [u8] = include_bytes_aligned!(
 
 //static TEXTURE: &[u8] = include_bytes_aligned!(4, "../target/assets/texture.bin");
 
+
 #[unsafe(no_mangle)]
 fn main() {
     init_heap!();
@@ -154,7 +146,9 @@ fn main() {
         char_height: 16,
         chars: " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~",
     };
+    let test = RefCell::new(5);
 
+    
     let nine_parts_texture = TransparentTexture {
         data: bytemuck::cast_slice(include_bytes!("../target/assets/9parts.bin")),
         width: 60,
@@ -167,6 +161,74 @@ fn main() {
         top_border_size: 20,
         bottom_border_size: 20,
     };
+
+    let mut menu = Menu {
+        base_node: Container {
+            children: &mut [
+                &mut ColorRectanglePrimitive {
+                    size: Vector2::new(0, 20),
+                    color: Color565::from_rgb888(255, 0, 0),
+                    layout_override: Layout::Default,
+                    margin: Margin::uniform(5),
+                    outline_thickness: None,
+                },
+                &mut ColorRectanglePrimitive {
+                    size: Vector2::new(0, 20),
+                    color: Color565::from_rgb888(255, 0, 0),
+                    layout_override: Layout::Default,
+                    margin: Margin::uniform(5),
+                    outline_thickness: None,
+                },
+                &mut Button {
+                    children: &mut [
+                        &mut ColorRectanglePrimitive {
+                            size: Vector2::new(30, 50),
+                            color: Color565::from_rgb888(255, 0, 0),
+                            layout_override: Layout::Default,
+                            margin: Margin::uniform(5),
+                            outline_thickness: None,
+                        },
+                        &mut ColorRectanglePrimitive {
+                            size: Vector2::new(30, 20),
+                            color: Color565::from_rgb888(255, 0, 0),
+                            layout_override: Layout::Default,
+                            margin: Margin::uniform(5),
+                            outline_thickness: None,
+                        },
+                        &mut ColorRectanglePrimitive {
+                            size: Vector2::new(30, 20),
+                            color: Color565::from_rgb888(255, 0, 0),
+                            layout_override: Layout::Default,
+                            margin: Margin::uniform(5),
+                            outline_thickness: None,
+                        },
+                        
+                    ],
+                    align: gui::enums::AlignDirection::Right,
+                    layout_override: Layout::Default,
+                    expand: false,
+                    margin: Margin::uniform(10),
+                    id: 0,
+                },
+                &mut ColorRectanglePrimitive {
+                    size: Vector2::new(30, 40),
+                    color: Color565::from_rgb888(255, 0, 0),
+                    layout_override: Layout::Default,
+                    margin: Margin::uniform(5),
+                    outline_thickness: None,
+                },
+            ],
+            align: gui::enums::AlignDirection::Down,
+            layout_override: Layout::Default,
+            expand: true,
+            margin: Margin::uniform(0),
+        },
+        selected_node: None,
+        default_hover_marker: true,
+    };
+
+    menu.selected_node = None;
+
 
     loop {
         time_manager.update();
@@ -185,69 +247,6 @@ fn main() {
 
         let frame_time = heapless::format!(30; "time: {}", time_manager.get_frame_time()).unwrap();
 
-        let menu = Menu {
-            base_node: Container {
-                children: &[
-                    &ColorRectanglePrimitive {
-                        size: Vector2::new(0, 20),
-                        color: Color565::from_rgb888(255, 0, 0),
-                        layout_override: Layout::Default,
-                        margin: Margin::uniform(5),
-                        outline_thickness: None,
-                    },
-                    &ColorRectanglePrimitive {
-                        size: Vector2::new(0, 20),
-                        color: Color565::from_rgb888(255, 0, 0),
-                        layout_override: Layout::Default,
-                        margin: Margin::uniform(5),
-                        outline_thickness: None,
-                    },
-                    &Container {
-                        children: &[
-                            &ColorRectanglePrimitive {
-                                size: Vector2::new(30, 50),
-                                color: Color565::from_rgb888(255, 0, 0),
-                                layout_override: Layout::Default,
-                                margin: Margin::uniform(5),
-                                outline_thickness: None,
-                            },
-                            &ColorRectanglePrimitive {
-                                size: Vector2::new(30, 20),
-                                color: Color565::from_rgb888(255, 0, 0),
-                                layout_override: Layout::Default,
-                                margin: Margin::uniform(5),
-                                outline_thickness: None,
-                            },
-                            &ColorRectanglePrimitive {
-                                size: Vector2::new(30, 20),
-                                color: Color565::from_rgb888(255, 0, 0),
-                                layout_override: Layout::Default,
-                                margin: Margin::uniform(5),
-                                outline_thickness: None,
-                            },
-                            
-                        ],
-                        align: gui::enums::AlignDirection::Right,
-                        layout_override: Layout::Default,
-                        expand: false,
-                        margin: Margin::uniform(10),
-                    },
-                    &ColorRectanglePrimitive {
-                        size: Vector2::new(30, 40),
-                        color: Color565::from_rgb888(255, 0, 0),
-                        layout_override: Layout::Default,
-                        margin: Margin::uniform(5),
-                        outline_thickness: None,
-                    },
-                ],
-                align: gui::enums::AlignDirection::Down,
-                layout_override: Layout::Default,
-                expand: true,
-                margin: Margin::uniform(0),
-            },
-            selected_node: 0,
-            default_hover_marker: true,
-        };
 
         let mut draw_queue: DrawQueue<'_, 100> = DrawQueue::new();
 

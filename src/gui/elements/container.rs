@@ -1,9 +1,9 @@
 use nalgebra::Vector2;
 
-use crate::gui::{AlignDirection, ChildrenType, Layout, Node, margin::Margin, traits::ContainerNode};
+use crate::gui::{AlignDirection, ChildrenType, Layout, Node, margin::Margin, traits::{ContainerNode, InteractiveNode, Primitive}};
 
 pub struct Container<'a> {
-    pub children: &'a [&'a dyn Node<'a>],
+    pub children: &'a mut [&'a mut dyn Node<'a>],
     pub align: AlignDirection,
     pub layout_override: Layout,
     pub expand: bool,
@@ -11,7 +11,11 @@ pub struct Container<'a> {
 }
 
 impl<'a> ContainerNode<'a> for Container<'a> {
-    fn get_children<'b>(&'b self) -> &'b [&'a dyn Node<'a>] {
+    fn get_children<'b>(&'b self) -> &'b [&'a mut dyn Node<'a>] {
+        self.children
+    }
+
+    fn get_children_mut<'b>(&'b mut self) -> &'b mut [&'a mut dyn Node<'a>] {
         self.children
     }
 
@@ -29,7 +33,7 @@ impl<'a> Node<'a> for Container<'a> {
         self.layout_override
     }
 
-    fn get_size(&self, mut force_size: (Option<isize>, Option<isize>)) -> Vector2<isize> {
+    fn get_size(&'a self, mut force_size: (Option<isize>, Option<isize>)) -> Vector2<isize> {
         if let Layout::Relative(..) = self.get_layout_ovewrite() {
             // Ignore the force_size as the element is detached from the flow
             force_size = (None, None);
@@ -43,7 +47,7 @@ impl<'a> Node<'a> for Container<'a> {
         let mut total_size = Vector2::new(0, 0);
         let mut max_direction = false;
         let mut last_margin = 0;
-        for child in self.children.iter() {
+        for child in self.get_children().iter() {
             let mut size = Vector2::zeros();
             if let Some(primitive) = child.as_primitive() {
                 if let Layout::Default = primitive.get_layout_ovewrite() {
@@ -117,11 +121,11 @@ impl<'a> Node<'a> for Container<'a> {
         self.margin
     }
 
-    fn as_primitive(&'a self) -> Option<&'a dyn crate::gui::traits::Primitive<'a>> {
-        None
+    fn as_container(&'a self) -> Option<&'a dyn ContainerNode<'a>> {
+        Some(self)
     }
 
-    fn as_container(&'a self) -> Option<&'a dyn crate::gui::traits::ContainerNode<'a>> {
+    fn as_container_mut(&'a mut self) -> Option<&'a mut dyn ContainerNode<'a>> {
         Some(self)
     }
 }

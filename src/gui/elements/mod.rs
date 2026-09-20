@@ -12,3 +12,4 @@ pub use nine_parts_rectangle::NinePartsRectanglePrimitive;
 pub use rounded_rectangle::RoundedRectanglePrimitive;
 pub use text::TextPrimitive;
 pub use container::Container;
+pub use button::Button;

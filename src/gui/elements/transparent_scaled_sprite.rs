@@ -1,8 +1,7 @@
 use nalgebra::Vector2;
 
 use crate::{
-    gui::{Layout, Node, Primitive, margin::Margin},
-    renderer2d::{
+    gui::{Layout, Node, Primitive, margin::Margin, traits::{ContainerNode, InteractiveNode}}, renderer2d::{
         elements::{Element, ScaleMode},
         sprite::TransparentTexture,
     },
@@ -38,10 +37,6 @@ impl<'a> Node<'a> for TransparentScaledSpritePrimitive<'a> {
 
     fn as_primitive(&'a self) -> Option<&'a dyn Primitive<'a>> {
         Some(self)
-    }
-
-    fn as_container(&'a self) -> Option<&'a dyn crate::gui::traits::ContainerNode<'a>> {
-        None
     }
 }
 

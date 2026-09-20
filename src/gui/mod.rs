@@ -1,12 +1,7 @@
 use crate::{
-    constants::rendering::{SCREEN_HEIGHT, SCREEN_WIDTH},
-    gui::{
-        elements::Container,
-        enums::{AlignDirection, Anchor, ChildrenType, Layout},
-        traits::{ContainerNode, Node, Primitive},
-    },
-    nadk::display::Color565,
-    renderer2d::{
+    constants::rendering::{SCREEN_HEIGHT, SCREEN_WIDTH}, gui::{
+        elements::Container, enums::{AlignDirection, Anchor, ChildrenType, Layout}, traits::{ContainerNode, InteractiveNode, Node, Primitive},
+    }, input_manager::{self, InputManager}, nadk::display::Color565, renderer2d::{
         draw_queue::DrawQueue,
         elements::{Element, Font, ScaleMode},
         nine_parts_rectangle::NinePartsTexture,
@@ -22,14 +17,14 @@ pub mod traits;
 
 pub struct Menu<'a> {
     pub base_node: Container<'a>,
-    pub selected_node: usize,
+    pub selected_node: Option<&'a mut dyn InteractiveNode<'a>>,
     pub default_hover_marker: bool,
 }
 
 impl<'a> Menu<'a> {
     fn render_primitive<'b, const SIZE: usize>(
         draw_queue: &mut DrawQueue<'a, SIZE>,
-        primitive: &dyn Primitive<'a>,
+        primitive: &'a dyn Primitive<'a>,
         offset: Vector2<isize>,
         force_size: (Option<isize>, Option<isize>),
     ) -> Result<Vector2<isize>, ()> {
@@ -44,7 +39,7 @@ impl<'a> Menu<'a> {
     }
 
     fn get_anchor_offset_pos(
-        node: &dyn Node,
+        node: &'a dyn Node<'a>,
         anchor: Anchor,
         offset: Vector2<isize>,
         parent_container_pos: Vector2<isize>,
@@ -370,4 +365,20 @@ impl<'a> Menu<'a> {
         )?;
         Ok(())
     }
+
+    fn update(&mut self, input_manager: InputManager) {
+        let key = input_manager.get_last_pressed();
+        if let Some(key) = key {
+            if let Some(node) = &mut self.selected_node {
+                node.handle_key_down(key);
+            }
+        }
+    }
+
+    /// Pool the last event emitted by the hovered node.
+    /// Returns None in case no event where emitted since the last update
+    fn get_last_event(&self) -> Option<(usize, usize)> {
+        None
+    }
 }
+ 
