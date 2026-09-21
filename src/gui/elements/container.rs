@@ -125,7 +125,7 @@ impl<'a> Node<'a> for Container<'a> {
         Some(self)
     }
 
-    fn as_container_mut(&'a mut self) -> Option<&'a mut dyn ContainerNode<'a>> {
+    fn as_container_mut<'child>(&'child mut self) -> Option<&'child mut (dyn ContainerNode<'a> + 'child)> {
         Some(self)
     }
 

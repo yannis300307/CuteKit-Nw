@@ -15,8 +15,8 @@ pub trait Node<'a> {
     fn as_container<'child>(&'child self) -> Option<&'child (dyn ContainerNode<'a> + 'child)> { None }
     fn as_interactive(&'a self) -> Option<&'a dyn InteractiveNode<'a>> { None }
 
-    fn as_container_mut(&'a mut self) -> Option<&'a mut dyn ContainerNode<'a>> { None }
-    fn as_interactive_mut(&'a mut self) -> Option<&'a mut dyn InteractiveNode<'a>> { None }
+    fn as_container_mut<'child>(&'child mut self) -> Option<&'child mut (dyn ContainerNode<'a> + 'child)> { None }
+    fn as_interactive_mut<'child>(&'child mut self) -> Option<&'child mut (dyn InteractiveNode<'a> + 'child)> { None }
 
     // The functions bellow are required to downcast the objets to their actual type
     fn node_id(&self) -> u32;
