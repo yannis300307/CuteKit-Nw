@@ -198,7 +198,7 @@ impl<'a> Menu<'a> {
                     target_size = if container.get_expand() {
                         child_force_size_expanded
                     } else {
-                        let fit_size = container.get_content_size((None, None));
+                        let fit_size = container.get_content_size(child_force_size);
                         match container.get_align_direction() {
                             AlignDirection::Down | AlignDirection::Up => (Some(fit_size.x), None),
                             AlignDirection::Right | AlignDirection::Left => (None, Some(fit_size.y)),
@@ -313,12 +313,12 @@ impl<'a> Menu<'a> {
                         &mut last_margin,
                     )?;
                     
-                    if let Some(width) = &mut force_size.0 {    
+                    /*if let Some(width) = &mut force_size.0 {    
                         *width = container_size.x - (offset.x - container_pos.x);
                     }
                     if let Some(height) = &mut force_size.1 {
                         *height = container_size.y - (offset.y - container_pos.y);
-                    }
+                    }*/
                 }
             }
             _ => {
@@ -336,12 +336,12 @@ impl<'a> Menu<'a> {
                         &mut last_margin,
                     )?;
 
-                    if let Some(width) = &mut force_size.0 {
+                    /*if let Some(width) = &mut force_size.0 {
                         *width = container_size.x - (offset.x - container_pos.x);
                     }
                     if let Some(height) = &mut force_size.1 {
                         *height = container_size.y - (offset.y - container_pos.y);
-                    }
+                    }*/
                 }
             }
         }
