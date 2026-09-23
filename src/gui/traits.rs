@@ -48,6 +48,7 @@ pub trait ContainerNode<'a>: Node<'a> {
     fn get_children_mut(&mut self) -> &mut [&'a mut (dyn Node<'a> + 'a)];
     fn get_align_direction(&self) -> AlignDirection;
     fn get_expand(&self) -> bool;
+    fn get_selected_node_path(&self) -> Option<usize>;
     fn get_expand_remaining_space(
         &self,
         max_size: Vector2<isize>,
@@ -117,6 +118,8 @@ pub trait ContainerNode<'a>: Node<'a> {
             AlignDirection::Down | AlignDirection::Up => { non_expand_size.y += last_margin },
             AlignDirection::Right | AlignDirection::Left => { non_expand_size.x += last_margin },
         }
+
+        // TODO: A margin seems to be 2 times counted (not sure)
 
         if expandable_count > 0 {
             (max_size - non_expand_size) / expandable_count

@@ -12,7 +12,7 @@ use crate::{
     gui::{
         Menu, elements::{
             Button, ColorRectanglePrimitive, Container, NinePartsRectanglePrimitive, RoundedRectanglePrimitive, TextPrimitive, TransparentScaledSpritePrimitive,
-        }, enums::{Anchor, Layout}, margin::Margin, traits::{ContainerNode, Node, node_downcast_ref, node_downcast_ref_mut},
+        }, enums::{Anchor::{self, Center}, Layout}, margin::Margin, traits::{ContainerNode, Node, node_downcast_ref, node_downcast_ref_mut},
     }, ingame_ui::draw_ui, input_manager::InputManager, nadk::{
         display::{
             self, COLOR_BLACK, COLOR_BLUE, COLOR_GREEN, COLOR_RED, COLOR_WHITE, Color565,
@@ -182,32 +182,26 @@ fn main() {
                 &mut Button {
                     children: &mut [
                         &mut ColorRectanglePrimitive {
-                            size: Vector2::new(30, 50),
-                            color: Color565::from_rgb888(255, 0, 0),
+                            size: Vector2::new(30, 30),
+                            color: Color565::from_rgb888(150, 150, 150),
                             layout_override: Layout::Default,
-                            margin: Margin::uniform(5),
+                            margin: Margin::none(),
                             outline_thickness: None,
                         },
-                        &mut ColorRectanglePrimitive {
-                            size: Vector2::new(30, 20),
-                            color: Color565::from_rgb888(255, 0, 0),
-                            layout_override: Layout::Default,
-                            margin: Margin::uniform(5),
-                            outline_thickness: None,
-                        },
-                        &mut ColorRectanglePrimitive {
-                            size: Vector2::new(30, 20),
-                            color: Color565::from_rgb888(255, 0, 0),
-                            layout_override: Layout::Default,
-                            margin: Margin::uniform(5),
-                            outline_thickness: None,
-                        },
+                        &mut TextPrimitive {
+                            text: "A button",
+                            font: &font,
+                            font_color: COLOR_RED,
+                            background_color: None, // TODO: Relative layout is broken with margins
+                            layout_override: Layout::Relative(Anchor::BottomLeft, Vector2::zeros()),
+                            margin: Margin::none(),
+                        }
                         
                     ],
-                    align: gui::enums::AlignDirection::Right,
+                    align: gui::enums::AlignDirection::Down,
                     layout_override: Layout::Default,
                     expand: false,
-                    margin: Margin::uniform(10),
+                    margin: Margin::uniform(15),
                     id: 0,
                 },
                 &mut ColorRectanglePrimitive {
@@ -217,17 +211,17 @@ fn main() {
                     margin: Margin::uniform(5),
                     outline_thickness: None,
                 },
+                
             ],
             align: gui::enums::AlignDirection::Down,
             layout_override: Layout::Default,
             expand: true,
             margin: Margin::uniform(0),
+            selected_child: Some(2),
         },
-        selected_node: None,
         default_hover_marker: true,
+        last_signal: None,
     };
-
-    let mut c = 0.;
 
     loop {
         time_manager.update();
@@ -246,22 +240,22 @@ fn main() {
 
         let frame_time = heapless::format!(30; "time: {}", time_manager.get_frame_time()).unwrap();
 
-        let node = &mut *menu.base_node.get_children_mut()[2].as_container_mut().unwrap().get_children_mut()[1];
-        let a: &mut ColorRectanglePrimitive = node_downcast_ref_mut(node).unwrap();
-        let color = (0,0,0);
-        a.color = Color565::from_rgb888(color.0, color.1, color.2);
-
-        let node = &mut *menu.base_node.get_children_mut()[0];
-        let a: &mut ColorRectanglePrimitive = node_downcast_ref_mut(node).unwrap();
-        let color = (10, 10, 10);
-        a.color = Color565::from_rgb888(color.0, color.1, color.2);
-
-        c += 2.;
-        if c >= 360. {c = 0.;}
-
         let mut draw_queue: DrawQueue<'_, 100> = DrawQueue::new();
 
-        //draw_queue.add_plugin(&mut renderer).unwrap();
+        //draw_queue.add_plugin(&mut renderer).unwrap()
+        
+        menu.update(&input_manager);
+
+        if let Some(signal) = menu.get_last_event() {
+            match signal.0 {
+                0 => {
+                    let node = &mut *menu.base_node.children[2].as_container_mut().unwrap().get_children_mut()[1];
+                    let text: &mut TextPrimitive = node_downcast_ref_mut(&mut *node).unwrap();
+                    text.text = "You clicked!";
+                }
+                _ => ()
+            }
+        }
 
         menu.render(&mut draw_queue).unwrap();
 

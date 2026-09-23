@@ -1,7 +1,7 @@
 use crate::{
     constants::rendering::{SCREEN_HEIGHT, SCREEN_WIDTH}, gui::{
-        elements::Container, enums::{AlignDirection, Anchor, ChildrenType, Layout}, traits::{ContainerNode, InteractiveNode, Node, Primitive},
-    }, input_manager::{self, InputManager}, nadk::display::Color565, renderer2d::{
+        elements::Container, enums::{AlignDirection, Anchor, ChildrenType, Layout}, traits::{ContainerNode, InteractiveNode, Node, Primitive, node_downcast_ref_mut},
+    }, input_manager::{self, InputManager}, nadk::{display::Color565, keyboard::Key}, renderer2d::{
         draw_queue::DrawQueue,
         elements::{Element, Font, ScaleMode},
         nine_parts_rectangle::NinePartsTexture,
@@ -15,10 +15,15 @@ pub mod enums;
 pub mod margin;
 pub mod traits;
 
+/// A signal emitted by an InteractiveNode. The first usize is the user-set id of the InteractiveNode
+/// and the second usize is the id of the signal.
+#[derive(Clone, Copy)]
+pub struct UiSignal(pub usize, pub usize);
+
 pub struct Menu<'a> {
     pub base_node: Container<'a>,
-    pub selected_node: Option<&'a mut dyn InteractiveNode<'a>>,
     pub default_hover_marker: bool,
+    pub last_signal: Option<UiSignal>,
 }
 
 impl<'a> Menu<'a> {
@@ -366,19 +371,34 @@ impl<'a> Menu<'a> {
         Ok(())
     }
 
-    fn update(&mut self, input_manager: InputManager) {
+    fn update_selected_node(node: &mut dyn Node<'a>, key: Key) -> Option<UiSignal> {
+        if let Some(node) = node.as_interactive_mut() {
+            let signal = node.handle_key_down(key);
+            if let Some(signal) = signal {
+                return Some(UiSignal(node.get_id(), signal));
+            }
+            return None;
+        }
+        else if let Some(container) = node.as_container_mut() {
+            if let Some(index) = container.get_selected_node_path() {
+                // Ok tell me how this could fail
+                return Self::update_selected_node(*container.get_children_mut().get_mut(index).unwrap(), key);
+            }
+        }
+        panic!("Selected node was pointing to a non-interactive node.");
+    }
+
+    pub fn update(&mut self, input_manager: &InputManager) {
         let key = input_manager.get_last_pressed();
         if let Some(key) = key {
-            if let Some(node) = &mut self.selected_node {
-                node.handle_key_down(key);
-            }
+            self.last_signal = Self::update_selected_node(&mut self.base_node, key);
         }
     }
 
     /// Pool the last event emitted by the hovered node.
     /// Returns None in case no event where emitted since the last update
-    fn get_last_event(&self) -> Option<(usize, usize)> {
-        None
+    pub fn get_last_event(&self) -> Option<UiSignal> {
+        self.last_signal
     }
 }
  

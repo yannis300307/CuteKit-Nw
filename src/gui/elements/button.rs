@@ -28,16 +28,23 @@ impl<'a> ContainerNode<'a> for Button<'a> {
     fn get_expand(&self) -> bool {
         self.expand
     }
+
+    fn get_selected_node_path(&self) -> Option<usize> {
+        None
+    }
 }
 
 impl<'a> InteractiveNode<'a> for Button<'a> {
     fn handle_key_down(&mut self, key: crate::nadk::keyboard::Key) -> Option<usize> {
-        None
+        match key {
+            keyboard::Key::Ok => Some(0),
+            _ => None
+        }
     }
     
     fn handle_key_up(&mut self, key: crate::nadk::keyboard::Key) -> Option<usize> {
         match key {
-            keyboard::Key::Ok => Some(0),
+            keyboard::Key::Ok => Some(1),
             _ => None
         }
     }

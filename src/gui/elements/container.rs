@@ -8,7 +8,21 @@ pub struct Container<'a> {
     pub layout_override: Layout,
     pub expand: bool,
     pub margin: Margin,
+    pub selected_child: Option<usize> // TODO: tihs should not be public. make a constructor
 }
+
+/*impl<'a> Container<'a> {
+    pub fn new(children: &'a mut [&'a mut dyn Node<'a>], align: AlignDirection, layout_override: Layout, expand: bool, margin: Margin) -> Self {
+        Self {
+            children,
+            align,
+            layout_override,
+            expand,
+            margin,
+            selected_child: None,
+        }
+    }
+}*/
 
 impl<'a> ContainerNode<'a> for Container<'a> {
     fn get_children(&self) -> &[&'a mut dyn Node<'a>] {
@@ -25,6 +39,10 @@ impl<'a> ContainerNode<'a> for Container<'a> {
 
     fn get_expand(&self) -> bool {
         self.expand
+    }
+
+    fn get_selected_node_path(&self) -> Option<usize> {
+        self.selected_child
     }
 }
 
