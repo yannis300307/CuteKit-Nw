@@ -9,6 +9,7 @@ pub struct Button<'a> {
     pub expand: bool,
     pub margin: Margin,
     pub id: usize,
+    pub is_selected: bool,
 }
 
 
@@ -51,6 +52,14 @@ impl<'a> InteractiveNode<'a> for Button<'a> {
     
     fn get_id(&self) -> usize {
         self.id
+    }
+    
+    fn get_is_selected(&self) -> bool {
+        self.is_selected
+    }
+    
+    fn set_is_selected(&mut self, state: bool) {
+        self.is_selected = state;
     }
 }
 
@@ -152,7 +161,7 @@ impl<'a> Node<'a> for Button<'a> {
         Some(self)
     }
 
-    fn as_interactive(&'a self) -> Option<&'a dyn InteractiveNode<'a>> {
+    fn as_interactive<'child>(&'child self) -> Option<&'child (dyn InteractiveNode<'a> + 'child)> {
         Some(self)
     }
 

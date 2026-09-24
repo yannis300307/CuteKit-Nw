@@ -203,6 +203,7 @@ fn main() {
                     expand: false,
                     margin: Margin::uniform(15),
                     id: 0,
+                    is_selected: true,
                 },
                 &mut ColorRectanglePrimitive {
                     size: Vector2::new(30, 40),

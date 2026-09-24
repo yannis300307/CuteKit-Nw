@@ -1,7 +1,7 @@
 use crate::{
     constants::rendering::{SCREEN_HEIGHT, SCREEN_WIDTH}, gui::{
         elements::Container, enums::{AlignDirection, Anchor, ChildrenType, Layout}, traits::{ContainerNode, InteractiveNode, Node, Primitive, node_downcast_ref_mut},
-    }, input_manager::{self, InputManager}, nadk::{display::Color565, keyboard::Key}, renderer2d::{
+    }, input_manager::{self, InputManager}, nadk::{display::{COLOR_WHITE, Color565}, keyboard::Key}, renderer2d::{
         draw_queue::DrawQueue,
         elements::{Element, Font, ScaleMode},
         nine_parts_rectangle::NinePartsTexture,
@@ -32,15 +32,24 @@ impl<'a> Menu<'a> {
         primitive: &'render dyn Primitive<'a>,
         offset: Vector2<isize>,
         force_size: (Option<isize>, Option<isize>),
+        render_select_marker: bool,
     ) -> Result<Vector2<isize>, ()> where 'a: 'render {
         let element: Element<'render> = primitive.get_element(offset, force_size.0, force_size.1);
         let size = primitive.get_size(force_size);
         draw_queue.queue_element(element)?;
 
-        Ok(Vector2::new(
+        let actual_size = Vector2::new(
             force_size.0.unwrap_or(size.x),
             force_size.1.unwrap_or(size.y),
-        ))
+        );
+
+        if let Some(primitive) = primitive.as_interactive() {
+            if render_select_marker && primitive.get_is_selected() {
+                draw_queue.add_outline_rectangle(offset, actual_size.map(|x| x as u16), COLOR_WHITE, 2)?;
+            }
+        }
+
+        Ok(actual_size)
     }
 
     fn get_anchor_offset_pos(
@@ -76,6 +85,7 @@ impl<'a> Menu<'a> {
         parent_container_pos: Vector2<isize>,
         parent_container_size: Vector2<isize>,
         last_margin: &mut isize,
+        render_select_marker: bool,
     ) -> Result<Vector2<isize>, ()> {
             if let Some(primitive) = node.as_primitive() {
                 let mut pos = offset;
@@ -125,7 +135,7 @@ impl<'a> Menu<'a> {
                     }
                 }
 
-                let size = Self::render_primitive(draw_queue, primitive, pos, child_force_size)?;
+                let size = Self::render_primitive(draw_queue, primitive, pos, child_force_size, render_select_marker)?;
                 // Ignore offset when transparent or anchored
                 match primitive.get_layout_ovewrite() {
                     Layout::Default => match parent_container.get_align_direction() {
@@ -211,7 +221,7 @@ impl<'a> Menu<'a> {
                     };
                 };
 
-                let size = Self::render_container(draw_queue, container, pos, target_size)?;
+                let size = Self::render_container(draw_queue, container, pos, target_size, render_select_marker)?;
                 // Ignore offset when transparent or anchored
                 match container.get_layout_ovewrite() {
                     Layout::Default => match parent_container.get_align_direction() {
@@ -245,6 +255,7 @@ impl<'a> Menu<'a> {
         container: &'render dyn ContainerNode<'a>,
         mut offset: Vector2<isize>,
         mut force_size: (Option<isize>, Option<isize>),
+        render_select_marker: bool,
     ) -> Result<Vector2<isize>, ()> {
         if let Layout::Relative(..) = container.get_layout_ovewrite() {
             // Ignore the force_size as the element is detached from the flow
@@ -316,6 +327,7 @@ impl<'a> Menu<'a> {
                         container_pos,
                         container_size,
                         &mut last_margin,
+                        render_select_marker
                     )?;
                     
                     /*if let Some(width) = &mut force_size.0 {    
@@ -339,6 +351,7 @@ impl<'a> Menu<'a> {
                         container_pos,
                         container_size,
                         &mut last_margin,
+                        render_select_marker
                     )?;
 
                     /*if let Some(width) = &mut force_size.0 {
@@ -355,6 +368,12 @@ impl<'a> Menu<'a> {
             force_size.0.unwrap_or(offset.x - container_pos.x),
             force_size.1.unwrap_or(offset.y - container_pos.y),
         );
+        if let Some(container) = container.as_interactive() {
+            if render_select_marker && container.get_is_selected() {
+                draw_queue.add_outline_rectangle(container_pos, actual_size.map(|x| x as u16), COLOR_WHITE, 2)?;
+            }
+        }
+
         Ok(actual_size)
     }
 
@@ -367,6 +386,7 @@ impl<'a> Menu<'a> {
             &self.base_node,
             Vector2::repeat(0),
             (Some(SCREEN_WIDTH as isize), Some(SCREEN_HEIGHT as isize)),
+            self.default_hover_marker,
         )?;
         Ok(())
     }

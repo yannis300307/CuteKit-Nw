@@ -13,7 +13,7 @@ pub trait Node<'a> {
 
     fn as_primitive<'child>(&'child self) -> Option<&'child (dyn Primitive<'a> + 'child)> { None }
     fn as_container<'child>(&'child self) -> Option<&'child (dyn ContainerNode<'a> + 'child)> { None }
-    fn as_interactive(&'a self) -> Option<&'a dyn InteractiveNode<'a>> { None }
+    fn as_interactive<'child>(&'child self) -> Option<&'child (dyn InteractiveNode<'a> + 'child)> { None }
 
     fn as_container_mut<'child>(&'child mut self) -> Option<&'child mut (dyn ContainerNode<'a> + 'child)> { None }
     fn as_interactive_mut<'child>(&'child mut self) -> Option<&'child mut (dyn InteractiveNode<'a> + 'child)> { None }
@@ -255,4 +255,10 @@ pub trait InteractiveNode<'a>: Node<'a> {
 
     // Return the id set by in the node tree.
     fn get_id(&self) -> usize;
+
+    /// Get the internal marker for selection
+    fn get_is_selected(&self) -> bool;
+
+    /// Set the internal marker for selection
+    fn set_is_selected(&mut self, state: bool);
 }
