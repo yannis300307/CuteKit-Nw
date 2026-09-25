@@ -262,20 +262,12 @@ impl<'a> Menu<'a> {
             force_size = (None, None);
         }
 
-        let mut child_force_size: (Option<isize>, Option<isize>) = match container.get_align_direction()
-        {
-            AlignDirection::Up | AlignDirection::Down => (force_size.0, None),
-            AlignDirection::Right | AlignDirection::Left => (None, force_size.1),
-        };
+        let margin = container.get_margin();
 
         let container_pos = offset;
 
         let default_size = container.get_content_size(force_size);
         let mut container_size = default_size;
-
-        let margin = container.get_margin();
-        container_size.x -= margin.left + margin.right;
-        container_size.y -= margin.top + margin.bottom;
 
         // If the parent of the container doesn't apply a size constraint, the size remains the sum of children of that container
         if let Some(width) = force_size.0 {
@@ -285,16 +277,40 @@ impl<'a> Menu<'a> {
             container_size.y = height;
         }
 
+        // TODO: Find a cleaner way to fix the double margin issue
+        // If the container is expanded, the margins are still not taken into account
+        let mut child_force_size: (Option<isize>, Option<isize>) = if container.get_expand() {
+            match container.get_align_direction()
+            { 
+                AlignDirection::Up | AlignDirection::Down => (force_size.0.map(|x| x - (margin.left + margin.right)), None),
+                AlignDirection::Right | AlignDirection::Left => (None, force_size.1.map(|y| y - (margin.top + margin.bottom))),
+            }
+        } else {
+            match container.get_align_direction()
+            { 
+                AlignDirection::Up | AlignDirection::Down => (force_size.0, None),
+                AlignDirection::Right | AlignDirection::Left => (None, force_size.1),
+            }
+        };
+        // TODO: Find a cleaner way to fix the double margin issue
+        if container.get_expand() {
+            // Remove the size of the non-flow direction margins
+            match container.get_align_direction() {
+                AlignDirection::Up | AlignDirection::Down => {container_size.x -= margin.left + margin.right;},
+                AlignDirection::Right | AlignDirection::Left => {container_size.y -= margin.top + margin.bottom;},
+            }
+        }
+
         // The size available for each expanded containers
-        let expand_size = container.get_expand_remaining_space(
+        let mut expand_size = container.get_expand_remaining_space(
             Vector2::new(force_size.0.unwrap_or(0), force_size.1.unwrap_or(0)),
             force_size,
         );
 
         let mut child_force_size_expanded: (Option<isize>, Option<isize>) =
             match container.get_align_direction() {
-                AlignDirection::Up | AlignDirection::Down => (force_size.0, Some(expand_size.y)),
-                AlignDirection::Right | AlignDirection::Left => (Some(expand_size.x), force_size.1),
+                AlignDirection::Up | AlignDirection::Down => (force_size.0.map(|x| x - (margin.left + margin.right)), Some(expand_size.y)),
+                AlignDirection::Right | AlignDirection::Left => (Some(expand_size.x), force_size.1.map(|y| y - (margin.top + margin.bottom))),
             };
 
         offset = match container.get_align_direction() {
@@ -310,7 +326,11 @@ impl<'a> Menu<'a> {
             }
         };
 
+        // Used for anchoring. The top left corner of the container
+        let origin = offset;
+
         let mut last_margin = 0;
+
 
         // If the direction is Left or Up, we simply reverse the iterator
         match container.get_align_direction() {
@@ -324,7 +344,7 @@ impl<'a> Menu<'a> {
                         child_force_size,
                         child_force_size_expanded,
                         force_size,
-                        container_pos,
+                        origin,
                         container_size,
                         &mut last_margin,
                         render_select_marker
@@ -348,7 +368,7 @@ impl<'a> Menu<'a> {
                         child_force_size,
                         child_force_size_expanded,
                         force_size,
-                        container_pos,
+                        origin,
                         container_size,
                         &mut last_margin,
                         render_select_marker
@@ -363,14 +383,16 @@ impl<'a> Menu<'a> {
                 }
             }
         }
-        let actual_size = Vector2::new(
+    
+        let mut actual_size = Vector2::new(
             // We have to substract the offset of the container itself to get its actual offset.
             force_size.0.unwrap_or(offset.x - container_pos.x),
             force_size.1.unwrap_or(offset.y - container_pos.y),
         );
+
         if let Some(container) = container.as_interactive() {
             if render_select_marker && container.get_is_selected() {
-                draw_queue.add_outline_rectangle(container_pos, actual_size.map(|x| x as u16), COLOR_WHITE, 2)?;
+                draw_queue.add_outline_rectangle(container_pos, container_size.map(|x| x as u16), COLOR_WHITE, 2)?;
             }
         }
 

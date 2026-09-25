@@ -193,15 +193,15 @@ fn main() {
                             font: &font,
                             font_color: COLOR_RED,
                             background_color: None, // TODO: Relative layout is broken with margins
-                            layout_override: Layout::Relative(Anchor::BottomLeft, Vector2::zeros()),
+                            layout_override: Layout::Relative(Anchor::Center, Vector2::zeros()),
                             margin: Margin::none(),
                         }
                         
                     ],
                     align: gui::enums::AlignDirection::Down,
                     layout_override: Layout::Default,
-                    expand: false,
-                    margin: Margin::uniform(15),
+                    expand: true,
+                    margin: Margin::uniform(20),
                     id: 0,
                     is_selected: true,
                 },
