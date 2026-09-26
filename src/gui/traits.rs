@@ -1,6 +1,6 @@
 use nalgebra::Vector2;
 
-use crate::{gui::{enums::{AlignDirection, ChildrenType, Layout}, margin::Margin}, nadk, renderer2d::elements::Element};
+use crate::{gui::{NavigationDirection, enums::{AlignDirection, ChildrenType, Layout}, margin::Margin}, nadk, renderer2d::elements::Element};
 
 pub unsafe trait NodeKind<'a>: Node<'a> {
     const ID: u32;
@@ -49,6 +49,7 @@ pub trait ContainerNode<'a>: Node<'a> {
     fn get_align_direction(&self) -> AlignDirection;
     fn get_expand(&self) -> bool;
     fn get_selected_node_path(&self) -> Option<usize>;
+    fn set_selected_node_path(&mut self, index: Option<usize>);
     fn get_expand_remaining_space(
         &self,
         max_size: Vector2<isize>,
@@ -251,7 +252,7 @@ pub trait InteractiveNode<'a>: Node<'a> {
     /// Returning true will prevent the default behavior.
     /// False will let the layout system process the default behavior.
     /// The default behavior is to select the next node in the direction of the pressed arrow.
-    fn handle_navigation(&mut self) -> bool {false}
+    fn handle_navigation(&mut self, direction: NavigationDirection) -> bool {false}
 
     // Return the id set by in the node tree.
     fn get_id(&self) -> usize;

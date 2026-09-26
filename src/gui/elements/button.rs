@@ -33,6 +33,8 @@ impl<'a> ContainerNode<'a> for Button<'a> {
     fn get_selected_node_path(&self) -> Option<usize> {
         None
     }
+
+    fn set_selected_node_path(&mut self, _index: Option<usize>) { /* Basically useless */}
 }
 
 impl<'a> InteractiveNode<'a> for Button<'a> {

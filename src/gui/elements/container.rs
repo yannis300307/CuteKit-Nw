@@ -44,6 +44,10 @@ impl<'a> ContainerNode<'a> for Container<'a> {
     fn get_selected_node_path(&self) -> Option<usize> {
         self.selected_child
     }
+    
+    fn set_selected_node_path(&mut self, index: Option<usize>) {
+        self.selected_child = index;
+    }
 }
 
 impl<'a> Node<'a> for Container<'a> {

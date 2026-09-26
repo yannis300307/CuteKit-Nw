@@ -20,6 +20,20 @@ pub mod traits;
 #[derive(Clone, Copy)]
 pub struct UiSignal(pub usize, pub usize);
 
+#[derive(Clone, Copy)]
+pub enum NavigationDirection {
+    Up,
+    Down,
+    Left,
+    Right,
+}
+
+#[derive(Clone, Copy)]
+enum EventType {
+    ButtonDown(Key),
+    ButtonUp(Key),
+}
+
 pub struct Menu<'a> {
     pub base_node: Container<'a>,
     pub default_hover_marker: bool,
@@ -413,27 +427,121 @@ impl<'a> Menu<'a> {
         Ok(())
     }
 
-    fn update_selected_node(node: &mut dyn Node<'a>, key: Key) -> Option<UiSignal> {
+    fn update_selected_node(node: &mut dyn Node<'a>, event: EventType) -> Option<UiSignal> {
         if let Some(node) = node.as_interactive_mut() {
-            let signal = node.handle_key_down(key);
-            if let Some(signal) = signal {
-                return Some(UiSignal(node.get_id(), signal));
+            match event {
+                EventType::ButtonDown(key) => {
+                    let signal = node.handle_key_down(key);
+                    if let Some(signal) = signal {
+                        return Some(UiSignal(node.get_id(), signal));
+                    }
+                },
+                EventType::ButtonUp(key) => {
+                    let signal = node.handle_key_up(key);
+                    if let Some(signal) = signal {
+                        return Some(UiSignal(node.get_id(), signal));
+                    }
+                },
             }
             return None;
         }
         else if let Some(container) = node.as_container_mut() {
             if let Some(index) = container.get_selected_node_path() {
                 // Ok tell me how this could fail
-                return Self::update_selected_node(*container.get_children_mut().get_mut(index).unwrap(), key);
+                return Self::update_selected_node(*container.get_children_mut().get_mut(index).unwrap(), event);
             }
         }
         panic!("Selected node was pointing to a non-interactive node.");
     }
 
+    fn navigate_from_selected_node(node: &mut dyn Node<'a>, direction: NavigationDirection) -> bool {
+        if let Some(node) = node.as_interactive_mut() {
+            let is_handled = node.handle_navigation(direction);
+            return is_handled;
+        }
+        else if let Some(container) = node.as_container_mut() {
+            if let Some(index) = container.get_selected_node_path() {
+                let is_handled = Self::navigate_from_selected_node(*container.get_children_mut().get_mut(index).unwrap(), direction);
+                
+                if is_handled {return true;}
+                let old_selected = index;
+
+                if let Some(interactive) = container.get_children_mut().get_mut(index).unwrap().as_interactive_mut() {
+                    interactive.set_is_selected(false);
+                }
+
+                // Fallback to the default navigation
+                let children_count = container.get_children().len();
+                let count_down =
+                match container.get_align_direction() {
+                    AlignDirection::Down => {
+                        match direction {
+                            NavigationDirection::Up => true,
+                            NavigationDirection::Down => false,
+                            _ => return false
+                        }
+                    },
+                    AlignDirection::Up => {
+                        match direction {
+                            NavigationDirection::Up => false,
+                            NavigationDirection::Down => true,
+                            _ => return false
+                        }
+                    },
+                    AlignDirection::Right => {
+                        match direction {
+                            NavigationDirection::Right => false,
+                            NavigationDirection::Left => true,
+                            _ => return false
+                        }
+                    },
+                    AlignDirection::Left => {
+                        match direction {
+                            NavigationDirection::Right => true,
+                            NavigationDirection::Left => false,
+                            _ => return false
+                        }
+                    },
+                };
+                if count_down {
+                    if index == 0 {return false;}
+                    for i in (0..=(index - 1)).rev() {
+                        if let Some(interactive) = container.get_children_mut().get_mut(i).unwrap().as_interactive_mut() {
+                            interactive.set_is_selected(true);
+                            container.set_selected_node_path(Some(i));
+                            return true;
+                        }
+                    }
+                } else {
+                    if index == children_count - 1 {return false;}
+                    for i in (index + 1)..children_count {
+                        if let Some(interactive) = container.get_children_mut().get_mut(i).unwrap().as_interactive_mut() {
+                            interactive.set_is_selected(true);
+                            container.set_selected_node_path(Some(i));
+                            return true;
+                        }
+                    }
+                }
+                container.set_selected_node_path(None);
+                return false;
+            }
+        }
+        return false;
+    }
+
     pub fn update(&mut self, input_manager: &InputManager) {
         let key = input_manager.get_last_pressed();
         if let Some(key) = key {
-            self.last_signal = Self::update_selected_node(&mut self.base_node, key);
+            match key {
+                Key::Left => {Self::navigate_from_selected_node(&mut self.base_node, NavigationDirection::Left);},
+                Key::Right => {Self::navigate_from_selected_node(&mut self.base_node, NavigationDirection::Right);},
+                Key::Down => {Self::navigate_from_selected_node(&mut self.base_node, NavigationDirection::Down);},
+                Key::Up => {Self::navigate_from_selected_node(&mut self.base_node, NavigationDirection::Up);},
+                _ => {
+                    // TODO: this is temporary. Handle both down and up
+                    self.last_signal = Self::update_selected_node(&mut self.base_node, EventType::ButtonDown(key))
+                },
+            }
         }
     }
 

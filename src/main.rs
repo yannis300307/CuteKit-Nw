@@ -11,8 +11,12 @@ use nalgebra::{Vector2, Vector3};
 use crate::{
     gui::{
         Menu, elements::{
-            Button, ColorRectanglePrimitive, Container, NinePartsRectanglePrimitive, RoundedRectanglePrimitive, TextPrimitive, TransparentScaledSpritePrimitive,
-        }, enums::{Anchor::{self, Center}, Layout}, margin::Margin, traits::{ContainerNode, Node, node_downcast_ref, node_downcast_ref_mut},
+            Button, ColorRectanglePrimitive, Container, NinePartsRectanglePrimitive,
+            RoundedRectanglePrimitive, TextPrimitive, TransparentScaledSpritePrimitive,
+        }, enums::{
+            Anchor::{self, Center},
+            Layout,
+        }, margin::{self, Margin}, traits::{ContainerNode, Node, node_downcast_ref, node_downcast_ref_mut},
     }, ingame_ui::draw_ui, input_manager::InputManager, nadk::{
         display::{
             self, COLOR_BLACK, COLOR_BLUE, COLOR_GREEN, COLOR_RED, COLOR_WHITE, Color565,
@@ -94,7 +98,6 @@ static FACE_FACES: &'static [u8] = include_bytes_aligned!(
 
 //static TEXTURE: &[u8] = include_bytes_aligned!(4, "../target/assets/texture.bin");
 
-
 #[unsafe(no_mangle)]
 fn main() {
     init_heap!();
@@ -148,7 +151,6 @@ fn main() {
     };
     let test = RefCell::new(5);
 
-    
     let nine_parts_texture = TransparentTexture {
         data: bytemuck::cast_slice(include_bytes!("../target/assets/9parts.bin")),
         width: 60,
@@ -164,61 +166,151 @@ fn main() {
 
     let mut menu = Menu {
         base_node: Container {
-            children: &mut [
-                &mut ColorRectanglePrimitive {
-                    size: Vector2::new(0, 20),
-                    color: Color565::from_rgb888(255, 0, 0),
-                    layout_override: Layout::Default,
-                    margin: Margin::uniform(5),
-                    outline_thickness: None,
-                },
-                &mut ColorRectanglePrimitive {
-                    size: Vector2::new(0, 20),
-                    color: Color565::from_rgb888(255, 0, 0),
-                    layout_override: Layout::Default,
-                    margin: Margin::uniform(5),
-                    outline_thickness: None,
-                },
-                &mut Button {
-                    children: &mut [
-                        &mut ColorRectanglePrimitive {
-                            size: Vector2::new(30, 30),
-                            color: Color565::from_rgb888(150, 150, 150),
-                            layout_override: Layout::Default,
-                            margin: Margin::none(),
-                            outline_thickness: None,
-                        },
-                        &mut TextPrimitive {
-                            text: "A button",
-                            font: &font,
-                            font_color: COLOR_RED,
-                            background_color: None, // TODO: Relative layout is broken with margins
-                            layout_override: Layout::Relative(Anchor::Center, Vector2::zeros()),
-                            margin: Margin::none(),
-                        }
-                        
-                    ],
-                    align: gui::enums::AlignDirection::Down,
-                    layout_override: Layout::Default,
-                    expand: true,
-                    margin: Margin::uniform(20),
-                    id: 0,
-                    is_selected: true,
-                },
-                &mut ColorRectanglePrimitive {
-                    size: Vector2::new(30, 40),
-                    color: Color565::from_rgb888(255, 0, 0),
-                    layout_override: Layout::Default,
-                    margin: Margin::uniform(5),
-                    outline_thickness: None,
-                },
-                
+            children: &mut [&mut Container {
+                children: &mut [
+                    &mut ColorRectanglePrimitive {
+                        size: Vector2::new(0, 20),
+                        color: Color565::from_rgb888(255, 0, 0),
+                        layout_override: Layout::Default,
+                        margin: Margin::uniform(5),
+                        outline_thickness: None,
+                    },
+                    &mut ColorRectanglePrimitive {
+                        size: Vector2::new(0, 20),
+                        color: Color565::from_rgb888(255, 0, 0),
+                        layout_override: Layout::Default,
+                        margin: Margin::uniform(5),
+                        outline_thickness: None,
+                    },
+                    &mut Button {
+                        children: &mut [
+                            &mut ColorRectanglePrimitive {
+                                size: Vector2::new(30, 30),
+                                color: Color565::from_rgb888(150, 150, 150),
+                                layout_override: Layout::Default,
+                                margin: Margin::none(),
+                                outline_thickness: None,
+                            },
+                            &mut TextPrimitive {
+                                text: "A button",
+                                font: &font,
+                                font_color: COLOR_RED,
+                                background_color: None, // TODO: Relative layout is broken with margins
+                                layout_override: Layout::Relative(Anchor::Center, Vector2::zeros()),
+                                margin: Margin::none(),
+                            },
+                        ],
+                        align: gui::enums::AlignDirection::Down,
+                        layout_override: Layout::Default,
+                        expand: false,
+                        margin: Margin::none(),
+                        id: 0,
+                        is_selected: true,
+                    },
+                    &mut Button {
+                        children: &mut [
+                            &mut ColorRectanglePrimitive {
+                                size: Vector2::new(30, 30),
+                                color: Color565::from_rgb888(150, 150, 150),
+                                layout_override: Layout::Default,
+                                margin: Margin::none(),
+                                outline_thickness: None,
+                            },
+                            &mut TextPrimitive {
+                                text: "A button",
+                                font: &font,
+                                font_color: COLOR_RED,
+                                background_color: None, // TODO: Relative layout is broken with margins
+                                layout_override: Layout::Relative(Anchor::Center, Vector2::zeros()),
+                                margin: Margin::none(),
+                            },
+                        ],
+                        align: gui::enums::AlignDirection::Down,
+                        layout_override: Layout::Default,
+                        expand: false,
+                        margin: Margin::none(),
+                        id: 1,
+                        is_selected: false,
+                    },
+                    &mut ColorRectanglePrimitive {
+                        size: Vector2::new(30, 40),
+                        color: Color565::from_rgb888(255, 0, 0),
+                        layout_override: Layout::Default,
+                        margin: Margin::uniform(5),
+                        outline_thickness: None,
+                    },
+                    &mut Button {
+                        children: &mut [
+                            &mut ColorRectanglePrimitive {
+                                size: Vector2::new(30, 30),
+                                color: Color565::from_rgb888(150, 150, 150),
+                                layout_override: Layout::Default,
+                                margin: Margin::none(),
+                                outline_thickness: None,
+                            },
+                            &mut TextPrimitive {
+                                text: "A button",
+                                font: &font,
+                                font_color: COLOR_RED,
+                                background_color: None, // TODO: Relative layout is broken with margins
+                                layout_override: Layout::Relative(Anchor::Center, Vector2::zeros()),
+                                margin: Margin::none(),
+                            },
+                        ],
+                        align: gui::enums::AlignDirection::Down,
+                        layout_override: Layout::Default,
+                        expand: false,
+                        margin: Margin::none(),
+                        id: 2,
+                        is_selected: false,
+                    },
+                ],
+                align: gui::enums::AlignDirection::Down,
+                layout_override: Layout::Default,
+                expand: true,
+                margin: Margin::uniform(0),
+                selected_child: Some(2),
+            },
+            &mut Container {
+                children: &mut [
+                    &mut Button {
+                        children: &mut [
+                            &mut ColorRectanglePrimitive {
+                                size: Vector2::new(30, 30),
+                                color: Color565::from_rgb888(150, 150, 150),
+                                layout_override: Layout::Default,
+                                margin: Margin::none(),
+                                outline_thickness: None,
+                            },
+                            &mut TextPrimitive {
+                                text: "A button",
+                                font: &font,
+                                font_color: COLOR_RED,
+                                background_color: None, // TODO: Relative layout is broken with margins
+                                layout_override: Layout::Relative(Anchor::Center, Vector2::zeros()),
+                                margin: Margin::none(),
+                            },
+                        ],
+                        align: gui::enums::AlignDirection::Down,
+                        layout_override: Layout::Default,
+                        expand: false,
+                        margin: Margin::none(),
+                        id: 2,
+                        is_selected: false,
+                    }
+                ],
+                align: gui::enums::AlignDirection::Down,
+                layout_override: Layout::Default,
+                expand: true,
+                margin: Margin::none(),
+                selected_child: None,
+            }
             ],
-            align: gui::enums::AlignDirection::Down,
+            align: gui::enums::AlignDirection::Right,
             layout_override: Layout::Default,
             expand: true,
-            margin: Margin::uniform(0),
-            selected_child: Some(2),
+            margin: Margin::none(),
+            selected_child: Some(0),
         },
         default_hover_marker: true,
         last_signal: None,
@@ -244,17 +336,39 @@ fn main() {
         let mut draw_queue: DrawQueue<'_, 100> = DrawQueue::new();
 
         //draw_queue.add_plugin(&mut renderer).unwrap()
-        
+
         menu.update(&input_manager);
 
         if let Some(signal) = menu.get_last_event() {
             match signal.0 {
                 0 => {
-                    let node = &mut *menu.base_node.children[2].as_container_mut().unwrap().get_children_mut()[1];
+                    let node = &mut *menu.base_node.children[2]
+                        .as_container_mut()
+                        .unwrap()
+                        .get_children_mut()[1];
                     let text: &mut TextPrimitive = node_downcast_ref_mut(&mut *node).unwrap();
-                    text.text = "You clicked!";
+                    text.text = "first btn clicked!";
+                    text.font_color = COLOR_BLACK;
                 }
-                _ => ()
+                1 => {
+                    let node = &mut *menu.base_node.children[3]
+                        .as_container_mut()
+                        .unwrap()
+                        .get_children_mut()[1];
+                    let text: &mut TextPrimitive = node_downcast_ref_mut(&mut *node).unwrap();
+                    text.text = "second btn clicked!";
+                    text.font_color = COLOR_BLACK;
+                }
+                2 => {
+                    let node = &mut *menu.base_node.children[5]
+                        .as_container_mut()
+                        .unwrap()
+                        .get_children_mut()[1];
+                    let text: &mut TextPrimitive = node_downcast_ref_mut(&mut *node).unwrap();
+                    text.text = "third btn clicked!";
+                    text.font_color = COLOR_BLACK;
+                }
+                _ => (),
             }
         }
 
