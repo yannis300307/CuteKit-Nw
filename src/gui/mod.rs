@@ -563,6 +563,50 @@ impl<'a> Menu<'a> {
         return false;
     }
 
+    fn select_node_by_id_recur(node: &mut dyn Node<'a>, id: usize) -> bool {
+        if let Some(node) = node.as_interactive_mut() {
+            if node.get_id() == id {
+                node.set_is_selected(true);
+                return true;
+            }
+        }
+        if let Some(node) = node.as_container_mut() {
+            for i in 0..node.get_children().len() {
+                if Self::select_node_by_id_recur(node.get_children_mut()[i], id) {
+                    node.set_selected_node_path(Some(i));
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    fn deselect_node_recur(node: &mut dyn Node<'a>) {
+        if let Some(node) = node.as_interactive_mut() {
+            node.set_is_selected(false);
+        }
+        if let Some(node) = node.as_container_mut() {
+            if let Some(index) = node.get_selected_node_path() {
+                Self::deselect_node_recur(node.get_children_mut()[index]);
+                node.set_selected_node_path(None);
+            }
+        }
+    }
+
+    pub fn deselect_node(&mut self) {
+        Self::deselect_node_recur(&mut self.base_node);
+    }
+
+    pub fn select_node_by_id(&mut self, id: usize) -> Option<()>{
+        self.deselect_node();
+        if Self::select_node_by_id_recur(&mut self.base_node, id) {
+            Some(())
+        } else {
+            None
+        }
+
+    }
+
     pub fn update(&mut self, input_manager: &InputManager) {
         let key = input_manager.get_last_pressed();
         if let Some(key) = key {

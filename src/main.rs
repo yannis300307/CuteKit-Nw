@@ -205,7 +205,7 @@ fn main() {
                         expand: false,
                         margin: Margin::none(),
                         id: 0,
-                        is_selected: true,
+                        is_selected: false,
                     },
                     &mut Button {
                         children: &mut [
@@ -269,7 +269,7 @@ fn main() {
                 layout_override: Layout::Default,
                 expand: true,
                 margin: Margin::uniform(0),
-                selected_child: Some(2),
+                selected_child: None,
             },
             &mut Container {
                 children: &mut [
@@ -310,11 +310,13 @@ fn main() {
             layout_override: Layout::Default,
             expand: true,
             margin: Margin::none(),
-            selected_child: Some(0),
+            selected_child: None,
         },
         default_hover_marker: true,
         last_signal: None,
     };
+
+    menu.select_node_by_id(2);
 
     loop {
         time_manager.update();
