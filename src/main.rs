@@ -295,7 +295,7 @@ fn main() {
                         layout_override: Layout::Default,
                         expand: false,
                         margin: Margin::none(),
-                        id: 2,
+                        id: 3,
                         is_selected: false,
                     }
                 ],
@@ -342,30 +342,36 @@ fn main() {
         if let Some(signal) = menu.get_last_event() {
             match signal.0 {
                 0 => {
-                    let node = &mut *menu.base_node.children[2]
+                    let node = &mut *menu.base_node.children[0].as_container_mut().unwrap().get_children_mut()[2]
                         .as_container_mut()
                         .unwrap()
                         .get_children_mut()[1];
                     let text: &mut TextPrimitive = node_downcast_ref_mut(&mut *node).unwrap();
-                    text.text = "first btn clicked!";
+                    text.text = "Hello 1!";
                     text.font_color = COLOR_BLACK;
                 }
                 1 => {
-                    let node = &mut *menu.base_node.children[3]
+                    let node = &mut *menu.base_node.children[0].as_container_mut().unwrap().get_children_mut()[3]
                         .as_container_mut()
                         .unwrap()
                         .get_children_mut()[1];
                     let text: &mut TextPrimitive = node_downcast_ref_mut(&mut *node).unwrap();
-                    text.text = "second btn clicked!";
+                    text.text = "Hello 2!";
                     text.font_color = COLOR_BLACK;
                 }
                 2 => {
-                    let node = &mut *menu.base_node.children[5]
+                    let node = &mut *menu.base_node.children[0].as_container_mut().unwrap().get_children_mut()[5]
                         .as_container_mut()
                         .unwrap()
                         .get_children_mut()[1];
                     let text: &mut TextPrimitive = node_downcast_ref_mut(&mut *node).unwrap();
-                    text.text = "third btn clicked!";
+                    text.text = "Hello 3!";
+                    text.font_color = COLOR_BLACK;
+                },
+                3 => {
+                    let node = &mut *menu.base_node.children[1].as_container_mut().unwrap().get_children_mut()[0].as_container_mut().unwrap().get_children_mut()[1];
+                    let text: &mut TextPrimitive = node_downcast_ref_mut(&mut *node).unwrap();
+                    text.text = "Hello 4!";
                     text.font_color = COLOR_BLACK;
                 }
                 _ => (),
