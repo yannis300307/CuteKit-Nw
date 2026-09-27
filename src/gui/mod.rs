@@ -38,6 +38,7 @@ pub struct Menu<'a> {
     pub base_node: Container<'a>,
     pub default_hover_marker: bool,
     pub last_signal: Option<UiSignal>,
+    pub selected_node_id: Option<usize>
 }
 
 impl<'a> Menu<'a> {
@@ -454,18 +455,17 @@ impl<'a> Menu<'a> {
         panic!("Selected node was pointing to a non-interactive node.");
     }
 
-    fn navigate_from_selected_node(node: &mut dyn Node<'a>, direction: NavigationDirection, ignore_direction: bool) -> bool {
+    fn navigate_from_selected_node_recur(node: &mut dyn Node<'a>, direction: NavigationDirection, ignore_direction: bool) -> (bool, Option<usize>) {
         if let Some(node) = node.as_interactive_mut() {
             let is_handled = node.handle_navigation(direction);
-            return is_handled;
+            return (is_handled, Some(node.get_id()));
         }
         else if let Some(container) = node.as_container_mut() {
             let mut start_index = 0;
             if let Some(index) = container.get_selected_node_path() {
-                let is_handled = Self::navigate_from_selected_node(*container.get_children_mut().get_mut(index).unwrap(), direction, false);
+                let handled = Self::navigate_from_selected_node_recur(*container.get_children_mut().get_mut(index).unwrap(), direction, false);
                 
-                if is_handled {return true;}
-                let old_selected = index;
+                if handled.0 {return (true, handled.1);}
 
                 if let Some(interactive) = container.get_children_mut().get_mut(index).unwrap().as_interactive_mut() {
                     interactive.set_is_selected(false);
@@ -486,28 +486,28 @@ impl<'a> Menu<'a> {
                         match direction {
                             NavigationDirection::Up => true,
                             NavigationDirection::Down => false,
-                            _ => {container.set_selected_node_path(None); return false;}
+                            _ => {container.set_selected_node_path(None); return (false, None);}
                         }
                     },
                     AlignDirection::Up => {
                         match direction {
                             NavigationDirection::Up => false,
                             NavigationDirection::Down => true,
-                            _ => {container.set_selected_node_path(None); return false;}
+                            _ => {container.set_selected_node_path(None); return (false, None);}
                         }
                     },
                     AlignDirection::Right => {
                         match direction {
                             NavigationDirection::Right => false,
                             NavigationDirection::Left => true,
-                            _ => {container.set_selected_node_path(None); return false;}
+                            _ => {container.set_selected_node_path(None); return (false, None);}
                         }
                     },
                     AlignDirection::Left => {
                         match direction {
                             NavigationDirection::Right => true,
                             NavigationDirection::Left => false,
-                            _ => {container.set_selected_node_path(None); return false;}
+                            _ => {container.set_selected_node_path(None); return (false, None);}
                         }
                     },
                 }
@@ -516,11 +516,11 @@ impl<'a> Menu<'a> {
             if container.get_selected_node_path().is_some() {
                 if count_down {
                     // Exit the container
-                    if start_index == 0 {container.set_selected_node_path(None); return false;}
+                    if start_index == 0 {container.set_selected_node_path(None); return (false, None);}
                     start_index -= 1;
                 } else {
                     // Exit the container
-                    if start_index == children_count - 1 {container.set_selected_node_path(None); return false;}
+                    if start_index == children_count - 1 {container.set_selected_node_path(None); return (false, None);}
                     start_index += 1;
                 }
             }
@@ -529,13 +529,15 @@ impl<'a> Menu<'a> {
                     let node = container.get_children_mut().get_mut(i).unwrap();
                     if let Some(node) = node.as_interactive_mut() {
                         node.set_is_selected(true);
+                        let id = node.get_id();
                         container.set_selected_node_path(Some(i));
-                        return true;
+                        return (true, Some(id));
                     } else if let Some(node) = node.as_container_mut() {
                         // Recursively search the next container
-                        if Self::navigate_from_selected_node(node, direction, true) {
+                        let handled = Self::navigate_from_selected_node_recur(node, direction, true);
+                        if handled.0 {
                             container.set_selected_node_path(Some(i));
-                            return true;
+                            return handled;
                         }
                         container.set_selected_node_path(None);
                     }
@@ -545,22 +547,24 @@ impl<'a> Menu<'a> {
                     let node = container.get_children_mut().get_mut(i).unwrap();
                     if let Some(node) = node.as_interactive_mut() {
                         node.set_is_selected(true);
+                        let id = node.get_id();
                         container.set_selected_node_path(Some(i));
-                        return true;
+                        return (true, Some(id));
                     } else if let Some(node) = node.as_container_mut() {
-                        if Self::navigate_from_selected_node(node, direction, true) {
+                        let handled = Self::navigate_from_selected_node_recur(node, direction, true);
+                        if handled.0 {
                             container.set_selected_node_path(Some(i));
-                            return true;
+                            return handled;
                         }
                         container.set_selected_node_path(None);
                     }
                 }
             }
             container.set_selected_node_path(None);
-            return false;
+            return (false, None);
             
         }
-        return false;
+        return (false, None);
     }
 
     fn select_node_by_id_recur(node: &mut dyn Node<'a>, id: usize) -> bool {
@@ -600,26 +604,41 @@ impl<'a> Menu<'a> {
     pub fn select_node_by_id(&mut self, id: usize) -> Option<()>{
         self.deselect_node();
         if Self::select_node_by_id_recur(&mut self.base_node, id) {
+            self.selected_node_id = Some(id);
             Some(())
         } else {
+            self.selected_node_id = None;
             None
         }
+    }
 
+    fn navigate_from_selected_node(&mut self, direction: NavigationDirection) {
+        let handled = Self::navigate_from_selected_node_recur(&mut self.base_node, direction, false);
+
+        if handled.0 {
+            self.selected_node_id = handled.1;
+        } else {
+            // Ok I'm too lazy to find a better solution for now...
+            if let Some(id) = self.selected_node_id {
+                self.select_node_by_id(id);
+            }
+        }
     }
 
     pub fn update(&mut self, input_manager: &InputManager) {
         let key = input_manager.get_last_pressed();
         if let Some(key) = key {
             match key {
-                Key::Left => {Self::navigate_from_selected_node(&mut self.base_node, NavigationDirection::Left, false);},
-                Key::Right => {Self::navigate_from_selected_node(&mut self.base_node, NavigationDirection::Right, false);},
-                Key::Down => {Self::navigate_from_selected_node(&mut self.base_node, NavigationDirection::Down, false);},
-                Key::Up => {Self::navigate_from_selected_node(&mut self.base_node, NavigationDirection::Up, false);},
+                Key::Left => {self.navigate_from_selected_node(NavigationDirection::Left);},
+                Key::Right => {self.navigate_from_selected_node(NavigationDirection::Right);},
+                Key::Down => {self.navigate_from_selected_node(NavigationDirection::Down);},
+                Key::Up => {self.navigate_from_selected_node(NavigationDirection::Up);},
                 _ => {
                     // TODO: this is temporary. Handle both down and up
                     self.last_signal = Self::update_selected_node(&mut self.base_node, EventType::ButtonDown(key))
                 },
             }
+            if self.base_node.selected_child.is_none() { self.select_node_by_id(0); }
         }
     }
 
