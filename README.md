@@ -36,7 +36,10 @@ cargo install just # Similar to makefile
 
 ## Build the app
 ```shell
-just build
+just build-epsilon
+```
+```shell
+just build-upsilon
 ```
 
 ## Build and send the app to an actual calculator
@@ -65,8 +68,12 @@ You can speed up the simulator build by setting the job number.
 just sim 5
 ```
 
-### AI usage
-AI was only used for debugging purpose. Nearly 100% of the code is handwritten.
+### AI usage disclosure
+Nearly 100% of the code is handwritten. I aim to use as less AI as possible. My use of AI on this project can be summarized to "It's been 5 hours and I'm still stuck on this lifetime issue on this specific line and my friends doesn't know how to fix it. [AI-name\], what's wrong about the lifetime in this line and what do I have to change to make it compile?".
+
+To learn more about how to contribute to the project and more precise guidelines about IA, please read the [Contributing policy](https://github.com/yannis300307/CuteKit-Nw/blob/main/.github/CONTRIBUTING.md).
+
+Due to the license, I cannot impose how to use the project. However, in respect to the (huge) amount of work done, it would be nice not to use my project in IA generated projects. You can use this project to make a 100% percent handmade games. Take this as an opportunity to show what humans can do. We don't care about what IA can do.
 
 ## Legal info
 NumWorks is a registered trademark.
