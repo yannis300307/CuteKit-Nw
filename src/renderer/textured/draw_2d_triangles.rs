@@ -1,12 +1,10 @@
 use nalgebra::Vector2;
 
 use crate::{
-    nadk::display::Color565,
-    renderer::{
-        SCREEN_TILE_HEIGHT, SCREEN_TILE_WIDTH,
+    nadk::display::Color565, renderer::{
         mesh::TexTriangle2D,
         textured::{clipping::triangle_clip_against_line, textured_triangle::textured_triangle},
-    }, renderer2d::elements::Texture,
+    }, renderer2d::{elements::Texture, renderer::{SCREEN_TILE_HEIGHT, SCREEN_TILE_WIDTH}},
 };
 
 pub fn draw_2d_triangles(
@@ -62,11 +60,6 @@ pub fn clip_and_draw_2d_triangle(
     clip_triangle(
         Vector2::new(0.0, SCREEN_TILE_HEIGHT as f32),
         Vector2::new(0.0, -1.0),
-    );
-    clip_triangle(Vector2::new(0.0, 0.0), Vector2::new(1.0, 0.0));
-    clip_triangle(
-        Vector2::new(SCREEN_TILE_WIDTH as f32, 0.0),
-        Vector2::new(-1.0, 0.0),
     );
 
     for cliped_tri in clip_buffer {

@@ -1,12 +1,10 @@
 use nalgebra::{Vector2, Vector3};
 
 use crate::{nadk::display::Color565, renderer::{
-    Renderer, SCREEN_TILE_HEIGHT, SCREEN_TILE_WIDTH,
-    mesh::{TexCompactTriangle2D, TexMeshTriangle, TexTriangle2D, TexturedMesh},
-    textured::{
-        clipping::tex_triangle_clip_against_plane, draw_2d_triangles::clip_and_draw_2d_triangle,
+    Renderer, SCREEN_WIDTHF, mesh::{TexCompactTriangle2D, TexMeshTriangle, TexTriangle2D, TexturedMesh}, textured::{
+        clipping::{tex_triangle_clip_against_plane, triangle_clip_against_line}, draw_2d_triangles::clip_and_draw_2d_triangle,
     },
-}, renderer2d::elements::Texture};
+}, renderer2d::{elements::Texture, renderer::{SCREEN_TILE_HEIGHT, SCREEN_TILE_WIDTH}}};
 
 impl<'a> Renderer<'a> {
     fn add_3d_textured_triangle_to_render(&mut self, mesh: &TexturedMesh, tri_index: usize) {
@@ -39,21 +37,21 @@ impl<'a> Renderer<'a> {
                 let w2 = -self.transformed_vertex_buffer[to_project.v2 as usize].z;
                 let w3 = -self.transformed_vertex_buffer[to_project.v3 as usize].z;
                 let t1 = Vector3::new(
-                    (to_project.t1.x / w1) as f16,
-                    (to_project.t1.y / w1) as f16,
-                    (1.0 / w1) as f16,
+                    to_project.t1.x / w1,
+                    to_project.t1.y / w1,
+                    1.0 / w1,
                 );
                 let t2 = Vector3::new(
-                    (to_project.t2.x / w2) as f16,
-                    (to_project.t2.y / w2) as f16,
-                    (1.0 / w2) as f16,
+                    to_project.t2.x / w2,
+                    to_project.t2.y / w2,
+                    1.0 / w2,
                 );
                 let t3 = Vector3::new(
-                    (to_project.t3.x / w3) as f16,
-                    (to_project.t3.y / w3) as f16,
-                    (1.0 / w3) as f16,
+                    to_project.t3.x / w3,
+                    to_project.t3.y / w3,
+                    1.0 / w3,
                 );
-                let projected_triangle = TexCompactTriangle2D {
+                let projected_triangle = TexTriangle2D {
                     p1: self.projected_buffer[to_project.v1 as usize],
                     p2: self.projected_buffer[to_project.v2 as usize],
                     p3: self.projected_buffer[to_project.v3 as usize],
@@ -62,7 +60,46 @@ impl<'a> Renderer<'a> {
                     t3,
                 };
 
-                self.tex_triangles_to_render.push(projected_triangle);
+                // Clip the left and right side of the screen
+                let mut clip_buffer: heapless::Deque<TexTriangle2D, 16> = heapless::Deque::new(); // 2^4
+
+                clip_buffer.push_back(projected_triangle).unwrap();
+                let mut new_tris = 1;
+
+                let mut clip_triangle = |line_p, line_n| {
+                    while new_tris > 0 {
+                        let test = clip_buffer.pop_front().unwrap();
+                        new_tris -= 1;
+
+                        let clipped = triangle_clip_against_line(&line_p, &line_n, &test);
+
+                        if let Some(clipped_tri) = clipped.0 {
+                            clip_buffer.push_back(clipped_tri).unwrap();
+                        }
+                        if let Some(clipped_tri) = clipped.1 {
+                            clip_buffer.push_back(clipped_tri).unwrap();
+                        }
+                    }
+                    new_tris = clip_buffer.len();
+                };
+
+                clip_triangle(Vector2::new(0.0, 0.0), Vector2::new(1.0, 0.0));
+                clip_triangle(
+                    Vector2::new(SCREEN_WIDTHF, 0.0),
+                    Vector2::new(-1.0, 0.0),
+                );
+
+                for tri in clip_buffer {
+                    let compacted = TexCompactTriangle2D {
+                        p1: tri.p1,
+                        p2: tri.p2,
+                        p3: tri.p3,
+                        t1: tri.t1.map(|x| x as f16),
+                        t2: tri.t2.map(|x| x as f16),
+                        t3: tri.t3.map(|x| x as f16),
+                    };
+                    self.tex_triangles_to_render.push(compacted);
+                }
             };
 
             if let Some(clipped) = clipped_triangles.0.0 {

@@ -12,7 +12,7 @@ use crate::{
     },
 };
 
-pub const SCREEN_TILE_WIDTH: usize = SCREEN_WIDTH.div_ceil(SCREEN_TILE_SUBDIVISION);
+pub const SCREEN_TILE_WIDTH: usize = SCREEN_WIDTH;
 pub const SCREEN_TILE_HEIGHT: usize = SCREEN_HEIGHT.div_ceil(SCREEN_TILE_SUBDIVISION);
 
 #[inline]
@@ -65,9 +65,7 @@ impl<'a> Renderer2d {
     ) {
         let char_size = Vector2::new(font.char_width as isize, font.char_height as isize);
 
-        if pos.x > SCREEN_TILE_WIDTH as isize
-            || pos.y > SCREEN_TILE_HEIGHT as isize
-            || pos.x + text.len() as isize * char_size.x < 0
+        if pos.y > SCREEN_TILE_HEIGHT as isize
             || pos.y + char_size.y < 0
         {
             return;
@@ -151,9 +149,7 @@ impl<'a> Renderer2d {
 
     fn draw_rectangle(&mut self, mut pos: Vector2<isize>, size: Vector2<isize>, color: Color565) {
         let mut end = pos + size;
-        if end.x < 0
-            || end.y < 0
-            || pos.x > SCREEN_TILE_WIDTH as isize
+        if end.y < 0
             || pos.y > SCREEN_TILE_HEIGHT as isize
         {
             return;
@@ -187,9 +183,7 @@ impl<'a> Renderer2d {
         thickness: isize,
     ) {
         let mut end = pos + size;
-        if end.x < 0
-            || end.y < 0
-            || pos.x > SCREEN_TILE_WIDTH as isize
+        if end.y < 0
             || pos.y > SCREEN_TILE_HEIGHT as isize
         {
             return;
@@ -224,8 +218,6 @@ impl<'a> Renderer2d {
         let mut x = x_start;
         if y < 0
             || y >= SCREEN_TILE_HEIGHT as isize
-            || x_start > SCREEN_TILE_WIDTH as isize
-            || x_stop < 0
         {
             return;
         }
@@ -333,82 +325,6 @@ impl<'a> Renderer2d {
             Vector2::new(size.x, size.y - r_isize * 2),
             color,
         );
-    }
-
-    // Adapted from http://members.chello.at/~easyfilter/bresenham.html
-    fn draw_line(
-        &mut self,
-        mut start: Vector2<isize>,
-        stop: Vector2<isize>,
-        mut width: f32,
-        color: Color565,
-    ) {
-        let d = (stop - start).abs();
-        let s = Vector2::new(
-            if start.x < stop.x { 1 } else { -1 },
-            if start.y < stop.y { 1 } else { -1 },
-        );
-        let mut err = d.x - d.y;
-        let mut x2;
-        let mut y2;
-        let mut e2;
-        let ed = if d.x + d.y == 0 {
-            1.0
-        } else {
-            d.map(|x| x as f32).norm()
-        };
-        width = (width + 1.0) / 2.0;
-        loop {
-            let opacity = (255.0 * (width - (err - d.x + d.y).abs() as f32 / ed)).clamp(0.0, 255.0);
-            let bg_color = self.get_pixel(start.x as usize, start.y as usize);
-            self.draw_pixel(
-                start.x as usize,
-                start.y as usize,
-                add_alpha_color(bg_color, color, opacity as u16),
-            );
-            e2 = err;
-            x2 = start.x;
-            if 2 * e2 >= -d.x {
-                e2 += d.y;
-                y2 = start.y;
-                while (e2 as f32) < ed * width && (stop.y != y2 || d.x > d.y) {
-                    y2 += s.y;
-                    let opacity = (255.0 * (width - e2.abs() as f32 / ed)).clamp(0.0, 255.0);
-                    let bg_color = self.get_pixel(start.x as usize, y2 as usize);
-                    self.draw_pixel(
-                        start.x as usize,
-                        y2 as usize,
-                        add_alpha_color(bg_color, color, opacity as u16),
-                    );
-                    e2 += d.x;
-                }
-                if start.x == stop.x {
-                    break;
-                };
-                e2 = err;
-                err -= d.y;
-                start.x += s.x;
-            }
-            if 2 * e2 <= d.y {
-                e2 = d.x - e2;
-                while (e2 as f32) < ed * width && (stop.x != x2 || d.x < d.y) {
-                    x2 += s.x;
-                    let opacity = (255.0 * (width - e2.abs() as f32 / ed)).clamp(0.0, 255.0);
-                    let bg_color = self.get_pixel(x2 as usize, start.y as usize);
-                    self.draw_pixel(
-                        x2 as usize,
-                        start.y as usize,
-                        add_alpha_color(bg_color, color, opacity as u16),
-                    );
-                    e2 += d.y;
-                }
-                if start.y == stop.y {
-                    break;
-                }
-                err += d.x;
-                start.y += s.y;
-            }
-        }
     }
 
     fn draw_shapes(
@@ -561,28 +477,26 @@ impl<'a> Renderer2d {
             }
         }
 
-        for x in 0..SCREEN_TILE_SUBDIVISION {
-            for y in 0..SCREEN_TILE_SUBDIVISION {
-                self.clear_frame_frame_buffer();
+        for y in 0..SCREEN_TILE_SUBDIVISION {
+            self.clear_frame_frame_buffer();
 
-                self.draw_shapes(
-                    Vector2::new(
-                        (x * SCREEN_TILE_WIDTH) as isize,
-                        (y * SCREEN_TILE_HEIGHT) as isize,
-                    ),
-                    &mut draw_queue.get_iterator(),
-                );
+            self.draw_shapes(
+                Vector2::new(
+                    0,
+                    (y * SCREEN_TILE_HEIGHT) as isize,
+                ),
+                &mut draw_queue.get_iterator(),
+            );
 
-                push_rect(
-                    ScreenRect {
-                        x: (SCREEN_TILE_WIDTH * x) as u16,
-                        y: (SCREEN_TILE_HEIGHT * y) as u16,
-                        width: SCREEN_TILE_WIDTH as u16,
-                        height: SCREEN_TILE_HEIGHT as u16,
-                    },
-                    &self.tile_frame_buffer,
-                );
-            }
+            push_rect(
+                ScreenRect {
+                    x: 0,
+                    y: (SCREEN_TILE_HEIGHT * y) as u16,
+                    width: SCREEN_TILE_WIDTH as u16,
+                    height: SCREEN_TILE_HEIGHT as u16,
+                },
+                &self.tile_frame_buffer,
+            );
         }
 
         for element in draw_queue.get_iterator() {

@@ -2,8 +2,7 @@ calc_use!(alloc::vec::Vec);
 use nalgebra::{Vector2, Vector3};
 
 use crate::renderer::{
-    clipping::{vector_intersect_line, vector_intersect_plane},
-    mesh::{TexMeshTriangle, TexTriangle2D},
+    clipping::{vector_intersect_line, vector_intersect_plane}, mesh::{TexMeshTriangle, TexTriangle2D},
 };
 
 pub fn triangle_clip_against_line(

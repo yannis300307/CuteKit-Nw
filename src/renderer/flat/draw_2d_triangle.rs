@@ -54,11 +54,6 @@ pub fn clip_and_draw_2d_triangle(
         Vector2::new(0.0, SCREEN_TILE_HEIGHT as f32),
         Vector2::new(0.0, -1.0),
     );
-    clip_triangle(Vector2::new(0.0, 0.0), Vector2::new(1.0, 0.0));
-    clip_triangle(
-        Vector2::new(SCREEN_TILE_WIDTH as f32, 0.0),
-        Vector2::new(-1.0, 0.0),
-    );
 
     for cliped_tri in clip_buffer {
         draw_2d_flat_triangles(&cliped_tri, frame_buffer, depth_buffer);

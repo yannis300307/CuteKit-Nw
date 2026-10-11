@@ -12,10 +12,7 @@ calc_use!(alloc::vec::Vec);
 use nalgebra::{Matrix4, Perspective3, Vector2, Vector3};
 
 use crate::{
-    constants::rendering::*,
-    nadk::display::{COLOR_BLACK, Color565},
-    renderer::{camera::Camera, mesh::{FlatCompactTriangle2D, TexCompactTriangle2D}},
-    renderer2d::elements::Texture,
+    constants::rendering::*, nadk::display::{COLOR_BLACK, Color565}, renderer::{camera::Camera, mesh::{FlatCompactTriangle2D, TexCompactTriangle2D}}, renderer2d::{elements::Texture, renderer::{SCREEN_TILE_HEIGHT, SCREEN_TILE_WIDTH}},
 };
 
 // Screen size related constants
@@ -25,10 +22,6 @@ const SCREEN_HEIGHTF: f32 = SCREEN_HEIGHT as f32;
 const HALF_SCREEN_WIDTHF: f32 = SCREEN_WIDTHF / 2.0;
 const HALF_SCREEN_HEIGHTF: f32 = SCREEN_HEIGHTF / 2.0;
 const HALF_SCREEN: Vector2<f32> = Vector2::new(HALF_SCREEN_WIDTHF, HALF_SCREEN_HEIGHTF);
-
-// Screen tiling constants
-const SCREEN_TILE_WIDTH: usize = SCREEN_WIDTH.div_ceil(SCREEN_TILE_SUBDIVISION);
-const SCREEN_TILE_HEIGHT: usize = SCREEN_HEIGHT.div_ceil(SCREEN_TILE_SUBDIVISION);
 
 // Projection parameters
 const ASPECT_RATIO: f32 = SCREEN_WIDTHF / SCREEN_HEIGHTF;

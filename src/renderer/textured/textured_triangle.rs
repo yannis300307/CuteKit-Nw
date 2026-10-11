@@ -3,8 +3,7 @@ use core::mem::swap;
 use nalgebra::{Vector2, Vector3};
 
 use crate::{
-    nadk::display::Color565,
-    renderer::{SCREEN_TILE_HEIGHT, SCREEN_TILE_WIDTH}, renderer2d::elements::Texture,
+    nadk::display::Color565, renderer2d::{elements::Texture, renderer::{SCREEN_TILE_HEIGHT, SCREEN_TILE_WIDTH}},
 };
 
 // #[inline(always)]
