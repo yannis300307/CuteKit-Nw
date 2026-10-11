@@ -1,11 +1,9 @@
 use nalgebra::{Vector2, Vector3};
 
 use crate::{nadk::display::Color565, renderer::{
-    Renderer, SCREEN_TILE_HEIGHT, SCREEN_TILE_WIDTH,
-    flat::{
-        clipping::flat_triangle_clip_against_plane, draw_2d_triangle::clip_and_draw_2d_triangle,
-    },
-    mesh::{FlatCompactTriangle2D, FlatMesh, FlatMeshTriangle, FlatTriangle2D},
+    Renderer, SCREEN_TILE_HEIGHT, SCREEN_TILE_WIDTH, SCREEN_WIDTHF, flat::{
+        clipping::{flat_triangle_clip_against_line, flat_triangle_clip_against_plane}, draw_2d_triangle::clip_and_draw_2d_triangle,
+    }, mesh::{FlatCompactTriangle2D, FlatMesh, FlatMeshTriangle, FlatTriangle2D},
 }};
 
 impl<'a> Renderer<'a> {
@@ -38,15 +36,54 @@ impl<'a> Renderer<'a> {
                 let w1 = -self.transformed_vertex_buffer[to_project.v1 as usize].z;
                 let w2 = -self.transformed_vertex_buffer[to_project.v2 as usize].z;
                 let w3 = -self.transformed_vertex_buffer[to_project.v3 as usize].z;
-                let projected_triangle = FlatCompactTriangle2D {
+                let projected_triangle = FlatTriangle2D {
                     p1: self.projected_buffer[to_project.v1 as usize],
                     p2: self.projected_buffer[to_project.v2 as usize],
                     p3: self.projected_buffer[to_project.v3 as usize],
                     color: to_project.color,
-                    depth: ((1.0 / w1) as f16, (1.0 / w2) as f16, (1.0 / w3) as f16),
+                    depth: (1.0 / w1, 1.0 / w2, 1.0 / w3),
                 };
 
-                self.flat_triangles_to_render.push(projected_triangle);
+
+                // Clip the left and right side of the screen
+                let mut clip_buffer: heapless::Deque<FlatTriangle2D, 16> = heapless::Deque::new(); // 2^4
+
+                clip_buffer.push_back(projected_triangle).unwrap();
+                let mut new_tris = 1;
+
+                let mut clip_triangle = |line_p, line_n| {
+                    while new_tris > 0 {
+                        let test = clip_buffer.pop_front().unwrap();
+                        new_tris -= 1;
+
+                        let clipped = flat_triangle_clip_against_line(&line_p, &line_n, &test);
+
+                        if let Some(clipped_tri) = clipped.0 {
+                            clip_buffer.push_back(clipped_tri).unwrap();
+                        }
+                        if let Some(clipped_tri) = clipped.1 {
+                            clip_buffer.push_back(clipped_tri).unwrap();
+                        }
+                    }
+                    new_tris = clip_buffer.len();
+                };
+
+                clip_triangle(Vector2::new(0.0, 0.0), Vector2::new(1.0, 0.0));
+                clip_triangle(
+                    Vector2::new(SCREEN_WIDTHF, 0.0),
+                    Vector2::new(-1.0, 0.0),
+                );
+
+                for tri in clip_buffer {
+                    let compacted = FlatCompactTriangle2D {
+                        p1: tri.p1,
+                        p2: tri.p2,
+                        p3: tri.p3,
+                        color: tri.color,
+                        depth: (tri.depth.0 as f16, tri.depth.1 as f16, tri.depth.2 as f16),
+                    };
+                    self.flat_triangles_to_render.push(compacted);
+                }
             };
 
             if let Some(clipped) = clipped_triangles.0.0 {
