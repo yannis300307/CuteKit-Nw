@@ -1,144 +1,130 @@
-use core::mem::swap;
-
 use nalgebra::{Vector2, Vector3};
 
-use crate::{
-    nadk::display::Color565, renderer2d::{elements::Texture, renderer::{SCREEN_TILE_HEIGHT, SCREEN_TILE_WIDTH}},
-};
+use crate::nadk::display::Color565;
+use crate::renderer2d::elements::Texture;
+use crate::renderer2d::renderer::{SCREEN_TILE_HEIGHT, SCREEN_TILE_WIDTH};
 
-// #[inline(always)]
-fn scan_line(
-    mut ax: i16,
-    mut bx: i16,
-    mut tex_s: Vector3<f32>,
-    mut tex_e: Vector3<f32>,
-    i: i16,
-    frame_buffer: &mut [Color565; SCREEN_TILE_WIDTH * SCREEN_TILE_HEIGHT],
-    depth_buffer: &mut [f16; SCREEN_TILE_WIDTH * SCREEN_TILE_HEIGHT],
-    texture: &Texture
-) {
-    if ax > bx {
-        swap(&mut ax, &mut bx);
-        swap(&mut tex_s, &mut tex_e);
-    }
-
-    let tstep: f32 = 1.0 / ((bx - ax) as f32);
-    let mut t = 0.0;
-
-    let texture_widthf = texture.width as f32;
-    let texture_heightf = texture.height as f32;
-
-    for j in ax..bx {
-        let tex_coords = (1.0 - t) * tex_s + t * tex_e;
-        let index = (i * SCREEN_TILE_WIDTH as i16 + j) as usize;
-        let z_inv = 1.0 / tex_coords.z;
-
-        let u = (tex_coords.x * z_inv).clamp(0.0, 0.9999);
-        let v = (tex_coords.y * z_inv).clamp(0.0, 0.9999);
-
-
-        if tex_coords.z < depth_buffer[index] as f32 {
-            let texture_pixel_index = ((u * texture_widthf) as usize) + ((v * texture_heightf) as usize) * texture.width as usize;
-            let pixel: Color565 = texture.data[texture_pixel_index];
-            frame_buffer[index] = pixel;    
-            depth_buffer[index] = tex_coords.z as f16;
-        }
-        t += tstep;
-    }
+fn lerp(a: f32, b: f32, t: f32) -> f32 { (a + (b - a) * t) }
+fn mult(tex: Vector3<f32>, size: Vector2<f32>) -> Vector3<f32>
+{
+	Vector3::new(tex.x * size.x, tex.y * size.y, tex.z)
 }
 
-//#[inline(always)]
+fn norm_w(v: Vector3<f32>) -> Vector3<f32>
+{
+	let inv_z = 1.0 / v.z;
+	Vector3::new(v.x * inv_z, v.y * inv_z, v.z)
+}
+
+pub fn textured_semiquad(
+	frame_buffer: &mut [Color565; SCREEN_TILE_WIDTH * SCREEN_TILE_HEIGHT],
+	depth_buffer: &mut [f16; SCREEN_TILE_WIDTH * SCREEN_TILE_HEIGHT],
+	mut point1: Vector2<i16>,
+	mut tex1: Vector3<f32>,
+	mut point2: Vector2<i16>,
+	mut tex2: Vector3<f32>,
+	mut width3: i16,
+	mut tex3: Vector3<f32>,
+	mut width4: i16,
+	mut tex4: Vector3<f32>,
+	texture: &Texture,
+)
+{
+	let h = point2.y - point1.y;
+	if h <= 0 {
+		return;
+	}
+
+	let (tw, th) = (texture.width as usize, texture.height as usize);
+	let tsize = Vector2::new(texture.width as f32, texture.height as f32);
+
+	let (tl, bl) = (point1.x as f32, point2.x as f32);
+	let (tr, br) = ((point1.x + width3) as f32, (point2.x + width4) as f32);
+	let (tex_tl, tex_bl) = (mult(tex1, tsize), mult(tex2, tsize));
+	let (tex_tr, tex_br) = (mult(tex3, tsize), mult(tex4, tsize));
+
+	let inv_h = 1.0 / h as f32;
+	let l_step = (bl - tl) * inv_h;
+	let r_step = (br - tr) * inv_h;
+	let ltex_step = (tex_bl - tex_tl) * inv_h;
+	let rtex_step = (tex_br - tex_tr) * inv_h;
+
+	let y_start = (point1.y as usize).max(0);
+	let y_end = (point2.y as usize).min(SCREEN_TILE_HEIGHT - 1);
+
+	for y in y_start..=y_end {
+		let dy = y as f32 - point1.y as f32;
+
+		let l = tl + l_step * dy;
+		let r = tr + r_step * dy;
+
+		let x_start = (l as usize).max(0);
+		let x_end = (r as usize).min(SCREEN_TILE_WIDTH - 1);
+		if x_start >= x_end {
+			continue;
+		}
+
+		let ltex = tex_tl + ltex_step * dy;
+		let rtex = tex_tr + rtex_step * dy;
+		let tex_step = (rtex - ltex) / (r - l);
+		let mut tex = ltex + tex_step * (x_start as f32 - l);
+
+		let row = y * SCREEN_TILE_WIDTH;
+		for p in row + x_start..=row + x_end {
+			let tz = tex.z as f16;
+
+			if tz < depth_buffer[p] {
+				let ptex = Vector2::new(tex.x, tex.y);
+				let tx = (ptex.x as usize).min(tw - 1);
+				let ty = (ptex.y as usize).min(th - 1);
+				frame_buffer[p] = texture.data[ty * tw + tx];
+				depth_buffer[p] = tz;
+			}
+			tex += tex_step;
+		}
+	}
+}
+
 pub fn textured_triangle(
-    frame_buffer: &mut [Color565; SCREEN_TILE_WIDTH * SCREEN_TILE_HEIGHT],
-    depth_buffer: &mut [f16; SCREEN_TILE_WIDTH * SCREEN_TILE_HEIGHT],
-    mut point1: Vector2<i16>,
-    mut tex1: Vector3<f32>,
-    mut point2: Vector2<i16>,
-    mut tex2: Vector3<f32>,
-    mut point3: Vector2<i16>,
-    mut tex3: Vector3<f32>,
-    texture: &Texture
-) {
-    if point2.y < point1.y {
-        swap(&mut point1, &mut point2);
-        swap(&mut tex1, &mut tex2);
-    }
+	frame_buffer: &mut [Color565; SCREEN_TILE_WIDTH * SCREEN_TILE_HEIGHT],
+	depth_buffer: &mut [f16; SCREEN_TILE_WIDTH * SCREEN_TILE_HEIGHT],
+	mut point1: Vector2<i16>,
+	mut tex1: Vector3<f32>,
+	mut point2: Vector2<i16>,
+	mut tex2: Vector3<f32>,
+	mut point3: Vector2<i16>,
+	mut tex3: Vector3<f32>,
+	texture: &Texture,
+)
+{
+	let mut points = [
+		(point1, norm_w(tex1)),
+		(point2, norm_w(tex2)),
+		(point3, norm_w(tex3)),
+	];
+	points.sort_unstable_by(|p1, p2| p1.0.y.cmp(&p2.0.y));
+	let [(high_pos, high_tex), (mid_pos, mid_tex), (low_pos, low_tex)] = points;
 
-    if point3.y < point1.y {
-        swap(&mut point1, &mut point3);
-        swap(&mut tex1, &mut tex3);
-    }
+	let r = (mid_pos.y - high_pos.y) as f32 / (low_pos.y - high_pos.y) as f32;
+	let mp_pos = Vector2::new(
+		lerp(high_pos.x as f32, low_pos.x as f32, r) as i16,
+		mid_pos.y,
+	);
+	let mp_tex = high_tex.lerp(&low_tex, r);
 
-    if point3.y < point2.y {
-        swap(&mut point2, &mut point3);
-        swap(&mut tex2, &mut tex3);
-    }
+	let (midl_pos, midl_tex, midr_pos, midr_tex) = if mp_pos.x < mid_pos.x {
+		(mp_pos, mp_tex, mid_pos, mid_tex)
+	} else {
+		(mid_pos, mid_tex, mp_pos, mp_tex)
+	};
+	let w = midr_pos.x - midl_pos.x;
 
-    let mut dpoint1 = point2 - point1;
-    let mut dtex1 = tex2 - tex1;
-
-    let dpoint2 = point3 - point1;
-    let dtex2 = tex3 - tex1;
-
-    let mut dax_step = 0.0;
-    let mut dbx_step = 0.0;
-    let mut dtex1_step = Vector3::repeat(0.0);
-    let mut dtex2_step = Vector3::repeat(0.0);
-
-    if dpoint1.y != 0 {
-        dax_step = dpoint1.x as f32 / dpoint1.y.abs() as f32;
-    }
-    if dpoint2.y != 0 {
-        dbx_step = dpoint2.x as f32 / dpoint2.y.abs() as f32;
-    }
-
-    if dpoint1.y != 0 {
-        dtex1_step = dtex1 / (dpoint1.y.abs() as f32);
-    }
-    if dpoint2.y != 0 {
-        dtex2_step = dtex2 / (dpoint2.y.abs() as f32);
-    }
-
-    if dpoint1.y != 0 {
-        for i in point1.y..=point2.y {
-            if i >= SCREEN_TILE_HEIGHT as i16 || i < 0 {
-                continue;
-            }
-            let ax = (point1.x as f32 + (i - point1.y) as f32 * dax_step) as i16;
-            let bx = (point1.x as f32 + (i - point1.y) as f32 * dbx_step) as i16;
-
-            let tex_s = tex1 + (i - point1.y) as f32 * dtex1_step;
-            let tex_e = tex1 + (i - point1.y) as f32 * dtex2_step;
-
-            scan_line(ax, bx, tex_s, tex_e, i, frame_buffer, depth_buffer, texture);
-        }
-    }
-
-    dpoint1 = point3 - point2;
-    dtex1 = tex3 - tex2;
-
-    if dpoint1.y != 0 {
-        dax_step = dpoint1.x as f32 / dpoint1.y.abs() as f32;
-    }
-    if dpoint2.y != 0 {
-        dbx_step = dpoint2.x as f32 / dpoint2.y.abs() as f32;
-    }
-
-    dtex1_step.x = 0.0;
-    dtex1_step.y = 0.0;
-    if dpoint1.y != 0 {
-        dtex1_step = dtex1 / (dpoint1.y.abs() as f32);
-    }
-
-    if dpoint1.y != 0 {
-        for i in point2.y..point3.y {
-            let ax = (point2.x as f32 + (i - point2.y) as f32 * dax_step) as i16;
-            let bx = (point1.x as f32 + (i - point1.y) as f32 * dbx_step) as i16;
-
-            let tex_s = tex2 + (i - point2.y) as f32 * dtex1_step;
-            let tex_e = tex1 + (i - point1.y) as f32 * dtex2_step;
-
-            scan_line(ax, bx, tex_s, tex_e, i, frame_buffer, depth_buffer, texture);
-        }
-    }
+	textured_semiquad(
+		frame_buffer, depth_buffer, high_pos, high_tex, midl_pos, midl_tex, 0, high_tex, w,
+		midr_tex, texture,
+	);
+	textured_semiquad(
+		frame_buffer, depth_buffer, midl_pos, midl_tex, low_pos, low_tex, w, midr_tex, 0, low_tex,
+		texture,
+	);
 }

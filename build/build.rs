@@ -1,55 +1,60 @@
+use std::fs;
+use std::process::Command;
+
 use image::{self, GenericImageView, ImageReader};
 use regex::Regex;
-use std::{fs, process::Command};
 
-fn convert_greyscale_image(file_name: &str) {
-    let img = ImageReader::open(format!("assets/{file_name}.png").as_str())
-        .unwrap()
-        .decode()
-        .unwrap();
+fn convert_greyscale_image(file_name: &str)
+{
+	let img = ImageReader::open(format!("assets/{file_name}.png").as_str())
+		.unwrap()
+		.decode()
+		.unwrap();
 
-    let mut converted_pixels: Vec<u8> = Vec::new();
+	let mut converted_pixels: Vec<u8> = Vec::new();
 
-    for pix in img.pixels() {
-        converted_pixels.push(pix.2.0[0]);
-    }
+	for pix in img.pixels() {
+		converted_pixels.push(pix.2.0[0]);
+	}
 
-    let data = converted_pixels.as_slice();
+	let data = converted_pixels.as_slice();
 
-    fs::write(format!("target/assets/{file_name}.bin").as_str(), data).unwrap();
+	fs::write(format!("target/assets/{file_name}.bin").as_str(), data).unwrap();
 }
 
-fn compile_c_libs() {
-    unsafe { std::env::set_var("CC", "arm-none-eabi-gcc") };
+fn compile_c_libs()
+{
+	unsafe { std::env::set_var("CC", "arm-none-eabi-gcc") };
 
-    let program = "npx";
+	let program = "npx";
 
-    let nwlink_flags = String::from_utf8(
-        Command::new(program)
-            .args(["--yes", "--", "nwlink@0.0.19", "eadk-cflags"])
-            .output()
-            .expect("Failed to get nwlink eadk-cflags")
-            .stdout,
-    )
-    .expect("Invalid UTF-8 in nwlink flags");
+	let nwlink_flags = String::from_utf8(
+		Command::new(program)
+			.args(["--yes", "--", "nwlink@0.0.19", "eadk-cflags"])
+			.output()
+			.expect("Failed to get nwlink eadk-cflags")
+			.stdout,
+	)
+	.expect("Invalid UTF-8 in nwlink flags");
 
-    let mut build = cc::Build::new();
-    build.file("src/nadk/storage/storage.c");
-    build.flag("-std=c99");
-    build.flag("-Os");
-    build.flag("-Wall");
-    build.flag("-ggdb");
-    build.warnings(false);
+	let mut build = cc::Build::new();
+	build.file("src/nadk/storage/storage.c");
+	build.flag("-std=c99");
+	build.flag("-Os");
+	build.flag("-Wall");
+	build.flag("-ggdb");
+	build.warnings(false);
 
-    for flag in nwlink_flags.split_whitespace() {
-        build.flag(flag);
-    }
+	for flag in nwlink_flags.split_whitespace() {
+		build.flag(flag);
+	}
 
-    build.compile("storage_c");
+	build.compile("storage_c");
 }
 
-fn patch_simulator() {
-    let remapped = "constexpr static KeySDLKeyPair sKeyPairs[] = {\
+fn patch_simulator()
+{
+	let remapped = "constexpr static KeySDLKeyPair sKeyPairs[] = {\
   KeySDLKeyPair(Key::OK,        SDL_SCANCODE_RETURN),\n\
   KeySDLKeyPair(Key::Back,      SDL_SCANCODE_BACKSPACE),\n\
   KeySDLKeyPair(Key::EXE,       SDL_SCANCODE_ESCAPE),\n\
@@ -69,112 +74,118 @@ fn patch_simulator() {
   KeySDLKeyPair(Key::Right,     SDL_SCANCODE_RIGHT),\n\
 };";
 
-    let file_content = fs::read_to_string("simulator/ion/src/simulator/shared/keyboard.cpp")
+	let file_content = fs::read_to_string("simulator/ion/src/simulator/shared/keyboard.cpp")
         .expect("Cannot open keyboard.cpp file from emulator. Please check if the simulator is clonned properly.");
 
-    if !file_content.contains(remapped) {
-        let re =
-            Regex::new(r"constexpr static KeySDLKeyPair sKeyPairs\[] ?= ?\{[\S\s]*?};").unwrap();
-        let result = re.replace(&file_content, remapped);
+	if !file_content.contains(remapped) {
+		let re =
+			Regex::new(r"constexpr static KeySDLKeyPair sKeyPairs\[] ?= ?\{[\S\s]*?};").unwrap();
+		let result = re.replace(&file_content, remapped);
 
-        fs::write(
-            "simulator/ion/src/simulator/shared/keyboard.cpp",
-            result.as_bytes(),
-        )
-        .unwrap();
-    }
+		fs::write(
+			"simulator/ion/src/simulator/shared/keyboard.cpp",
+			result.as_bytes(),
+		)
+		.unwrap();
+	}
 }
 
-fn convert_image(file_name: &str) {
-    let img = ImageReader::open(format!("assets/{}.png", file_name).as_str())
-        .unwrap()
-        .decode()
-        .unwrap();
+fn convert_image(file_name: &str)
+{
+	let img = ImageReader::open(format!("assets/{}.png", file_name).as_str())
+		.unwrap()
+		.decode()
+		.unwrap();
 
-    let mut data: Vec<u8> = Vec::new();
+	let mut data: Vec<u8> = Vec::new();
 
-    for pix in img.pixels() {
-        data.extend(
-            (((pix.2.0[0] as u16 & 0xF8) << 8)
-                | ((pix.2.0[1] as u16 & 0xFC) << 3)
-                | ((pix.2.0[2] as u16) >> 3))
-                .to_le_bytes(),
-        );
-    }
+	for pix in img.pixels() {
+		data.extend(
+			(((pix.2.0[0] as u16 & 0xF8) << 8)
+				| ((pix.2.0[1] as u16 & 0xFC) << 3)
+				| ((pix.2.0[2] as u16) >> 3))
+				.to_le_bytes(),
+		);
+	}
 
-    fs::write(format!("target/assets/{}.bin", file_name).as_str(), data).unwrap();
+	let path = format!("target/assets/{}.bin", file_name);
+	fs::write(path.as_str(), data).unwrap();
 }
 
-fn convert_image_transparent(file_name: &str) {
-    let img = ImageReader::open(format!("assets/{}.png", file_name).as_str())
-        .unwrap()
-        .decode()
-        .unwrap();
+fn convert_image_transparent(file_name: &str)
+{
+	let img = ImageReader::open(format!("assets/{}.png", file_name).as_str())
+		.unwrap()
+		.decode()
+		.unwrap();
 
-    let mut data: Vec<u8> = Vec::new();
+	let mut data: Vec<u8> = Vec::new();
 
-    for pix in img.pixels() {
-        data.extend(
-            (((pix.2.0[0] as u16 & 0b11111000) << 8)
-                | ((pix.2.0[1] as u16 & 0b11111100) << 3)
-                | (pix.2.0[2] as u16 >> 3))
-                .to_le_bytes(),
-        );
-        data.push(pix.2.0[3]);
-    }
+	for pix in img.pixels() {
+		data.extend(
+			(((pix.2.0[0] as u16 & 0b11111000) << 8)
+				| ((pix.2.0[1] as u16 & 0b11111100) << 3)
+				| (pix.2.0[2] as u16 >> 3))
+				.to_le_bytes(),
+		);
+		data.push(pix.2.0[3]);
+	}
 
-    fs::write(format!("target/assets/{}.bin", file_name).as_str(), data).unwrap();
+	let path = format!("target/assets/{}.bin", file_name);
+	fs::write(path.as_str(), data).unwrap();
 }
 
-fn convert_icon() {
-    let output = {
-        if let Ok(out) = Command::new("sh")
-            .arg("-c")
-            .arg("npx --yes -- nwlink@0.0.19 png-nwi assets/icon.png target/assets/icon.nwi")
-            .output()
-        {
-            out
-        } else {
-            panic!(
-                "Your OS is not supported! If you're using Windows, please compile Numcraft in WSL."
-            );
-        }
-    };
-    assert!(
-        output.status.success(),
-        "{}",
-        String::from_utf8_lossy(&output.stderr)
-    );
+fn convert_icon()
+{
+	let output = {
+		if let Ok(out) = Command::new("sh")
+			.arg("-c")
+			.arg("npx --yes -- nwlink@0.0.19 png-nwi assets/icon.png target/assets/icon.nwi")
+			.output()
+		{
+			out
+		} else {
+			panic!(
+				"Your OS is not supported! If you're using Windows, please compile Numcraft in WSL."
+			);
+		}
+	};
+	assert!(
+		output.status.success(),
+		"{}",
+		String::from_utf8_lossy(&output.stderr)
+	);
 }
 
-fn main() {
-    // Turn icon.png into icon.nwi
+fn main()
+{
+	// Turn icon.png into icon.nwi
 
-    println!("cargo:rerun-if-changed=assets/icon.png");
-    println!("cargo:rerun-if-changed=assets/font.png");
-    println!("cargo:rerun-if-changed=assets/texture.png");
+	println!("cargo:rerun-if-changed=assets/icon.png");
+	println!("cargo:rerun-if-changed=assets/font.png");
+	println!("cargo:rerun-if-changed=assets/model.png");
 
-    convert_icon();
+	convert_icon();
 
-    // Convert font to usable data
-    convert_greyscale_image("font");
+	// Convert font to usable data
+	convert_greyscale_image("font");
 
-    convert_image("texture");
-    convert_image_transparent("9parts");
+	convert_image("model");
+	convert_image_transparent("9parts");
 
-    // Compile storage.c
-    if std::env::var("CARGO_CFG_TARGET_OS").unwrap() == "none" {
-        println!("cargo:rustc-link-arg=--relocatable");
-        println!("cargo:rustc-link-arg=-no-gc-sections");
+	// Compile storage.c
+	if std::env::var("CARGO_CFG_TARGET_OS").unwrap() == "none" {
+		println!("cargo:rustc-link-arg=--relocatable");
+		println!("cargo:rustc-link-arg=-no-gc-sections");
 
-        if std::env::var("CARGO_FEATURE_UPSILON").is_ok() {
-            println!("cargo:rustc-link-arg=-Ltarget/upsilon_api");
-            println!("cargo:rustc-link-arg=-lapi");
-        } else {
-            compile_c_libs();
-            println!("cargo:rustc-link-arg=-lstorage_c");
-        }
-    } else {
-        patch_simulator();
-    }
+		if std::env::var("CARGO_FEATURE_UPSILON").is_ok() {
+			println!("cargo:rustc-link-arg=-Ltarget/upsilon_api");
+			println!("cargo:rustc-link-arg=-lapi");
+		} else {
+			compile_c_libs();
+			println!("cargo:rustc-link-arg=-lstorage_c");
+		}
+	} else {
+		patch_simulator();
+	}
 }
