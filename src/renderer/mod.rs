@@ -1,3 +1,4 @@
+mod camera;
 mod clipping;
 pub mod drawing;
 mod engine_3d;
@@ -5,15 +6,16 @@ mod flat;
 mod matrix_utils;
 pub mod mesh;
 mod textured;
-mod camera;
 
 calc_use!(alloc::vec::Vec);
 
 use nalgebra::{Matrix4, Perspective3, Vector2, Vector3};
 
-use crate::{
-    constants::rendering::*, nadk::display::{COLOR_BLACK, Color565}, renderer::{camera::Camera, mesh::{FlatCompactTriangle2D, TexCompactTriangle2D}}, renderer2d::{elements::Texture, renderer::{SCREEN_TILE_HEIGHT, SCREEN_TILE_WIDTH}},
-};
+use crate::constants::rendering::*;
+use crate::renderer::camera::Camera;
+use crate::renderer::mesh::{FlatCompactTriangle2D, TexCompactTriangle2D};
+use crate::renderer2d::elements::Texture;
+use crate::renderer2d::renderer::{SCREEN_TILE_HEIGHT, SCREEN_TILE_WIDTH};
 
 // Screen size related constants
 
@@ -29,45 +31,39 @@ const ASPECT_RATIO: f32 = SCREEN_WIDTHF / SCREEN_HEIGHTF;
 const ZNEAR: f32 = 0.1;
 const ZFAR: f32 = 1000.0;
 
-static FONT_DATA: &[u8] = include_bytes!("../../target/assets/font.bin");
-const FONT_WIDTH: usize = 1045;
-const FONT_HEIGHT: usize = 15;
-
-const FONT_CHAR_WIDTH: usize = 11;
-static FONT_ORDER: &str = "!\" $%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^+`abcdefghijklmnopqrstuvwxyz{|}~€";
-
-pub struct Renderer<'a> {
-    pub camera: Camera,
-    tex_triangles_to_render: Vec<TexCompactTriangle2D>,
-    flat_triangles_to_render: Vec<FlatCompactTriangle2D>,
-    tile_depth_buffer: [f16; SCREEN_TILE_WIDTH * SCREEN_TILE_HEIGHT],
-    projection_matrix: Perspective3<f32>,
-    pub enable_vsync: bool,
-    mat_view: Matrix4<f32>,
-    projected_buffer: Vec<Vector2<i16>>,
-    transformed_vertex_buffer: Vec<Vector3<f32>>,
-    texture: Option<&'a Texture>,
+pub struct Renderer<'a>
+{
+	pub camera:                Camera,
+	tex_triangles_to_render:   Vec<TexCompactTriangle2D>,
+	flat_triangles_to_render:  Vec<FlatCompactTriangle2D>,
+	tile_depth_buffer:         [f16; SCREEN_TILE_WIDTH * SCREEN_TILE_HEIGHT],
+	projection_matrix:         Perspective3<f32>,
+	pub enable_vsync:          bool,
+	mat_view:                  Matrix4<f32>,
+	projected_buffer:          Vec<Vector2<i16>>,
+	transformed_vertex_buffer: Vec<Vector3<f32>>,
+	texture:                   Option<&'a Texture>,
 }
 
-impl<'a> Renderer<'a> {
-    pub fn new() -> Self {
-        let renderer: Renderer = Renderer {
-            camera: Camera::new(),
-            projection_matrix: Perspective3::new(ASPECT_RATIO, FOV, ZNEAR, ZFAR),
-            tex_triangles_to_render: Vec::with_capacity(MAX_TRIANGLES),
-            flat_triangles_to_render: Vec::with_capacity(1),
-            tile_depth_buffer: [0.0; SCREEN_TILE_WIDTH * SCREEN_TILE_HEIGHT],
-            enable_vsync: true,
-            mat_view: Matrix4::zeros(),
-            projected_buffer: Vec::new(),
-            transformed_vertex_buffer: Vec::new(),
-            texture: None,
-        };
+impl<'a> Renderer<'a>
+{
+	pub fn new() -> Self
+	{
+		let renderer: Renderer = Renderer {
+			camera:                    Camera::new(),
+			projection_matrix:         Perspective3::new(ASPECT_RATIO, FOV, ZNEAR, ZFAR),
+			tex_triangles_to_render:   Vec::with_capacity(MAX_TRIANGLES),
+			flat_triangles_to_render:  Vec::with_capacity(1),
+			tile_depth_buffer:         [0.0; SCREEN_TILE_WIDTH * SCREEN_TILE_HEIGHT],
+			enable_vsync:              true,
+			mat_view:                  Matrix4::zeros(),
+			projected_buffer:          Vec::new(),
+			transformed_vertex_buffer: Vec::new(),
+			texture:                   None,
+		};
 
-        renderer
-    }
+		renderer
+	}
 
-    pub fn load_texture(&mut self, texture: &'a Texture) {
-        self.texture = Some(texture);
-    }
+	pub fn load_texture(&mut self, texture: &'a Texture) { self.texture = Some(texture); }
 }

@@ -10,12 +10,6 @@ fn mult(tex: Vector3<f32>, size: Vector2<f32>) -> Vector3<f32>
 	Vector3::new(tex.x * size.x, tex.y * size.y, tex.z)
 }
 
-fn norm_w(v: Vector3<f32>) -> Vector3<f32>
-{
-	let inv_z = 1.0 / v.z;
-	Vector3::new(v.x * inv_z, v.y * inv_z, v.z)
-}
-
 pub fn textured_semiquad(
 	frame_buffer: &mut [Color565; SCREEN_TILE_WIDTH * SCREEN_TILE_HEIGHT],
 	depth_buffer: &mut [f16; SCREEN_TILE_WIDTH * SCREEN_TILE_HEIGHT],
@@ -97,11 +91,7 @@ pub fn textured_triangle(
 	texture: &Texture,
 )
 {
-	let mut points = [
-		(point1, norm_w(tex1)),
-		(point2, norm_w(tex2)),
-		(point3, norm_w(tex3)),
-	];
+	let mut points = [(point1, tex1), (point2, tex2), (point3, tex3)];
 	points.sort_unstable_by(|p1, p2| p1.0.y.cmp(&p2.0.y));
 	let [(high_pos, high_tex), (mid_pos, mid_tex), (low_pos, low_tex)] = points;
 
