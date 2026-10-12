@@ -4,7 +4,7 @@
 #![feature(const_trait_impl)]
 #![feature(f16)]
 
-use core::{any::Any, cell::RefCell};
+use core::{any::Any, cell::RefCell, f32::consts::PI};
 
 use nalgebra::{Vector2, Vector3};
 
@@ -22,7 +22,6 @@ use crate::{
         margin::{self, Margin},
         traits::{ContainerNode, Node, node_downcast_ref, node_downcast_ref_mut},
     },
-    ingame_ui::draw_ui,
     input_manager::InputManager,
     nadk::{
         display::{
@@ -57,7 +56,6 @@ mod input_manager;
 mod renderer;
 mod timing;
 
-mod ingame_ui;
 mod renderer2d;
 
 setup_allocator!();
@@ -67,7 +65,7 @@ configure_app!(b"CuteKitTest\0", 12, "../target/assets/icon.nwi", 3437);
 // Hey you reading code in the repo! If you're wondering why these files are not included in the repo,
 // it's because the model used to develop the 3D engine was not open source. So we can't redistribute it under the GPL 3 license.
 // However, you can still replace the model with your own converted model. Have a good day!
-/*static BODY_VERTICIES: &'static [u8] = include_bytes_aligned!(
+static BODY_VERTICIES: &'static [u8] = include_bytes_aligned!(
     4,
     "../assets/model/Anime_character_optimised_body_verticies.bin"
 );
@@ -104,9 +102,9 @@ static FACE_VERTICIES: &'static [u8] = include_bytes_aligned!(
 static FACE_FACES: &'static [u8] = include_bytes_aligned!(
     4,
     "../assets/model/Anime_character_optimised_face_faces.bin"
-);*/
+);
 
-//static TEXTURE: &[u8] = include_bytes_aligned!(4, "../target/assets/texture.bin");
+static TEXTURE: &[u8] = include_bytes_aligned!(4, "../target/assets/texture.bin");
 
 #[unsafe(no_mangle)]
 fn main() {
@@ -117,15 +115,16 @@ fn main() {
     let mut input_manager = InputManager::new();
     let mut time_manager = TimingManager::new();
 
-    /*let texture = Texture {
+    let texture = Texture {
         width: 512,
         height: 512,
         data: bytemuck::cast_slice(TEXTURE),
-    };*/
-    /*let mut renderer = Renderer::new();
+    };
+    let mut renderer = Renderer::new();
     renderer.load_texture(&texture);
 
-    renderer.camera.update_pos(Vector3::new(0.0, 1.0, -2.0));
+    renderer.camera.update_pos(Vector3::new(0.06092486, 5.4939995, 2.7025957));
+    renderer.camera.set_rotation(Vector3::new(0., PI, 0.));
 
     let body = TexturedMesh {
         triangles: bytemuck::cast_slice(&BODY_FACES),
@@ -146,7 +145,7 @@ fn main() {
     let face = TexturedMesh {
         triangles: bytemuck::cast_slice(&FACE_FACES),
         vertices: bytemuck::cast_slice(&FACE_VERTICIES),
-    };*/
+    };
 
     let mut renderer2d = Renderer2d::new(COLOR_BLACK);
 
@@ -344,13 +343,14 @@ fn main() {
             break;
         }
         let delta = time_manager.get_delta_time();
-        /*renderer.camera.update(delta, &input_manager);
+        renderer.camera.update(delta, &input_manager);
+        //println!("{:?}", renderer.camera.get_pos());
 
         renderer.draw_textured_mesh(&face);
         renderer.draw_textured_mesh(&hair);
         renderer.draw_textured_mesh(&body);
         renderer.draw_textured_mesh(&zip);
-        renderer.draw_textured_mesh(&skirt);*/
+        renderer.draw_textured_mesh(&skirt);
 
         let frame_time = heapless::format!(30; "time: {}", time_manager.get_frame_time()).unwrap();
 
@@ -414,9 +414,10 @@ fn main() {
             }
         }
 
-        menu.render(&mut draw_queue).unwrap();
+        //menu.render(&mut draw_queue).unwrap();
+        draw_queue.add_plugin(&mut renderer).unwrap();
 
-        /*draw_queue
+        draw_queue
         .add_text(
             Vector2::new(10, 10),
             &frame_time,
@@ -424,10 +425,11 @@ fn main() {
             COLOR_BLUE,
             Some(COLOR_WHITE),
         )
-        .unwrap();*/
+        .unwrap();
+
 
         renderer2d.draw(&mut draw_queue);
 
-        time::wait_milliseconds(16);
+        //time::wait_milliseconds(16);
     }
 }
