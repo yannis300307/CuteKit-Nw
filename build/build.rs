@@ -4,8 +4,7 @@ use std::process::Command;
 use image::{self, GenericImageView, ImageReader};
 use regex::Regex;
 
-fn convert_greyscale_image(file_name: &str)
-{
+fn convert_greyscale_image(file_name: &str) {
 	let img = ImageReader::open(format!("assets/{file_name}.png").as_str())
 		.unwrap()
 		.decode()
@@ -22,8 +21,7 @@ fn convert_greyscale_image(file_name: &str)
 	fs::write(format!("target/assets/{file_name}.bin").as_str(), data).unwrap();
 }
 
-fn compile_c_libs()
-{
+fn compile_c_libs() {
 	unsafe { std::env::set_var("CC", "arm-none-eabi-gcc") };
 
 	let program = "npx";
@@ -38,7 +36,7 @@ fn compile_c_libs()
 	.expect("Invalid UTF-8 in nwlink flags");
 
 	let mut build = cc::Build::new();
-	build.file("src/nadk/storage/storage.c");
+	build.file("cutekit/src/nadk/storage/storage.c");
 	build.flag("-std=c99");
 	build.flag("-Os");
 	build.flag("-Wall");
@@ -52,8 +50,7 @@ fn compile_c_libs()
 	build.compile("storage_c");
 }
 
-fn patch_simulator()
-{
+fn patch_simulator() {
 	let remapped = "constexpr static KeySDLKeyPair sKeyPairs[] = {\
   KeySDLKeyPair(Key::OK,        SDL_SCANCODE_RETURN),\n\
   KeySDLKeyPair(Key::Back,      SDL_SCANCODE_BACKSPACE),\n\
@@ -90,8 +87,7 @@ fn patch_simulator()
 	}
 }
 
-fn convert_image(file_name: &str)
-{
+fn convert_image(file_name: &str) {
 	let img = ImageReader::open(format!("assets/{}.png", file_name).as_str())
 		.unwrap()
 		.decode()
@@ -112,8 +108,7 @@ fn convert_image(file_name: &str)
 	fs::write(path.as_str(), data).unwrap();
 }
 
-fn convert_image_transparent(file_name: &str)
-{
+fn convert_image_transparent(file_name: &str) {
 	let img = ImageReader::open(format!("assets/{}.png", file_name).as_str())
 		.unwrap()
 		.decode()
@@ -135,8 +130,7 @@ fn convert_image_transparent(file_name: &str)
 	fs::write(path.as_str(), data).unwrap();
 }
 
-fn convert_icon()
-{
+fn convert_icon() {
 	let output = {
 		if let Ok(out) = Command::new("sh")
 			.arg("-c")
@@ -157,8 +151,7 @@ fn convert_icon()
 	);
 }
 
-fn main()
-{
+fn main() {
 	// Turn icon.png into icon.nwi
 
 	println!("cargo:rerun-if-changed=assets/icon.png");

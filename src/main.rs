@@ -4,63 +4,24 @@
 #![feature(const_trait_impl)]
 #![feature(f16)]
 
-use core::any::Any;
 use core::cell::RefCell;
 use core::f32::consts::PI;
 
+use cutekit::gui::Menu;
+use cutekit::gui::elements::{Button, ColorRectanglePrimitive, Container, TextPrimitive};
+use cutekit::gui::enums::{AlignDirection, Anchor, Layout};
+use cutekit::gui::margin::Margin;
+use cutekit::gui::traits::node_downcast_ref_mut;
+use cutekit::renderer::Renderer;
+use cutekit::renderer::mesh::TexturedMesh;
+use cutekit::renderer2d::draw_queue::DrawQueue;
+use cutekit::renderer2d::elements::{Font, Texture};
+use cutekit::renderer2d::nine_parts_rectangle::NinePartsTexture;
+use cutekit::renderer2d::renderer::Renderer2d;
+use cutekit::renderer2d::sprite::TransparentTexture;
+use cutekit::{self, COLOR_BLACK, COLOR_BLUE, COLOR_RED, COLOR_WHITE, Color565, Key};
 use include_bytes_aligned::include_bytes_aligned;
 use nalgebra::{Vector2, Vector3};
-
-use crate::gui::Menu;
-use crate::gui::elements::{
-	Button,
-	ColorRectanglePrimitive,
-	Container,
-	NinePartsRectanglePrimitive,
-	RoundedRectanglePrimitive,
-	TextPrimitive,
-	TransparentScaledSpritePrimitive,
-};
-use crate::gui::enums::Anchor::{self, Center};
-use crate::gui::enums::Layout;
-use crate::gui::margin::{self, Margin};
-use crate::gui::traits::{ContainerNode, Node, node_downcast_ref, node_downcast_ref_mut};
-use crate::input_manager::InputManager;
-use crate::nadk::display::{
-	self,
-	COLOR_BLACK,
-	COLOR_BLUE,
-	COLOR_GREEN,
-	COLOR_RED,
-	COLOR_WHITE,
-	Color565,
-	ScreenRect,
-};
-use crate::nadk::time::{self, wait_milliseconds};
-use crate::nadk::utils::wait_ok_released;
-use crate::renderer::Renderer;
-use crate::renderer::mesh::{FlatMesh, TexturedMesh};
-use crate::renderer2d::draw_queue::DrawQueue;
-use crate::renderer2d::elements::{CustomPlugin, Element, Font, ScaleMode, Texture};
-use crate::renderer2d::nine_parts_rectangle::NinePartsTexture;
-use crate::renderer2d::renderer::Renderer2d;
-use crate::renderer2d::sprite::TransparentTexture;
-use crate::timing::TimingManager;
-
-#[macro_use]
-mod nadk;
-
-mod constants;
-mod gui;
-mod input_manager;
-mod renderer;
-mod timing;
-
-mod renderer2d;
-
-setup_allocator!();
-
-configure_app!(b"CuteKitTest\0", 12, "../target/assets/icon.nwi", 3437);
 
 // Hey you reading code in the repo! If you're wondering why these files are not included in the repo,
 // it's because the model used to develop the 3D engine was not open source. So we can't redistribute it under the GPL 3 license.
@@ -107,14 +68,8 @@ static FACE_FACES: &'static [u8] = include_bytes_aligned!(
 static TEXTURE: &[u8] = include_bytes_aligned!(4, "../target/assets/model.bin");
 
 #[unsafe(no_mangle)]
-fn main()
-{
-	init_heap!();
-
-	wait_ok_released();
-
-	let mut input_manager = InputManager::new();
-	let mut time_manager = TimingManager::new();
+fn main() {
+	let mut ck = cutekit::init();
 
 	let texture = Texture {
 		width:  512,
@@ -216,7 +171,7 @@ fn main()
 									margin:           Margin::none(),
 								},
 							],
-							align:           gui::enums::AlignDirection::Down,
+							align:           AlignDirection::Down,
 							layout_override: Layout::Default,
 							expand:          false,
 							margin:          Margin::none(),
@@ -244,7 +199,7 @@ fn main()
 									margin:           Margin::none(),
 								},
 							],
-							align:           gui::enums::AlignDirection::Down,
+							align:           AlignDirection::Down,
 							layout_override: Layout::Default,
 							expand:          false,
 							margin:          Margin::none(),
@@ -279,7 +234,7 @@ fn main()
 									margin:           Margin::none(),
 								},
 							],
-							align:           gui::enums::AlignDirection::Down,
+							align:           AlignDirection::Down,
 							layout_override: Layout::Default,
 							expand:          false,
 							margin:          Margin::none(),
@@ -287,7 +242,7 @@ fn main()
 							is_selected:     false,
 						},
 					],
-					align:           gui::enums::AlignDirection::Down,
+					align:           AlignDirection::Down,
 					layout_override: Layout::Default,
 					expand:          true,
 					margin:          Margin::uniform(0),
@@ -315,21 +270,21 @@ fn main()
 								margin:           Margin::none(),
 							},
 						],
-						align:           gui::enums::AlignDirection::Down,
+						align:           AlignDirection::Down,
 						layout_override: Layout::Default,
 						expand:          false,
 						margin:          Margin::none(),
 						id:              3,
 						is_selected:     false,
 					}],
-					align:           gui::enums::AlignDirection::Down,
+					align:           AlignDirection::Down,
 					layout_override: Layout::Default,
 					expand:          true,
 					margin:          Margin::none(),
 					selected_child:  None,
 				},
 			],
-			align:           gui::enums::AlignDirection::Right,
+			align:           AlignDirection::Right,
 			layout_override: Layout::Default,
 			expand:          true,
 			margin:          Margin::none(),
@@ -343,13 +298,12 @@ fn main()
 	menu.select_node_by_id(2); // TODO: The indexes must absolutly be updated in case the tree is modified
 
 	loop {
-		time_manager.update();
-		input_manager.update();
-		if input_manager.is_just_pressed(nadk::keyboard::Key::Back) {
+		ck.update();
+		if ck.inputs.key_just_pressed(Key::Back) {
 			break;
 		}
-		let delta = time_manager.get_delta_time();
-		renderer.camera.update(delta, &input_manager);
+		let delta = ck.delta_time;
+		renderer.camera.update(delta, &ck.inputs);
 		//println!("{:?}", renderer.camera.get_pos());
 
 		renderer.draw_textured_mesh(&face);
@@ -358,13 +312,13 @@ fn main()
 		renderer.draw_textured_mesh(&zip);
 		renderer.draw_textured_mesh(&skirt);
 
-		let frame_time = heapless::format!(30; "time: {}", time_manager.get_frame_time()).unwrap();
+		let frame_time = heapless::format!(30; "time: {}", ck.frame_time).unwrap();
 
 		let mut draw_queue: DrawQueue<'_, 100> = DrawQueue::new();
 
 		//draw_queue.add_plugin(&mut renderer).unwrap()
 
-		menu.update(&input_manager);
+		menu.update(&ck.inputs);
 
 		if let Some(signal) = menu.get_last_event() {
 			match signal.0 {
