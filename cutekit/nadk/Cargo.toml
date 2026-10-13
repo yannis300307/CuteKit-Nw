@@ -1,0 +1,15 @@
+[package]
+name = "nadk"
+version = "0.1.0"
+edition = "2024"
+
+[features]
+upsilon = []
+epsilon = []
+
+[dependencies]
+cortex-m = {version="0.7.7", features=["critical-section-single-core"]}
+embedded-alloc = "0.6.0"
+postcard = {version = "1.1.2", features=["alloc"]}
+enum-iterator = "2.3.0"
+bytemuck = { version = "1.25.0", features = ["derive"] }

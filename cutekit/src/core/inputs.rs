@@ -1,8 +1,10 @@
 use enum_iterator::all;
+use nadk::{
+	keyboard::KeyboardState,
+	{self},
+};
 
 use crate::Key;
-use crate::nadk::keyboard::KeyboardState;
-use crate::nadk::{self};
 
 pub struct InputManager {
 	down:          KeyboardState,

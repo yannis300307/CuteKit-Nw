@@ -5,11 +5,13 @@ edition = "2024"
 
 [features]
 default = ["handle_nadk"]
-upsilon = []
-epsilon = []
+upsilon = ["nadk/upsilon"]
+epsilon = ["nadk/epsilon"]
 debug_ui = []
 handle_nadk = []
 
+[dependencies.nadk]
+path = "nadk"
 
 [dependencies]
 nalgebra = {version = "0.33.2", default-features = false, features = ["libm", "bytemuck"]}

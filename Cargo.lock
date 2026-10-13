@@ -345,6 +345,7 @@ dependencies = [
  "image",
  "include_bytes_aligned",
  "libm",
+ "nadk",
  "nalgebra",
  "postcard",
  "rand_core 0.9.3",
@@ -756,6 +757,17 @@ checksum = "1fa76a2c86f704bdb222d66965fb3d63269ce38518b83cb0575fca855ebb6316"
 dependencies = [
  "adler2",
  "simd-adler32",
+]
+
+[[package]]
+name = "nadk"
+version = "0.1.0"
+dependencies = [
+ "bytemuck",
+ "cortex-m",
+ "embedded-alloc",
+ "enum-iterator",
+ "postcard",
 ]
 
 [[package]]

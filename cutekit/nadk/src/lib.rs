@@ -1,4 +1,23 @@
 #![allow(unused)]
+#![cfg_attr(target_os = "none", no_std)]
+#![no_main]
+
+#[allow(unused_imports)]
+#[cfg(target_os = "none")]
+use cortex_m;
+#[cfg(target_os = "none")]
+use embedded_alloc::LlffHeap as Heap;
+
+#[global_allocator]
+#[cfg(target_os = "none")]
+static HEAP: Heap = Heap::empty();
+
+#[cfg(target_os = "none")]
+extern crate alloc;
+
+#[cfg(target_os = "none")]
+pub fn init_heap() { unsafe { crate::HEAP.init(adresses::heap_start(), adresses::heap_size()) } }
+
 #[macro_use]
 /// A crate containing useful macros to write cleaner code.
 pub mod macros;
