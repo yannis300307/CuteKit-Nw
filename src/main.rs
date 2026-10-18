@@ -1,68 +1,22 @@
 #![cfg_attr(target_os = "none", no_std)]
 #![no_main]
-#![feature(const_index)]
-#![feature(const_trait_impl)]
-#![feature(f16)]
 
-use core::f32::consts::PI;
-
-use cutekit::gui::Menu;
-use cutekit::gui::elements::{Button, ColorRectanglePrimitive, Container, TextPrimitive};
-use cutekit::gui::enums::{AlignDirection, Anchor, Layout};
-use cutekit::gui::margin::Margin;
-use cutekit::gui::traits::node_downcast_ref_mut;
-use cutekit::renderer::Renderer;
-use cutekit::renderer::mesh::TexturedMesh;
-use cutekit::renderer2d::draw_queue::DrawQueue;
-use cutekit::renderer2d::elements::{Font, Texture};
-use cutekit::renderer2d::nine_parts_rectangle::NinePartsTexture;
-use cutekit::renderer2d::renderer::Renderer2d;
-use cutekit::renderer2d::sprite::TransparentTexture;
-use cutekit::{self, COLOR_BLACK, COLOR_BLUE, COLOR_RED, COLOR_WHITE, Color565, Key};
+use cutekit::{
+	COLOR_BLACK,
+	COLOR_BLUE,
+	COLOR_WHITE,
+	Color,
+	Key,
+	Vec2,
+	configure_app,
+	drawing::Pipeline,
+	render2d::{Element2D, Pipeline2D},
+	texture::Texture,
+};
 use include_bytes_aligned::include_bytes_aligned;
-use nalgebra::{Vector2, Vector3};
+mod cutekit_main;
 
-// Hey you reading code in the repo! If you're wondering why these files are not included in the repo,
-// it's because the model used to develop the 3D engine was not open source. So we can't redistribute it under the GPL 3 license.
-// However, you can still replace the model with your own converted model. Have a good day!
-static BODY_VERTICIES: &'static [u8] = include_bytes_aligned!(
-	4,
-	"../assets/model/Anime_character_optimised_body_verticies.bin"
-);
-static BODY_FACES: &'static [u8] = include_bytes_aligned!(
-	4,
-	"../assets/model/Anime_character_optimised_body_faces.bin"
-);
-static SKIRT_VERTICIES: &'static [u8] = include_bytes_aligned!(
-	4,
-	"../assets/model/Anime_character_optimised_skirt_verticies.bin"
-);
-static SKIRT_FACES: &'static [u8] = include_bytes_aligned!(
-	4,
-	"../assets/model/Anime_character_optimised_skirt_faces.bin"
-);
-static ZIP_VERTICIES: &'static [u8] = include_bytes_aligned!(
-	4,
-	"../assets/model/Anime_character_optimised_zip_verticies.bin"
-);
-static ZIP_FACES: &'static [u8] =
-	include_bytes_aligned!(4, "../assets/model/Anime_character_optimised_zip_faces.bin");
-static HAIR_VERTICIES: &'static [u8] = include_bytes_aligned!(
-	4,
-	"../assets/model/Anime_character_optimised_hair_verticies.bin"
-);
-static HAIR_FACES: &'static [u8] = include_bytes_aligned!(
-	4,
-	"../assets/model/Anime_character_optimised_hair_faces.bin"
-);
-static FACE_VERTICIES: &'static [u8] = include_bytes_aligned!(
-	4,
-	"../assets/model/Anime_character_optimised_face_verticies.bin"
-);
-static FACE_FACES: &'static [u8] = include_bytes_aligned!(
-	4,
-	"../assets/model/Anime_character_optimised_face_faces.bin"
-);
+configure_app!(b"CuteKitTest\0", 12, "../target/assets/icon.nwi", 3437);
 
 static TEXTURE: &[u8] = include_bytes_aligned!(4, "../target/assets/model.bin");
 
@@ -70,84 +24,38 @@ static TEXTURE: &[u8] = include_bytes_aligned!(4, "../target/assets/model.bin");
 fn main() {
 	let mut ck = cutekit::init();
 
-	let texture = Texture {
-		width:  512,
-		height: 512,
-		data:   bytemuck::cast_slice(TEXTURE),
-	};
-	let mut renderer = Renderer::new();
-	renderer.load_texture(&texture);
+	let mut render = Pipeline2D::<30>::new();
 
-	renderer
-		.camera
-		.update_pos(Vector3::new(0.06092486, 5.4939995, 2.7025957));
-	renderer.camera.set_rotation(Vector3::new(0.0, PI, 0.0));
+	let texture = Texture::from_bytes(Vec2::new(512, 512), TEXTURE);
 
-	let body = TexturedMesh {
-		triangles: bytemuck::cast_slice(&BODY_FACES),
-		vertices:  bytemuck::cast_slice(&BODY_VERTICIES),
-	};
-	let skirt = TexturedMesh {
-		triangles: bytemuck::cast_slice(&SKIRT_FACES),
-		vertices:  bytemuck::cast_slice(&SKIRT_VERTICIES),
-	};
-	let zip = TexturedMesh {
-		triangles: bytemuck::cast_slice(&ZIP_FACES),
-		vertices:  bytemuck::cast_slice(&ZIP_VERTICIES),
-	};
-	let hair = TexturedMesh {
-		triangles: bytemuck::cast_slice(&HAIR_FACES),
-		vertices:  bytemuck::cast_slice(&HAIR_VERTICIES),
-	};
-	let face = TexturedMesh {
-		triangles: bytemuck::cast_slice(&FACE_FACES),
-		vertices:  bytemuck::cast_slice(&FACE_VERTICIES),
-	};
-
-	let mut renderer2d = Renderer2d::new(COLOR_BLACK);
-
-	let font = Font {
-		data:             include_bytes!("../target/assets/font.bin"),
-		font_image_width: 1235,
-		char_width:       13,
-		char_height:      16,
-		chars:            " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~",
-	};
+	let mut pos = Vec2::new(40, 40);
+	let mut size = Vec2::new(40, 80);
 
 	loop {
 		ck.update();
-		if ck.inputs.key_just_pressed(Key::Back) {
-			break;
+
+		if ck.inputs.key_down(Key::Up) {
+			pos.y -= 1;
 		}
-		let delta = ck.delta_time;
-		renderer.camera.update(delta, &ck.inputs);
-		//println!("{:?}", renderer.camera.get_pos());
+		if ck.inputs.key_down(Key::Down) {
+			pos.y += 1;
+		}
+		if ck.inputs.key_down(Key::Left) {
+			pos.x -= 1;
+		}
+		if ck.inputs.key_down(Key::Right) {
+			pos.x += 1;
+		}
 
-		renderer.draw_textured_mesh(&face);
-		renderer.draw_textured_mesh(&hair);
-		renderer.draw_textured_mesh(&body);
-		renderer.draw_textured_mesh(&zip);
-		renderer.draw_textured_mesh(&skirt);
+		render.clear();
 
-		let frame_time = heapless::format!(30; "time: {}", ck.frame_time).unwrap();
-
-		let mut draw_queue: DrawQueue<'_, 100> = DrawQueue::new();
-
-		//draw_queue.add_plugin(&mut renderer).unwrap()
-
-		//menu.render(&mut draw_queue).unwrap();
-		draw_queue.add_plugin(&mut renderer).unwrap();
-
-		draw_queue
-			.add_text(
-				Vector2::new(10, 10),
-				&frame_time,
-				&font,
-				COLOR_BLUE,
-				Some(COLOR_WHITE),
-			)
+		render
+			.register(Element2D::Sprite {
+				pos,
+				texture: &texture,
+			})
 			.unwrap();
 
-		renderer2d.draw(&mut draw_queue);
+		ck.render(COLOR_BLACK, [&mut render]);
 	}
 }

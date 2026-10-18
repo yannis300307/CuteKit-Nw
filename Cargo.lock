@@ -764,10 +764,13 @@ name = "nadk"
 version = "0.1.0"
 dependencies = [
  "bytemuck",
+ "cc",
  "cortex-m",
  "embedded-alloc",
  "enum-iterator",
+ "image",
  "postcard",
+ "regex",
 ]
 
 [[package]]

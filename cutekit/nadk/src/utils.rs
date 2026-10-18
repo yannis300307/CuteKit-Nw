@@ -28,5 +28,5 @@ pub fn log(text: &[&str]) {
 #[inline(always)]
 pub fn refresh_simulator() {
 	#[cfg(not(target_os = "none"))]
-	crate::nadk::keyboard::KeyboardState::scan();
+	crate::keyboard::KeyboardState::scan();
 }

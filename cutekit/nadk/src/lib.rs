@@ -2,14 +2,13 @@
 #![cfg_attr(target_os = "none", no_std)]
 #![no_main]
 
-#[allow(unused_imports)]
 #[cfg(target_os = "none")]
 use cortex_m;
 #[cfg(target_os = "none")]
 use embedded_alloc::LlffHeap as Heap;
 
-#[global_allocator]
 #[cfg(target_os = "none")]
+#[global_allocator]
 static HEAP: Heap = Heap::empty();
 
 #[cfg(target_os = "none")]

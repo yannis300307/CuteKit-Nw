@@ -1,0 +1,156 @@
+#![cfg_attr(target_os = "none", no_std)]
+#![no_main]
+#![feature(const_index)]
+#![feature(const_trait_impl)]
+#![feature(f16)]
+
+use core::f32::consts::PI;
+
+use cutekit::{
+	self,
+	COLOR_BLACK,
+	COLOR_BLUE,
+	COLOR_RED,
+	COLOR_WHITE,
+	Color565,
+	Key,
+	gui::{
+		Menu,
+		elements::{Button, ColorRectanglePrimitive, Container, TextPrimitive},
+		enums::{AlignDirection, Anchor, Layout},
+		margin::Margin,
+		traits::node_downcast_ref_mut,
+	},
+};
+use include_bytes_aligned::include_bytes_aligned;
+use nalgebra::{Vector2, Vector3};
+
+// Hey you reading code in the repo! If you're wondering why these files are not included in the repo,
+// it's because the model used to develop the 3D engine was not open source. So we can't redistribute it under the GPL 3 license.
+// However, you can still replace the model with your own converted model. Have a good day!
+static BODY_VERTICIES: &'static [u8] = include_bytes_aligned!(
+	4,
+	"../assets/model/Anime_character_optimised_body_verticies.bin"
+);
+static BODY_FACES: &'static [u8] = include_bytes_aligned!(
+	4,
+	"../assets/model/Anime_character_optimised_body_faces.bin"
+);
+static SKIRT_VERTICIES: &'static [u8] = include_bytes_aligned!(
+	4,
+	"../assets/model/Anime_character_optimised_skirt_verticies.bin"
+);
+static SKIRT_FACES: &'static [u8] = include_bytes_aligned!(
+	4,
+	"../assets/model/Anime_character_optimised_skirt_faces.bin"
+);
+static ZIP_VERTICIES: &'static [u8] = include_bytes_aligned!(
+	4,
+	"../assets/model/Anime_character_optimised_zip_verticies.bin"
+);
+static ZIP_FACES: &'static [u8] =
+	include_bytes_aligned!(4, "../assets/model/Anime_character_optimised_zip_faces.bin");
+static HAIR_VERTICIES: &'static [u8] = include_bytes_aligned!(
+	4,
+	"../assets/model/Anime_character_optimised_hair_verticies.bin"
+);
+static HAIR_FACES: &'static [u8] = include_bytes_aligned!(
+	4,
+	"../assets/model/Anime_character_optimised_hair_faces.bin"
+);
+static FACE_VERTICIES: &'static [u8] = include_bytes_aligned!(
+	4,
+	"../assets/model/Anime_character_optimised_face_verticies.bin"
+);
+static FACE_FACES: &'static [u8] = include_bytes_aligned!(
+	4,
+	"../assets/model/Anime_character_optimised_face_faces.bin"
+);
+
+static TEXTURE: &[u8] = include_bytes_aligned!(4, "../target/assets/model.bin");
+
+#[unsafe(no_mangle)]
+fn main() {
+	let mut ck = cutekit::init();
+
+	let texture = Texture {
+		width:  512,
+		height: 512,
+		data:   bytemuck::cast_slice(TEXTURE),
+	};
+	let mut renderer = Renderer::new();
+	renderer.load_texture(&texture);
+
+	renderer
+		.camera
+		.update_pos(Vector3::new(0.06092486, 5.4939995, 2.7025957));
+	renderer.camera.set_rotation(Vector3::new(0.0, PI, 0.0));
+
+	let body = TexturedMesh {
+		triangles: bytemuck::cast_slice(&BODY_FACES),
+		vertices:  bytemuck::cast_slice(&BODY_VERTICIES),
+	};
+	let skirt = TexturedMesh {
+		triangles: bytemuck::cast_slice(&SKIRT_FACES),
+		vertices:  bytemuck::cast_slice(&SKIRT_VERTICIES),
+	};
+	let zip = TexturedMesh {
+		triangles: bytemuck::cast_slice(&ZIP_FACES),
+		vertices:  bytemuck::cast_slice(&ZIP_VERTICIES),
+	};
+	let hair = TexturedMesh {
+		triangles: bytemuck::cast_slice(&HAIR_FACES),
+		vertices:  bytemuck::cast_slice(&HAIR_VERTICIES),
+	};
+	let face = TexturedMesh {
+		triangles: bytemuck::cast_slice(&FACE_FACES),
+		vertices:  bytemuck::cast_slice(&FACE_VERTICIES),
+	};
+
+	let mut renderer2d = Renderer2d::new(COLOR_BLACK);
+
+	let font = Font {
+		data:             include_bytes!("../target/assets/font.bin"),
+		font_image_width: 1235,
+		char_width:       13,
+		char_height:      16,
+		chars:            " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~",
+	};
+
+	loop {
+		ck.update();
+		if ck.inputs.key_just_pressed(Key::Back) {
+			break;
+		}
+		let delta = ck.delta_time;
+		renderer.camera.update(delta, &ck.inputs);
+		//println!("{:?}", renderer.camera.get_pos());
+
+		renderer.draw_textured_mesh(&face);
+		renderer.draw_textured_mesh(&hair);
+		renderer.draw_textured_mesh(&body);
+		renderer.draw_textured_mesh(&zip);
+		renderer.draw_textured_mesh(&skirt);
+
+		let frame_time = heapless::format!(30; "time: {}", ck.frame_time).unwrap();
+
+		let mut draw_queue: DrawQueue<'_, 100> = DrawQueue::new();
+
+		//draw_queue.add_plugin(&mut renderer).unwrap()
+
+		//menu.render(&mut draw_queue).unwrap();
+		draw_queue.add_plugin(&mut renderer).unwrap();
+
+		draw_queue
+			.add_text(
+				Vector2::new(10, 10),
+				&frame_time,
+				&font,
+				COLOR_BLUE,
+				Some(COLOR_WHITE),
+			)
+			.unwrap();
+
+		renderer2d.draw(&mut draw_queue);
+	}
+}

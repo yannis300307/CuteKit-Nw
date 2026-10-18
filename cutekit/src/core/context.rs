@@ -2,22 +2,19 @@ use nadk::display::{ScreenRect, push_rect};
 
 use crate::{
 	Color,
-	MAX_PIPELINES,
 	SCREEN_HEIGHT,
 	SCREEN_TILE_HEIGHT,
 	SCREEN_TILE_WIDTH,
-	ScreenPos,
+	Vec2,
+	drawing::{Drawable, TileBuffer},
 	inputs::InputManager,
-	rendering::{PipelineRef, TileBuffer},
 };
 
 #[readonly::make]
-pub struct Cutekit<const PIPELINES: usize = MAX_PIPELINES> {
+pub struct Cutekit {
 	pub frame_time: f32,
 	pub delta_time: f32,
 	pub inputs:     InputManager,
-
-	pipelines: heapless::Vec<PipelineRef, PIPELINES>,
 }
 
 impl Cutekit {
@@ -31,8 +28,6 @@ impl Cutekit {
 			frame_time: Self::get_time() - Self::TARGET_DELTA_TIME,
 
 			inputs: InputManager::init(),
-
-			pipelines: heapless::Vec::new(),
 		}
 	}
 
@@ -44,29 +39,29 @@ impl Cutekit {
 		self.inputs.update(self.delta_time);
 	}
 
-	pub fn schedule(&mut self, plugin: PipelineRef) -> Option<usize> {
-		match self.pipelines.push(plugin) {
-			Ok(_) => Some(self.pipelines.len() - 1),
-			Err(_) => None,
-		}
-	}
+	pub fn render<'a, const N: usize>(
+		&mut self,
+		clear_color: Color,
+		mut pipelines: [&'a mut dyn Drawable; N],
+	) {
+		for y in (0..SCREEN_HEIGHT).step_by(SCREEN_TILE_HEIGHT as usize) {
+			let mut tile_buffer = TileBuffer::new(
+				Vec2::new(SCREEN_TILE_WIDTH, SCREEN_TILE_HEIGHT),
+				clear_color,
+			);
 
-	pub fn render(&mut self, clear_color: Color) {
-		for y in (0..SCREEN_HEIGHT).step_by(SCREEN_TILE_HEIGHT) {
-			let mut tile_buffer = TileBuffer::new(ScreenPos::new(0, y as i16), clear_color);
-
-			for pipeline in self.pipelines.iter_mut() {
-				pipeline.draw(&mut tile_buffer);
+			for pipeline in pipelines.iter_mut() {
+				pipeline.draw(&mut tile_buffer, Vec2::new(0, y));
 			}
 
 			push_rect(
 				ScreenRect {
 					x:      0,
-					y:      (SCREEN_TILE_HEIGHT * y) as u16,
+					y:      y as u16,
 					width:  SCREEN_TILE_WIDTH as u16,
 					height: SCREEN_TILE_HEIGHT as u16,
 				},
-				&tile_buffer.buffer,
+				&tile_buffer.data,
 			);
 		}
 	}

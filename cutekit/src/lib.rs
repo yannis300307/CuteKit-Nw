@@ -1,8 +1,8 @@
 #![cfg_attr(target_os = "none", no_std)]
-#![no_main]
-#![feature(const_index)]
 #![feature(const_trait_impl)]
 #![feature(f16)]
+#![feature(step_trait)]
+#![feature(generic_const_exprs)]
 
 pub use nadk::{
 	configure_app,
@@ -15,15 +15,11 @@ pub type Vec2<T> = nalgebra::Vector2<T>;
 pub type Vec3<T> = nalgebra::Vector3<T>;
 pub type Vec2f = Vec2<f32>;
 pub type Vec3f = Vec3<f32>;
-pub type ScreenPos = Vec2<i16>;
 
 pub mod core;
 pub use crate::core::*;
 
-pub mod gui;
 pub mod render2d;
-pub mod renderer;
-pub mod renderer2d;
 
 #[cfg(not(feature = "epsilon"))]
 #[cfg(not(feature = "upsilon"))]
@@ -40,6 +36,7 @@ compile_error!(
 
 pub fn init() -> Cutekit {
 	if cfg!(feature = "handle_nadk") {
+		#[cfg(target_os = "none")]
 		nadk::init_heap();
 		nadk::utils::wait_ok_released();
 	}

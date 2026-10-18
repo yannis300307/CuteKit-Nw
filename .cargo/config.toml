@@ -9,4 +9,5 @@ rustflags = [
 ]
 
 [build]
+rustflags = ["-Znext-solver=coherence"]
 target = "thumbv7em-none-eabihf"
