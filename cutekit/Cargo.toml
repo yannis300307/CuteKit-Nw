@@ -4,11 +4,15 @@ version = "0.1.0"
 edition = "2024"
 
 [features]
-default = ["handle_nadk"]
+default = ["handle_nadk", "draw_2d"]
 upsilon = ["nadk/upsilon"]
 epsilon = ["nadk/epsilon"]
-debug_ui = []
 handle_nadk = []
+expose = []
+
+draw_2d = []
+draw_3d = []
+ui = ["draw_2d"]
 
 [dependencies.nadk]
 path = "nadk"
@@ -26,6 +30,7 @@ rand_core = "0.9.3"
 bytemuck = { version = "1.25.0", features = ["derive"] }
 include_bytes_aligned = "0.2.0"
 readonly = "0.2.14"
+enum-map = "3.1.0"
 
 [build-dependencies]
 image = "0.25.6"

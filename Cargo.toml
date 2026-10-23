@@ -38,6 +38,7 @@ codegen-units = 1
 
 [dependencies.cutekit]
 path = "cutekit"
+features = ["expose"]
 
 [dependencies]
 nalgebra = {version = "0.33.2", default-features = false, features = ["libm", "bytemuck"]}
