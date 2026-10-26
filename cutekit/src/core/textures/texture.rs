@@ -9,6 +9,17 @@ use crate::{
 
 impl<'a, T: AnyColor> Texture<'a, T> {
 	#[inline]
+	pub const fn new(width: i16, height: i16, data: &'a [T]) -> Self {
+		let size = Vec2::new(width, height);
+		Self {
+			data,
+			stride: width,
+			size,
+			clip: AnyRect::<i16, false>(Vec2::new(0, 0), size),
+		}
+	}
+
+	#[inline]
 	pub fn from_data(size: Vec2<i16>, data: &'a [T]) -> Self {
 		assert!(size.x > 0 && size.y > 0);
 		assert!(data.len() == size.x as usize * size.y as usize);
@@ -16,7 +27,7 @@ impl<'a, T: AnyColor> Texture<'a, T> {
 			data,
 			stride: size.x,
 			size,
-			clip: Rect::new(Vec2::new(0, 0), size),
+			clip: Rect::at_origin(size),
 		}
 	}
 

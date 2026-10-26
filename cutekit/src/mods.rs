@@ -4,6 +4,9 @@ pub mod draw_2d;
 #[cfg(feature = "draw_3d")]
 #[path = "draw_3d/mod.rs"]
 pub mod draw_3d;
+#[cfg(feature = "kibble")]
+#[path = "kibble/mod.rs"]
+pub mod kibble;
 #[cfg(feature = "ui")]
 #[path = "ui/mod.rs"]
 pub mod ui;

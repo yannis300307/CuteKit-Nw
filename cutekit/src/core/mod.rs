@@ -19,6 +19,7 @@ pub mod public {
 		utils::math::CutekitMatrix,
 	};
 }
+pub use public::*;
 
 pub const SCREEN_WIDTH: i16 = 320;
 pub const SCREEN_HEIGHT: i16 = 240;

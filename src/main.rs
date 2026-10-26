@@ -17,23 +17,22 @@ use cutekit::{
 	TextureAlpha,
 	Vec2,
 	draw_2d::{Ascii, ColorFont, Element2D, Pipeline, Pipeline2D},
+	include_texture,
 	setup,
 };
-use include_bytes_aligned::include_bytes_aligned;
 mod cutekit_main;
 
 setup!(b"CuteKitTest\0", 12, "../target/assets/icon.nwi", 3437);
 
-static TEXTURE: &[u8] = include_bytes_aligned!(4, "../target/assets/9parts.bin");
-static FONT: &[u8] = include_bytes_aligned!(4, "../target/assets/font.bin");
+const TEXTURE: TextureAlpha = include_texture!("../assets/.kibble/9parts.kib");
+const FONT: Texture<ColorGrayscale> = include_texture!("../assets/.kibble/font.kib");
 
 #[unsafe(no_mangle)]
 fn main() {
 	let mut ck = cutekit::init();
 
-	let font_texture = Texture::<ColorGrayscale>::from_bytes(Vec2::new(1235, 16), FONT);
-	let mut font_textures = array::repeat::<Texture<ColorGrayscale>, 95>(font_texture);
-	font_texture.subdivide(Vec2::new(13, 16), &mut font_textures);
+	let mut font_textures = array::repeat::<Texture<ColorGrayscale>, 95>(FONT);
+	FONT.subdivide(Vec2::new(13, 16), &mut font_textures);
 
 	let font = ColorFont::<Ascii>::from_fmt_monospace(
 		-1,
@@ -45,8 +44,7 @@ fn main() {
 		font_textures,
 	);
 
-	let mut texture = TextureAlpha::from_bytes(Vec2::new(60, 60), TEXTURE);
-
+	let mut texture = TEXTURE.view(TEXTURE.clip.ordered());
 	texture.clip(OrdRect::from_coords(10, 10, 50, 50));
 
 	let mut v = Vec2::new(0, 0);
@@ -67,7 +65,7 @@ fn main() {
 			v.x += 1;
 		}
 
-		let mut view = texture.view(OrdRect::from_coords(10, 0, 60, 60));
+		let mut view = TEXTURE.view(OrdRect::from_coords(10, 0, 60, 60));
 		view.clip(Rect::from_coords(50, 0, 0, 50));
 
 		let mut render = Pipeline2D::<5>::new();

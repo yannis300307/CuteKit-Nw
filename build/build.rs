@@ -1,25 +1,6 @@
-use std::fs;
-use std::process::Command;
+use std::{fs, process::Command};
 
-use image::{self, GenericImageView, ImageReader};
 use regex::Regex;
-
-fn convert_greyscale_image(file_name: &str) {
-	let img = ImageReader::open(format!("assets/{file_name}.png").as_str())
-		.unwrap()
-		.decode()
-		.unwrap();
-
-	let mut converted_pixels: Vec<u8> = Vec::new();
-
-	for pix in img.pixels() {
-		converted_pixels.push(pix.2.0[0]);
-	}
-
-	let data = converted_pixels.as_slice();
-
-	fs::write(format!("target/assets/{file_name}.bin").as_str(), data).unwrap();
-}
 
 fn compile_c_libs() {
 	unsafe { std::env::set_var("CC", "arm-none-eabi-gcc") };
@@ -36,7 +17,7 @@ fn compile_c_libs() {
 	.expect("Invalid UTF-8 in nwlink flags");
 
 	let mut build = cc::Build::new();
-	build.file("cutekit/src/nadk/storage/storage.c");
+	build.file("cutekit/nadk/src/storage/storage.c");
 	build.flag("-std=c99");
 	build.flag("-Os");
 	build.flag("-Wall");
@@ -75,8 +56,8 @@ fn patch_simulator() {
         .expect("Cannot open keyboard.cpp file from emulator. Please check if the simulator is clonned properly.");
 
 	if !file_content.contains(remapped) {
-		let re =
-			Regex::new(r"constexpr static KeySDLKeyPair sKeyPairs\[] ?= ?\{[\S\s]*?};").unwrap();
+		let re = Regex::new(r"constexpr static KeySDLKeyPair sKeyPairs\[] ?= ?\{[\S\s]*?};")
+			.unwrap();
 		let result = re.replace(&file_content, remapped);
 
 		fs::write(
@@ -85,49 +66,6 @@ fn patch_simulator() {
 		)
 		.unwrap();
 	}
-}
-
-fn convert_image(file_name: &str) {
-	let img = ImageReader::open(format!("assets/{}.png", file_name).as_str())
-		.unwrap()
-		.decode()
-		.unwrap();
-
-	let mut data: Vec<u8> = Vec::new();
-
-	for pix in img.pixels() {
-		data.extend(
-			(((pix.2.0[0] as u16 & 0xF8) << 8)
-				| ((pix.2.0[1] as u16 & 0xFC) << 3)
-				| ((pix.2.0[2] as u16) >> 3))
-				.to_le_bytes(),
-		);
-	}
-
-	let path = format!("target/assets/{}.bin", file_name);
-	fs::write(path.as_str(), data).unwrap();
-}
-
-fn convert_image_transparent(file_name: &str) {
-	let img = ImageReader::open(format!("assets/{}.png", file_name).as_str())
-		.unwrap()
-		.decode()
-		.unwrap();
-
-	let mut data: Vec<u8> = Vec::new();
-
-	for pix in img.pixels() {
-		data.extend(
-			(((pix.2.0[0] as u16 & 0b11111000) << 8)
-				| ((pix.2.0[1] as u16 & 0b11111100) << 3)
-				| (pix.2.0[2] as u16 >> 3))
-				.to_le_bytes(),
-		);
-		data.push(pix.2.0[3]);
-	}
-
-	let path = format!("target/assets/{}.bin", file_name);
-	fs::write(path.as_str(), data).unwrap();
 }
 
 fn convert_icon() {
@@ -153,18 +91,8 @@ fn convert_icon() {
 
 fn main() {
 	// Turn icon.png into icon.nwi
-
 	println!("cargo:rerun-if-changed=assets/icon.png");
-	println!("cargo:rerun-if-changed=assets/font.png");
-	println!("cargo:rerun-if-changed=assets/model.png");
-
 	convert_icon();
-
-	// Convert font to usable data
-	convert_greyscale_image("font");
-
-	convert_image("model");
-	convert_image_transparent("9parts");
 
 	// Compile storage.c
 	if std::env::var("CARGO_CFG_TARGET_OS").unwrap() == "none" {

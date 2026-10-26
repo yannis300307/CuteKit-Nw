@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [features]
-default = ["handle_nadk", "draw_2d"]
+default = ["handle_nadk", "draw_2d", "kibble"]
 upsilon = ["nadk/upsilon"]
 epsilon = ["nadk/epsilon"]
 handle_nadk = []
@@ -12,6 +12,7 @@ expose = []
 
 draw_2d = []
 draw_3d = []
+kibble = []
 ui = ["draw_2d"]
 
 [dependencies.nadk]

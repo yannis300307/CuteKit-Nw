@@ -1,6 +1,8 @@
 #![cfg_attr(target_os = "none", no_std)]
 #![feature(const_trait_impl)]
 #![feature(step_trait)]
+#![feature(const_index)]
+#![feature(const_cmp)]
 
 pub use nadk::{
 	configure_app as setup,
@@ -19,14 +21,16 @@ cfg_select! {
 		pub mod core;
 		pub mod mods;
 
-		pub use core::{public::*, *};
+		pub use core::*;
 
 		#[cfg(feature = "draw_2d")]
-		pub use mods::draw_2d::public as draw_2d;
+		pub use mods::draw_2d;
 		#[cfg(feature = "draw_3d")]
-		pub use mods::draw_3d::public as draw_3d;
+		pub use mods::draw_3d;
+		#[cfg(feature = "kibble")]
+		pub use mods::kibble;
 		#[cfg(feature = "ui")]
-		pub use mods::ui::public as ui;
+		pub use mods::ui;
 	}
 	_ => {
 		pub(crate) mod core;
@@ -39,6 +43,8 @@ cfg_select! {
 		pub use mods::draw_2d::public as draw_2d;
 		#[cfg(feature = "draw_3d")]
 		pub use mods::draw_3d::public as draw_3d;
+		#[cfg(feature = "kibble")]
+		pub use mods::kibble;
 		#[cfg(feature = "ui")]
 		pub use mods::ui::public as ui;
 	}
