@@ -1,92 +1,79 @@
-use enum_iterator::all;
-use nadk::{
-	keyboard::KeyboardState,
-	{self},
-};
+use heapless::Deque;
+use nadk::utils::KeyboardState;
 
-use crate::Key;
+use crate::{AppState, Key};
 
-pub struct InputManager {
-	down:          KeyboardState,
-	just_pressed:  KeyboardState,
-	just_released: KeyboardState,
-	last_pressed:  Option<Key>,
-	impulsed_key:  Option<Key>,
-	impulse_timer: f32,
+/// Cutekit's input record for recent inputs
+#[derive(Clone, Copy, Debug)]
+pub enum Input {
+	/// A record for a pressed key at the given time
+	Pressed { key: Key, timestamp: f32 },
+	/// A record for a released key at the given time
+	Released { key: Key, timestamp: f32 },
 }
 
-impl InputManager {
-	pub fn init() -> Self {
+/// Cutekit's input manager, used by the global context and root functions
+#[derive(Clone, Debug)]
+pub struct InputManager<const N: usize = 16> {
+	keyboard:     KeyboardState,
+	input_record: Deque<Input, N>,
+}
+
+impl<const N: usize> InputManager<N> {
+	pub const fn init() -> Self {
 		InputManager {
-			down:          KeyboardState::default(),
-			just_pressed:  KeyboardState::default(),
-			just_released: KeyboardState::default(),
-
-			last_pressed:  None,
-			impulsed_key:  None,
-			impulse_timer: 0.0,
+			keyboard:     KeyboardState::new(),
+			input_record: Deque::new(),
 		}
 	}
 
-	pub fn refresh(&mut self) {
-		let next = nadk::keyboard::KeyboardState::scan();
+	pub fn update(&mut self) {
+		self.keyboard.update();
 
-		self.just_pressed = next.get_just_pressed(self.down);
-		self.just_released = next.get_just_released(self.down);
-		self.down = next;
-	}
+		let now = AppState::get().frame_time;
 
-	pub fn update(&mut self, delta_time: f32) {
-		self.refresh();
-
-		if let Some(key) = self.get_last_pressed() {
-			self.last_pressed = Some(key);
-			self.impulse_timer = 0.5;
-		}
-
-		if let Some(key) = self.last_pressed {
-			if self.key_down(key) {
-				self.impulse_timer -= delta_time;
-
-				if self.impulse_timer < 0.0 {
-					self.impulse_timer += 0.06;
-					self.impulsed_key = self.last_pressed;
-				}
-			} else {
-				self.last_pressed = None;
-				self.impulse_timer = 0.0;
+		let enqueue = |s: &mut Self, v| {
+			if s.input_record.len() == s.input_record.capacity() {
+				s.input_record.pop_back();
 			}
-		}
-	}
+			s.input_record.push_front(v).unwrap();
+		};
 
-	pub fn get_last_pressed(&self) -> Option<Key> {
-		for key in all::<Key>() {
+		for key in enum_iterator::all::<Key>() {
 			if self.key_just_pressed(key) {
-				return Some(key);
+				enqueue(self, Input::Pressed { key, timestamp: now });
+			}
+			if self.key_just_released(key) {
+				enqueue(self, Input::Released { key, timestamp: now });
 			}
 		}
-		None
 	}
 
-	pub fn key_impulsed(&self, key: Key) -> bool { self.impulsed_key == Some(key) }
+	pub fn key_just_pressed(&self, key: Key) -> bool { self.keyboard.key_just_pressed(key) }
 
-	pub fn key_just_pressed(&self, key: Key) -> bool { self.just_pressed.key_down(key) }
+	pub fn key_just_released(&self, key: Key) -> bool { self.keyboard.key_just_released(key) }
 
-	pub fn key_just_released(&self, key: Key) -> bool { self.just_released.key_down(key) }
+	pub fn key_down(&self, key: Key) -> bool { self.keyboard.key_down(key) }
 
-	pub fn key_down(&self, key: Key) -> bool { self.down.key_down(key) }
-
-	pub fn wait_delay_or_ok(&mut self, delay_ms: usize) {
-		while self.key_down(Key::Ok) {
-			self.refresh();
-			nadk::time::wait_milliseconds(50);
+	pub fn key_impulsed(&self, key: Key) -> bool {
+		if !self.key_down(key) {
+			return false;
 		}
-		for _ in 0..delay_ms / 50 {
-			self.refresh();
-			if self.key_just_pressed(Key::Ok) {
-				break;
-			}
-			nadk::time::wait_milliseconds(50);
+
+		let input = self.input_record.iter().find(|x| match x {
+			Input::Pressed { key: k, .. } => *k == key,
+			Input::Released { .. } => false,
+		});
+
+		if let Some(Input::Pressed { timestamp, .. }) = input {
+			let state = AppState::get();
+			let delay = state.frame_time - timestamp - 0.5;
+
+			return delay >= 0.0
+				&& (state.delta_time >= 0.06 || delay % 0.06 < delay - state.delta_time);
 		}
+		return false;
 	}
+
+	pub fn get_recent_inputs(&mut self) -> &[Input] { self.input_record.make_contiguous() }
 }

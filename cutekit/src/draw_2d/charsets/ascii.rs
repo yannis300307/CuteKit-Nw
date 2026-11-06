@@ -1,11 +1,12 @@
 use enum_map::Enum;
 
-use crate::mods::draw_2d::text::{
+use crate::mods::draw_2d::font::{
 	Charset,
 	charsets::base::{CaseLetters, Letters, Numbers},
 };
 
-#[allow(dead_code)]
+/// Ascii charset enum, containing every character in the ascii table
+/// excepted for non-printable ones, which are all stored as a single variant.
 #[derive(Clone, Copy, Debug, Enum, Default)]
 pub enum Ascii {
 	#[default]

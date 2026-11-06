@@ -1,7 +1,8 @@
 use enum_map::Enum;
 
-use crate::mods::draw_2d::text::{Charset, charsets::base::Numbers};
+use crate::mods::draw_2d::font::{Charset, charsets::base::Numbers};
 
+/// Charset enum used to handle basic numeric representation.
 #[allow(dead_code)]
 #[derive(Clone, Copy, Debug, Enum, Default)]
 pub enum Numeric {

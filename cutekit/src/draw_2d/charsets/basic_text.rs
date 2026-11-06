@@ -1,10 +1,13 @@
 use enum_map::Enum;
 
-use crate::mods::draw_2d::text::{
+use crate::mods::draw_2d::font::{
 	Charset,
 	charsets::base::{CaseLetters, Letters, Numbers},
 };
 
+/// Charset enum used to handle basic english text.
+///
+/// Usable as a simpler alternative to ascii.
 #[allow(dead_code)]
 #[derive(Clone, Copy, Debug, Enum, Default)]
 pub enum BasicText {
@@ -20,7 +23,6 @@ pub enum BasicText {
 	ExclamationMark,
 	QuestionMark,
 	Colon,
-	Semicolon,
 	DoubleQuote,
 }
 
@@ -39,7 +41,6 @@ impl Charset for BasicText {
 					'!' => Some(Self::ExclamationMark),
 					'?' => Some(Self::QuestionMark),
 					':' => Some(Self::Colon),
-					';' => Some(Self::Semicolon),
 					'"' => Some(Self::DoubleQuote),
 					_ => None,
 				},

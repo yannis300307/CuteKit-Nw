@@ -1,20 +1,13 @@
 #![cfg_attr(target_os = "none", no_std)]
 #![feature(const_trait_impl)]
-#![feature(step_trait)]
-#![feature(const_index)]
-#![feature(const_cmp)]
+#![feature(const_index, const_cmp, const_convert)]
+#![feature(min_specialization)]
+#![feature(fn_traits)]
 
-pub use nadk::{
-	configure_app as setup,
-	display::{COLOR_BLACK, COLOR_BLUE, COLOR_GREEN, COLOR_RED, COLOR_WHITE},
-	keyboard::Key,
-};
+pub use nadk::{Key, configure_app};
 
-pub type Color = nadk::display::Color565;
-pub type Vec2<T> = nalgebra::Vector2<T>;
-pub type Vec3<T> = nalgebra::Vector3<T>;
-pub type Vec2f = Vec2<f32>;
-pub type Vec3f = Vec3<f32>;
+pub type Vec2<T = f32> = nalgebra::Vector2<T>;
+pub type Vec3<T = f32> = nalgebra::Vector3<T>;
 
 cfg_select! {
 	feature = "expose" => {
@@ -23,14 +16,7 @@ cfg_select! {
 
 		pub use core::*;
 
-		#[cfg(feature = "draw_2d")]
-		pub use mods::draw_2d;
-		#[cfg(feature = "draw_3d")]
-		pub use mods::draw_3d;
-		#[cfg(feature = "kibble")]
-		pub use mods::kibble;
-		#[cfg(feature = "ui")]
-		pub use mods::ui;
+		pub use mods::*;
 	}
 	_ => {
 		pub(crate) mod core;
@@ -39,25 +25,22 @@ cfg_select! {
 		pub use core::public::*;
 		pub(crate) use core::*;
 
-		#[cfg(feature = "draw_2d")]
-		pub use mods::draw_2d::public as draw_2d;
-		#[cfg(feature = "draw_3d")]
-		pub use mods::draw_3d::public as draw_3d;
-		#[cfg(feature = "kibble")]
-		pub use mods::kibble;
-		#[cfg(feature = "ui")]
-		pub use mods::ui::public as ui;
+		pub use mods::public::*;
 	}
 }
 
-#[cfg(not(any(feature = "epsilon", feature = "upsilon")))]
-compile_error!(
-	r#"No valid firmware selected!
-	Add 'epsilon' or 'upsilon' to cutekit's features in your Cargo.toml"#
-);
+pub mod prelude {
+	#![allow(unused_imports)]
 
-#[cfg(all(feature = "epsilon", feature = "upsilon"))]
-compile_error!(
-	r#"Multiple firmwares selected!
-	Make sure you only have the 'epsilon' or 'upsilon' feature enabled in your Cargo.toml"#
-);
+	pub use enum_map::{EnumMap, enum_map};
+
+	#[cfg(feature = "draw_2d")]
+	pub use crate::draw_2d::*;
+	#[cfg(feature = "draw_3d")]
+	pub use crate::draw_3d::*;
+	#[cfg(feature = "kibble")]
+	pub use crate::kibble::*;
+	#[cfg(feature = "ui")]
+	pub use crate::ui::*;
+	pub use crate::*;
+}

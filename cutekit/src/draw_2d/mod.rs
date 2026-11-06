@@ -1,15 +1,18 @@
-pub mod elements;
+pub mod drawing;
+pub mod font;
 pub mod pipeline;
-pub mod text;
 
 pub mod public {
 	pub use super::{
-		elements::Element2D,
-		pipeline::{Pipeline, Pipeline2D},
-		text::{
-			ColorFont,
+		drawing::*,
+		font::{
 			charsets::{ascii::Ascii, basic_text::BasicText, numeric::Numeric},
+			ColorFont,
+		},
+		pipeline::{
+			elements::{Element2D, NineParts},
+			registry::Pipeline,
+			Pipeline2D,
 		},
 	};
 }
-pub use public::*;

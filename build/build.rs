@@ -32,25 +32,25 @@ fn compile_c_libs() {
 }
 
 fn patch_simulator() {
-	let remapped = "constexpr static KeySDLKeyPair sKeyPairs[] = {\
-  KeySDLKeyPair(Key::OK,        SDL_SCANCODE_RETURN),\n\
-  KeySDLKeyPair(Key::Back,      SDL_SCANCODE_BACKSPACE),\n\
-  KeySDLKeyPair(Key::EXE,       SDL_SCANCODE_ESCAPE),\n\
-\
-  KeySDLKeyPair(Key::Var,       SDL_SCANCODE_I),\n\
-\
-  KeySDLKeyPair(Key::Toolbox,   SDL_SCANCODE_W),\n\
-  KeySDLKeyPair(Key::Imaginary, SDL_SCANCODE_A),\n\
-  KeySDLKeyPair(Key::Power,     SDL_SCANCODE_D),\n\
-  KeySDLKeyPair(Key::Comma,     SDL_SCANCODE_S),\n\
-  KeySDLKeyPair(Key::Shift,     SDL_SCANCODE_SPACE),\n\
-  KeySDLKeyPair(Key::Exp,       SDL_SCANCODE_LSHIFT),\n\
-\
-  KeySDLKeyPair(Key::Down,      SDL_SCANCODE_DOWN),\n\
-  KeySDLKeyPair(Key::Up,        SDL_SCANCODE_UP),\n\
-  KeySDLKeyPair(Key::Left,      SDL_SCANCODE_LEFT),\n\
-  KeySDLKeyPair(Key::Right,     SDL_SCANCODE_RIGHT),\n\
-};";
+	let remapped = r#"constexpr static KeySDLKeyPair sKeyPairs[] = {
+  KeySDLKeyPair(Key::OK,        SDL_SCANCODE_RETURN),
+  KeySDLKeyPair(Key::Back,      SDL_SCANCODE_BACKSPACE),
+  KeySDLKeyPair(Key::EXE,       SDL_SCANCODE_ESCAPE),
+
+  KeySDLKeyPair(Key::Var,       SDL_SCANCODE_I),
+
+  KeySDLKeyPair(Key::Toolbox,   SDL_SCANCODE_W),
+  KeySDLKeyPair(Key::Imaginary, SDL_SCANCODE_A),
+  KeySDLKeyPair(Key::Power,     SDL_SCANCODE_D),
+  KeySDLKeyPair(Key::Comma,     SDL_SCANCODE_S),
+  KeySDLKeyPair(Key::Shift,     SDL_SCANCODE_SPACE),
+  KeySDLKeyPair(Key::Exp,       SDL_SCANCODE_LSHIFT),
+
+  KeySDLKeyPair(Key::Down,      SDL_SCANCODE_DOWN),
+  KeySDLKeyPair(Key::Up,        SDL_SCANCODE_UP),
+  KeySDLKeyPair(Key::Left,      SDL_SCANCODE_LEFT),
+  KeySDLKeyPair(Key::Right,     SDL_SCANCODE_RIGHT),
+};"#;
 
 	let file_content = fs::read_to_string("simulator/ion/src/simulator/shared/keyboard.cpp")
         .expect("Cannot open keyboard.cpp file from emulator. Please check if the simulator is clonned properly.");

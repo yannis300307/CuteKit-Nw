@@ -1,5 +1,9 @@
 use crate::{Texture, mods::kibble::color::KibColor};
 
+/// Loads the given .kib image into a new texture.
+///
+/// When used in a global/static context,
+/// the texture should end up stored in the program's ROM.
 #[macro_export]
 macro_rules! include_texture {
 	($path: expr) => {
@@ -25,6 +29,7 @@ struct _KibbleHeader {
 }
 
 impl<T: KibColor> Texture<'static, T> {
+	/// Creates a new texture from the given .kib image bytes.
 	pub const fn _from_kib(bytes: &'static [u8]) -> Self {
 		assert!(align_of::<T>() <= 16, "Color alignment cannot be above 16");
 
@@ -68,7 +73,7 @@ impl<T: KibColor> Texture<'static, T> {
 			"Invalid pixel data size"
 		);
 
-		Self::new(md.width, md.height, unsafe {
+		Self::from_data_const(md.width, md.height, unsafe {
 			core::slice::from_raw_parts(data.as_ptr().cast::<T>(), data_size)
 		})
 	}

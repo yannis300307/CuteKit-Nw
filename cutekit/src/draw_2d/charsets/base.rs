@@ -1,7 +1,8 @@
 use enum_map::Enum;
 
-use crate::mods::draw_2d::text::Charset;
+use crate::mods::draw_2d::font::Charset;
 
+/// Charset enum containg every letter of the english alphabet. Case-insensitive.
 #[allow(dead_code)]
 #[derive(Clone, Copy, Debug, Enum, Default)]
 pub enum Letters {
@@ -35,6 +36,8 @@ pub enum Letters {
 	Z,
 }
 
+/// Charset enum containg every letter of the english alphabet
+/// in both lowercase and uppercase variants.
 #[allow(dead_code)]
 #[derive(Clone, Copy, Debug, Enum, Default)]
 pub enum CaseLetters {
@@ -44,6 +47,7 @@ pub enum CaseLetters {
 	Upper(Letters),
 }
 
+/// Charset enum containg every latin numerical digit.
 #[allow(dead_code)]
 #[derive(Clone, Copy, Debug, Enum, Default)]
 pub enum Numbers {
