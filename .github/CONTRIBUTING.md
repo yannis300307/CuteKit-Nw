@@ -5,20 +5,33 @@ If your issue is related to a bug, please give the full error message if one is 
 If you are asking for an enhancement, please consider the following hardware restrictions:
 - No wireless
 - No sound
-- CuteKit must be compatible with N0110, N0115 and N0120. So make sure that the game runs on every models.
-- extremely low amount of ram
-- and a lot of other restrictions
+- CuteKit must be compatible with **N0110**, **N0115** and **N0120**. So make sure that the lib can be run on every model.
+- The entire application only has around **100kB of RAM available**, for both Cutekit **and** the program that uses it.
 
-Before reporting a bug please read the `Known bugs` section and the `Roadmap` before asking for features.
+## About vibe coding and AI
 
-## About vibe codding and AI
-Every AI company has ethical issues: on the crawling side, on the copyright side, on the advertisement side and a lot more.
+Every AI has ethical issues: crawling, copyright, environment, advertising etc...
 
-CuteKit is a human first project. The goal is to show what **human devs** are capable of, not what the latest Fable 19 pro plus extreme can do. Moreover, most of the code that IA produces is not optimized for the calculator or is full of bugs. That's why AI contributions are now forbidden.
-However, help from an IA to find a bug in your own code is tolerated as long as you disclose what the AI was used for in your PR.
+CuteKit is a **human first** project.
+One goal is to show what human devs are capable of, not what the latest *Fable 19 pro plus extreme* can do.
+Moreover, most of the code that AI produces is not optimized for the calculator or is full of bugs.
 
-## Code guideline
-- All the code including, function names, comments, structure names, etc... must be in English.
-- When a part of your code is not easy to understand or is very abstract, please add comments. Functions like `place_air` that have only a few lines of code don't necessary need comments. 
-- Please fit your code to the current architecture of the project. Do not refactor the whole project. If you strongly believe that the code needs a complete refactor, please open a discussion thread first.
-- If you use the simulator to write your PR's code, please remember that your code will run on hardware that is thousands of times less powerful than your computer. So always try your code on real hardware before opening a new PR.
+For thoses reasons, **AI-programmed contributions are forbidden**.
+
+However, help from an AI to find a bug in your own code is tolerated as long as you disclose what the AI was used for.
+
+---
+
+## Code guidelines
+
+- Your code (functions, variables, comments, etc...) must be written in English.
+
+- Name your variables explicitely (no shortened words or single letters unless it is easy to tell what the variable does)
+
+- API exposed functions must be documented. Don't be afraid to comment your code in general.
+
+- Do not refactor a major part of the project unprompted. Please ask us first.
+
+- Use the correct module for your features. Feel free to make your own if what you want to implement is not closely related to an existing one.
+
+- Always try your code on real hardware.

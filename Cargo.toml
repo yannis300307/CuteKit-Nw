@@ -1,53 +1,42 @@
-cargo-features = ["profile-rustflags"]
 [package]
-name = "Numcraft"
-version = "0.1.7"
-authors = ["Yannis300307"]
+name = "cutekit"
+version = "0.1.0"
 edition = "2024"
-build="build/build.rs"
-
-[[bin]]
-name = "Numcraft"
-path = "src/main.rs"
-test = false
-doctest = false
-bench = false
-
-[lib]
-path = "src/main.rs"
-crate-type = ["cdylib"]
-name = "numcraft_sim"
-test = false
-doctest = false
-bench = false
-
-[features]
-default = ["upsilon"]
-upsilon = ["cutekit/upsilon"]
-epsilon = ["cutekit/epsilon"]
 
 [profile.dev]
 panic="abort"
 
+[profile.dev-opt]
+inherits = "dev"
+opt-level = 2
+lto = "thin"
+codegen-units = 16
+
 [profile.release]
 panic="abort"
-strip = true
-lto = true
+lto = "fat"
+strip = "debuginfo"
 codegen-units = 1
 
-[dependencies.cutekit]
-path = "cutekit"
-features = []
+[features]
+default = ["draw_2d", "kibble"]
+upsilon = ["nadk/upsilon"]
+epsilon = ["nadk/epsilon"]
+expose = []
+
+draw_2d = []
+draw_3d = []
+kibble = []
+ui = ["draw_2d"]
+
+[dependencies.nadk]
+path = "nadk"
 
 [dependencies]
 bytemuck = { version = "1.25.0", features = ["derive"] }
 nalgebra = { version = "0.33.2", default-features = false, features = ["libm", "bytemuck"]}
 heapless = { version = "0.9.3" }
 libm = "0.2.15"
+include_bytes_aligned = "0.2.0"
 enum-iterator = "2.3.0"
 enum-map = "3.1.0"
-include_bytes_aligned = "0.2.0"
-
-[build-dependencies]
-cc = "1.2.27"
-regex = "1.11.1"
