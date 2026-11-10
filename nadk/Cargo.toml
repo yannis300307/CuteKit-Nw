@@ -1,0 +1,22 @@
+[package]
+name = "nadk"
+version = "0.1.0"
+edition = "2024"
+
+[features]
+default = ["utils"]
+upsilon = ["dep:nanorand"]
+epsilon = []
+utils = []
+
+[dependencies]
+cortex-m = {version="0.7.7", features=["critical-section-single-core"]}
+bytemuck = { version = "1.25.0", features = ["derive"] }
+embedded-alloc = "0.6.0"
+enum-iterator = "2.3.0"
+
+[dependencies.nanorand]
+version = "0.8.0"
+default-features = false
+features = ["wyrand"]
+optional = true

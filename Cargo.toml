@@ -1,57 +1,42 @@
-cargo-features = ["profile-rustflags"]
 [package]
-name = "Numcraft"
-version = "0.1.7"
-authors = ["Yannis300307"]
+name = "cutekit"
+version = "0.1.0"
 edition = "2024"
-build="build/build.rs"
-
-[[bin]]
-name = "Numcraft"
-path = "src/main.rs"
-test = false
-doctest = false
-bench = false
-
-[lib]
-path = "src/main.rs"
-crate-type = ["cdylib"]
-name = "numcraft_sim"
-test = false
-doctest = false
-bench = false
-
-[features]
-default = ["upsilon"]
-debug_ui = []
-upsilon = []
-epsilon = []
 
 [profile.dev]
 panic="abort"
 
+[profile.dev-opt]
+inherits = "dev"
+opt-level = 2
+lto = "thin"
+codegen-units = 16
+
 [profile.release]
 panic="abort"
-strip = true
-opt-level = 3
-lto = true
+lto = "fat"
+strip = "debuginfo"
 codegen-units = 1
 
-[dependencies]
-nalgebra = {version = "0.33.2", default-features = false, features = ["libm", "bytemuck"]}
-libm = "0.2.15"
-heapless = { version = "0.9.3" }
-cortex-m = {version="0.7.7", features=["critical-section-single-core"]}
-embedded-alloc = "0.6.0"
-postcard = {version = "1.1.2", features=["alloc"]}
-serde = {version = "1.0.219", default-features=false}
-enum-iterator = "2.3.0"
-rand_core = "0.9.3"
-bytemuck = { version = "1.25.0", features = ["derive"] }
-include_bytes_aligned = "0.2.0"
+[features]
+default = ["draw_2d", "kibble"]
+upsilon = ["nadk/upsilon"]
+epsilon = ["nadk/epsilon"]
+expose = []
 
-[build-dependencies]
-image = "0.25.6"
-cc = "1.2.27"
-regex = "1.11.1"
-serde = {version = "1.0.219", features = ["derive"]}
+draw_2d = []
+draw_3d = []
+kibble = []
+ui = ["draw_2d"]
+
+[dependencies.nadk]
+path = "nadk"
+
+[dependencies]
+bytemuck = { version = "1.25.0", features = ["derive"] }
+nalgebra = { version = "0.33.2", default-features = false, features = ["libm", "bytemuck"]}
+heapless = { version = "0.9.3" }
+libm = "0.2.15"
+include_bytes_aligned = "0.2.0"
+enum-iterator = "2.3.0"
+enum-map = "3.1.0"
