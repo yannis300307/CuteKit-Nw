@@ -30,11 +30,14 @@ kibble = []
 ui = ["draw_2d"]
 
 [dependencies.nadk]
-path = "nadk"
+path = "deps/nadk"
+
+[dependencies.glam-traits]
+path = "deps/glam-traits"
 
 [dependencies]
+glam = { version = "0.34.3", default-features = false, features = ["nostd-libm"]}
 bytemuck = { version = "1.25.0", features = ["derive"] }
-nalgebra = { version = "0.33.2", default-features = false, features = ["libm", "bytemuck"]}
 heapless = { version = "0.9.3" }
 libm = "0.2.15"
 include_bytes_aligned = "0.2.0"

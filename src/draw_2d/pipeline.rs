@@ -1,3 +1,5 @@
+use glam::I16Vec2;
+
 use crate::{
 	AnyTexture,
 	ColorGrayscale,
@@ -5,7 +7,6 @@ use crate::{
 	ColorRGBA,
 	Texture,
 	TextureMut,
-	Vec2,
 	color::Blend,
 	draw_2d::{
 		DrawCircle,
@@ -69,10 +70,10 @@ where
 	for<'b> ColorRGBA: Blend<<TXF::LtAs<'b> as AnyTexture>::Pixel>,
 	for<'b> ColorGrayscale: Blend<<TXF::LtAs<'b> as AnyTexture>::Pixel>,
 {
-	fn render(&mut self, tile: &mut TXF::LtAs<'_>, pos: Vec2<i16>) {
+	fn render(&mut self, tile: &mut TXF::LtAs<'_>, pos: I16Vec2) {
 		fn draw_element<T: Blend<ColorRGB>, TXF: AnyTextureMut>(
 			tile: &mut TXF::LtAs<'_>,
-			pos: Vec2<i16>,
+			pos: I16Vec2,
 			element: &mut Element2DColorPrimitive<T>,
 		) where
 			for<'b> TXF::LtAs<'b>: Draw<DrawRectangle<T>>

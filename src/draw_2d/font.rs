@@ -1,6 +1,7 @@
 use core::fmt::Debug;
 
 use enum_map::{Enum, EnumMap};
+use glam::I16Vec2;
 use libm::floorf;
 
 use crate::{
@@ -9,7 +10,6 @@ use crate::{
 	Rect,
 	Texture,
 	TextureAtlas,
-	Vec2,
 	color::Blend,
 	drawing::Draw,
 	mods::draw_2d::drawing::sprite::DrawSprite,
@@ -31,7 +31,7 @@ pub mod charsets {
 
 /// Trait implemented by fonts and objects able to render using text.
 pub trait AnyFont<TXF: AnyTextureMut>: Debug {
-	fn draw_string(&self, tile: &mut TXF::LtAs<'_>, pos: Vec2<i16>, str: &str);
+	fn draw_string(&self, tile: &mut TXF::LtAs<'_>, pos: I16Vec2, str: &str);
 }
 
 /// Simple colored font.
@@ -43,7 +43,7 @@ pub trait AnyFont<TXF: AnyTextureMut>: Debug {
 #[derive(Debug)]
 pub struct ColorFont<'a, K: Charset> {
 	atlas:             TextureAtlas<'a, K, ColorGrayscale>,
-	origins:           EnumMap<K, Vec2<i16>>,
+	origins:           EnumMap<K, I16Vec2>,
 	horizontal_margin: i16,
 	line_height:       i16,
 	glyph_color:       ColorRGBA,
@@ -76,7 +76,7 @@ impl<'a, K: Charset> ColorFont<'a, K> {
 		fmt: &str,
 		default_texture: Texture<'a, ColorGrayscale>,
 		glyphs: &[Texture<'a, ColorGrayscale>; N],
-		origins: EnumMap<K, Vec2<i16>>,
+		origins: EnumMap<K, I16Vec2>,
 	) -> Self {
 		let mut tx_map =
 			EnumMap::<K, Texture<'a, ColorGrayscale>>::from_fn(|_| default_texture);
@@ -108,7 +108,7 @@ impl<K: Charset, TXF: AnyTextureMut> AnyFont<TXF> for ColorFont<'_, K>
 where
 	ColorRGBA: for<'b> Blend<<TXF::LtAs<'b> as AnyTexture>::Pixel>,
 {
-	fn draw_string(&self, tile: &mut TXF::LtAs<'_>, pos: Vec2<i16>, str: &str) {
+	fn draw_string(&self, tile: &mut TXF::LtAs<'_>, pos: I16Vec2, str: &str) {
 		let oob = if self.line_height < 0 {
 			|clip: Rect, y, h| y < clip.start.y + h
 		} else {

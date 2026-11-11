@@ -1,3 +1,5 @@
+use glam::U16Vec3;
+
 use crate::{ColorRGB, ColorRGBA, color::AnyColor};
 
 /// Trait implemented by texture pixel values to be drawable over other pixel types.
@@ -22,15 +24,12 @@ impl Blend<ColorRGB> for ColorRGBA {
 			0 => return bg,
 			_ => {}
 		}
-		let [bg_r, bg_g, bg_b] = bg.rgb();
-		let [fg_r, fg_g, fg_b, fg_a] = fg.rgba();
+		let bg_rgb = U16Vec3::from_array(bg.rgb());
+		let fg_rgb = U16Vec3::from_array(fg.rgb());
+		let fg_a = fg.a as u16;
 		let bg_a = 256 - fg_a;
 
-		ColorRGB::new(
-			(bg_r * bg_a + fg_r * fg_a) / 256,
-			(bg_g * bg_a + fg_g * fg_a) / 256,
-			(bg_b * bg_a + fg_b * fg_a) / 256,
-		)
+		ColorRGB::from_slice(&((bg_rgb * bg_a + fg_rgb * fg_a) / 256).to_array())
 	}
 }
 
@@ -41,17 +40,18 @@ impl Blend<ColorRGBA> for ColorRGBA {
 			0 => return bg,
 			_ => {}
 		}
-		let [bg_r, bg_g, bg_b, bg_a] = bg.rgba();
-		let [fg_r, fg_g, fg_b, fg_a] = fg.rgba();
+		let bg_rgb = U16Vec3::from_array(bg.rgb());
+		let fg_rgb = U16Vec3::from_array(fg.rgb());
+		let bg_a = bg.a as u16;
+		let fg_a = fg.a as u16;
 
 		let nbga = bg_a * (255 - fg_a) / 255;
 		let blend = fg_a + nbga;
 
-		ColorRGBA::new(
-			(bg_r * nbga + fg_r * fg_a) / blend,
-			(bg_g * nbga + fg_g * fg_a) / blend,
-			(bg_b * nbga + fg_b * fg_a) / blend,
-			blend / 255,
+		ColorRGBA::from_slice(
+			&((bg_rgb * nbga + fg_rgb * fg_a) / blend)
+				.extend(blend / 255)
+				.to_array(),
 		)
 	}
 }

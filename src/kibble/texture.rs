@@ -1,15 +1,28 @@
+use glam::i16vec2;
+
 use crate::{Texture, mods::kibble::color::KibColor};
 
 /// Loads the given .kib image into a new texture.
 ///
 /// When used in a global/static context,
 /// the texture should end up stored in the program ROM.
+///
+/// The second numeric argument refers to the kib version the texture is expected to be,
+/// if missing, no version enforcement is made.
 #[macro_export]
 macro_rules! include_texture {
 	($path: expr) => {
-		$crate::Texture::_from_kib(include_bytes_aligned::include_bytes_aligned!(16, $path))
+		$crate::Texture::_from_kib::<0>(include_bytes_aligned::include_bytes_aligned!(
+			16, $path
+		))
+	};
+	($path: expr, $version: expr) => {
+		$crate::Texture::_from_kib::<$version>(include_bytes_aligned::include_bytes_aligned!(
+			16, $path
+		))
 	};
 }
+pub use include_texture;
 
 struct KibbleMD {
 	width:           i16,
@@ -30,7 +43,7 @@ struct _KibbleHeader {
 
 impl<T: KibColor> Texture<'static, T> {
 	/// Creates a new texture from the given .kib image bytes.
-	pub const fn _from_kib(bytes: &'static [u8]) -> Self {
+	pub const fn _from_kib<const VERSION: u8>(bytes: &'static [u8]) -> Self {
 		assert!(align_of::<T>() <= 16, "Color alignment cannot be above 16");
 
 		let len = bytes.len();
@@ -40,6 +53,11 @@ impl<T: KibColor> Texture<'static, T> {
 		assert!(bytes[0..3] == *b"kib", "Invalid file signature");
 
 		let version = bytes[3];
+
+		if VERSION != 0 && version != VERSION {
+			panic!("Unexpected version")
+		}
+
 		let header_size = match version {
 			1 => 16,
 			_ => panic!("Invalid version"),
@@ -73,7 +91,7 @@ impl<T: KibColor> Texture<'static, T> {
 			"Invalid pixel data size"
 		);
 
-		Self::from_data_const(md.width, md.height, unsafe {
+		Self::from_data(i16vec2(md.width, md.height), unsafe {
 			core::slice::from_raw_parts(data.as_ptr().cast::<T>(), data_size)
 		})
 	}

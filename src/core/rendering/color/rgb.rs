@@ -1,6 +1,6 @@
 use nadk::Color565;
 
-use crate::{ColorGrayscale, ColorRGB};
+use crate::{ColorGrayscale, ColorRGB, ColorRGBA};
 
 impl ColorRGB {
 	const B_MASK: u16 = 0b00000000_00011111;
@@ -55,6 +55,10 @@ impl ColorRGB {
 		let [r, g, b] = rgb;
 		Self::new(*r, *g, *b)
 	}
+
+	/// Creates a new RGB color from a RGBA color.
+	#[inline]
+	pub const fn from_rgba(color: ColorRGBA) -> Self { color.rgb }
 
 	/// Creates a new RGB color from a grayscale color.
 	#[inline]

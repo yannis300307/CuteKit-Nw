@@ -1,8 +1,9 @@
 use core::ops::{AddAssign, SubAssign};
 
+use glam::{I16Vec2, i16vec2};
+
 use crate::{
 	Rect,
-	Vec2,
 	color::Blend,
 	draw_2d::DrawSprite,
 	drawing::{Draw, DrawRenderable, Sampler},
@@ -36,29 +37,28 @@ where
 		let clip = self.get_clip();
 		let rect = sprite.rect.ordered();
 
-		let start = rect.start.zip_map(&clip.start, |a, b| a.max(b));
-		let end = rect.end.zip_map(&clip.end, |a, b| a.min(b));
+		let start = rect.start.max(clip.start);
+		let end = rect.end.min(clip.end);
 
 		let tile_size = sprite.tile.size();
 
-		if start.x >= end.x || start.y >= end.y || tile_size.x == 0 || tile_size.y == 0 {
+		if start.cmpge(end).any() || tile_size.cmpeq(I16Vec2::ZERO).any() {
 			return;
 		}
 
 		let abs_ts = tile_size.abs();
-		let ord_ts = tile_size.zip_map(&sprite.rect.size(), |a, b| a * b.signum());
+		let ord_ts = tile_size * sprite.rect.size().signum();
 
-		let offset = (sprite.rect.start - start + sprite.tile.start)
-			.zip_map(&abs_ts, |a, b| a.rem_euclid(b));
+		let offset = (sprite.rect.start - start + sprite.tile.start).rem_euclid(abs_ts);
 
-		let tstart = start + offset - ord_ts.map(|x| x.max(0));
-		let tend = end + offset - ord_ts.map(|x| x.min(0));
+		let tstart = start + offset - ord_ts.max(I16Vec2::ZERO);
+		let tend = end + offset - ord_ts.min(I16Vec2::ZERO);
 
 		self.clip(rect);
 		for y in (tstart.y..tend.y).step_by(abs_ts.y as usize) {
 			for x in (tstart.x..tend.x).step_by(abs_ts.x as usize) {
 				self.draw(&DrawSprite {
-					rect:    Rect::from_size(Vec2::new(x, y), ord_ts),
+					rect:    Rect::from_size(i16vec2(x, y), ord_ts),
 					texture: sprite.texture,
 				});
 			}
@@ -67,14 +67,14 @@ where
 	}
 }
 
-impl<TX: AnyTexture + Sampler> AddAssign<Vec2<i16>> for DrawSpriteTiled<'_, TX> {
-	fn add_assign(&mut self, rhs: Vec2<i16>) { self.rect += rhs; }
+impl<TX: AnyTexture + Sampler> AddAssign<I16Vec2> for DrawSpriteTiled<'_, TX> {
+	fn add_assign(&mut self, rhs: I16Vec2) { self.rect += rhs; }
 }
 
-impl<TX: AnyTexture + Sampler> SubAssign<Vec2<i16>> for DrawSpriteTiled<'_, TX> {
-	fn sub_assign(&mut self, rhs: Vec2<i16>) { self.rect -= rhs; }
+impl<TX: AnyTexture + Sampler> SubAssign<I16Vec2> for DrawSpriteTiled<'_, TX> {
+	fn sub_assign(&mut self, rhs: I16Vec2) { self.rect -= rhs; }
 }
 
-impl_add_sub!(DrawSpriteTiled<'a, TX: AnyTexture + Sampler> for Vec2<i16>);
+impl_add_sub!(DrawSpriteTiled<'a, TX: AnyTexture + Sampler> for I16Vec2);
 
 impl<TX: AnyTexture + Sampler + Copy> DrawRenderable for DrawSpriteTiled<'_, TX> {}

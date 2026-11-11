@@ -1,16 +1,17 @@
 use core::array;
 
+use glam::i16vec2;
+
 use crate::{
-	drawing::Renderable,
-	inputs::Input,
-	textures::TextureMut,
 	AppState,
 	ColorRGB,
 	Key,
-	Vec2,
 	SCREEN_HEIGHT,
 	SCREEN_TILE_HEIGHT,
 	SCREEN_TILE_WIDTH,
+	drawing::Renderable,
+	inputs::Input,
+	textures::TextureMut,
 };
 
 /// Initializes Cutekit and nadk.
@@ -83,7 +84,7 @@ pub fn get_recent_inputs<'a>() -> &'a [Input] { AppState::get_mut().inputs.get_r
 /// See also the `Pipeline` and `Draw...` structs from the `draw_2d` module
 pub fn render(clear_color: ColorRGB, pipelines: &mut [&mut dyn Renderable]) {
 	for y in (0..SCREEN_HEIGHT).step_by(SCREEN_TILE_HEIGHT as usize) {
-		let pos = Vec2::new(0, y);
+		let pos = i16vec2(0, y);
 
 		let mut buffer_data = array::repeat::<
 			ColorRGB,
@@ -91,7 +92,7 @@ pub fn render(clear_color: ColorRGB, pipelines: &mut [&mut dyn Renderable]) {
 		>(clear_color);
 
 		let mut tile_buffer = TextureMut::from_data(
-			Vec2::new(SCREEN_TILE_WIDTH, SCREEN_TILE_HEIGHT),
+			i16vec2(SCREEN_TILE_WIDTH, SCREEN_TILE_HEIGHT),
 			&mut buffer_data,
 		);
 

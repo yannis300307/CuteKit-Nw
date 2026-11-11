@@ -1,7 +1,8 @@
 use core::ops::{AddAssign, SubAssign};
 
+use glam::I16Vec2;
+
 use crate::{
-	Vec2,
 	drawing::{Draw, Renderable},
 	mods::draw_2d::{drawing::impl_add_sub, font::AnyFont},
 	textures::AnyTextureMut,
@@ -15,7 +16,7 @@ use crate::{
 /// This struct can be given to `Pipeline2D`'s `register` method.
 #[derive(Clone, Copy, Debug)]
 pub struct DrawText<'a, TXF: AnyTextureMut> {
-	pub pos:  Vec2<i16>,
+	pub pos:  I16Vec2,
 	pub text: &'a str,
 	pub font: &'a dyn AnyFont<TXF>,
 }
@@ -29,17 +30,17 @@ impl<'a, TXF: for<'b> AnyTextureMut<LtAs<'b> = DST>, DST: AnyTextureMut> Draw<Dr
 }
 
 impl<'a, TXF: AnyTextureMut> Renderable<'_, TXF> for DrawText<'a, TXF> {
-	fn render(&mut self, tile: &mut TXF::LtAs<'_>, pos: Vec2<i16>) {
+	fn render(&mut self, tile: &mut TXF::LtAs<'_>, pos: I16Vec2) {
 		self.font.draw_string(tile, self.pos - pos, self.text);
 	}
 }
 
-impl<TX: AnyTextureMut> AddAssign<Vec2<i16>> for DrawText<'_, TX> {
-	fn add_assign(&mut self, rhs: Vec2<i16>) { self.pos += rhs; }
+impl<TX: AnyTextureMut> AddAssign<I16Vec2> for DrawText<'_, TX> {
+	fn add_assign(&mut self, rhs: I16Vec2) { self.pos += rhs; }
 }
 
-impl<TX: AnyTextureMut> SubAssign<Vec2<i16>> for DrawText<'_, TX> {
-	fn sub_assign(&mut self, rhs: Vec2<i16>) { self.pos -= rhs; }
+impl<TX: AnyTextureMut> SubAssign<I16Vec2> for DrawText<'_, TX> {
+	fn sub_assign(&mut self, rhs: I16Vec2) { self.pos -= rhs; }
 }
 
-impl_add_sub!(DrawText<'a, TX: AnyTextureMut> for Vec2<i16>);
+impl_add_sub!(DrawText<'a, TX: AnyTextureMut> for I16Vec2);

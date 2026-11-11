@@ -14,6 +14,18 @@ pub mod kibble;
 #[path = "ui/mod.rs"]
 pub mod ui;
 
+pub mod prelude {
+	#![allow(unused_imports)]
+	#[cfg(feature = "draw_2d")]
+	pub use super::draw_2d::prelude::*;
+	#[cfg(feature = "draw_3d")]
+	pub use super::draw_3d::prelude::*;
+	#[cfg(feature = "kibble")]
+	pub use super::kibble::prelude::*;
+	#[cfg(feature = "ui")]
+	pub use super::ui::prelude::*;
+}
+
 pub mod public {
 	#[cfg(feature = "draw_2d")]
 	pub use super::draw_2d::public as draw_2d;

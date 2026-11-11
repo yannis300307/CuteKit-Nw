@@ -90,10 +90,10 @@ cfg_select! {
 }
 
 /// The width of this platform's screen in pixels.
-const SCREEN_WIDTH: u16 = Platform::SCREEN_WIDTH;
+pub const SCREEN_WIDTH: u16 = Platform::SCREEN_WIDTH;
 
 /// The height of this platform's screen in pixels.
-const SCREEN_HEIGHT: u16 = Platform::SCREEN_HEIGHT;
+pub const SCREEN_HEIGHT: u16 = Platform::SCREEN_HEIGHT;
 
 /// Initalizes the applications heap and other platform specific utilities.
 #[inline]

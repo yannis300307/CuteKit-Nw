@@ -1,8 +1,9 @@
 use core::ops::{AddAssign, SubAssign};
 
+use glam::I16Vec2;
+
 use crate::{
 	Rect,
-	Vec2,
 	color::{AnyColor, Blend},
 	drawing::{Draw, DrawRenderable},
 	mods::draw_2d::drawing::{
@@ -30,7 +31,7 @@ pub struct DrawRoundedRectangle<T: AnyColor> {
 impl<DST: AnyTextureMut, T: Blend<DST::Pixel>> Draw<DrawRoundedRectangle<T>> for DST {
 	fn draw(&mut self, rectangle: &DrawRoundedRectangle<T>) {
 		let rect = rectangle.rect.ordered();
-		let radius = rectangle.radius.min(rect.size().min() / 2);
+		let radius = rectangle.radius.min(rect.size().min_element() / 2);
 		let [start, end] = rect.bounds();
 
 		let mut t1 = radius as f32 / 16.0;
@@ -72,20 +73,20 @@ impl<DST: AnyTextureMut, T: Blend<DST::Pixel>> Draw<DrawRoundedRectangle<T>> for
 			}
 		}
 		self.draw(&DrawRectangle {
-			rect:  Rect::from_scalars(start.x, start.y + r, end.x, end.y - r),
+			rect:  Rect::pack2(start.x, start.y + r, end.x, end.y - r),
 			color: rectangle.color,
 		});
 	}
 }
 
-impl<T: AnyColor> AddAssign<Vec2<i16>> for DrawRoundedRectangle<T> {
-	fn add_assign(&mut self, rhs: Vec2<i16>) { self.rect += rhs; }
+impl<T: AnyColor> AddAssign<I16Vec2> for DrawRoundedRectangle<T> {
+	fn add_assign(&mut self, rhs: I16Vec2) { self.rect += rhs; }
 }
 
-impl<T: AnyColor> SubAssign<Vec2<i16>> for DrawRoundedRectangle<T> {
-	fn sub_assign(&mut self, rhs: Vec2<i16>) { self.rect -= rhs; }
+impl<T: AnyColor> SubAssign<I16Vec2> for DrawRoundedRectangle<T> {
+	fn sub_assign(&mut self, rhs: I16Vec2) { self.rect -= rhs; }
 }
 
-impl_add_sub!(DrawRoundedRectangle<T: AnyColor> for Vec2<i16>);
+impl_add_sub!(DrawRoundedRectangle<T: AnyColor> for I16Vec2);
 
 impl<T: AnyColor> DrawRenderable for DrawRoundedRectangle<T> {}

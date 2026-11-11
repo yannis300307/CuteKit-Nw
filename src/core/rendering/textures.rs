@@ -1,12 +1,12 @@
 use core::{fmt::Debug, marker::PhantomData};
 
 use enum_map::{Enum, EnumMap};
+use glam::{I16Vec2, Vec2};
 
 use crate::{
-	color::{AnyColor, Blend},
 	ColorRGB,
 	Rect,
-	Vec2,
+	color::{AnyColor, Blend},
 };
 
 /// Trait implemented by 2D textures.
@@ -15,7 +15,7 @@ pub trait AnyTexture: Debug {
 	type Pixel: AnyColor;
 
 	/// Gets the size of this texture.
-	fn size(&self) -> Vec2<i16>;
+	fn size(&self) -> I16Vec2;
 
 	/// Gets the stride of this texture,
 	/// the amount of elements needed to go down one row when using indexes.
@@ -40,7 +40,7 @@ pub trait AnyTexture: Debug {
 
 	/// Returns the one-dimensional index of the pixel
 	/// at the given position in this texture.
-	fn index_of(&self, p: Vec2<i16>) -> usize;
+	fn index_of(&self, p: I16Vec2) -> usize;
 
 	/// Returns the value of the pixel at the given index in this texture.
 	///
@@ -73,7 +73,7 @@ pub trait AnyTextureMut: AnyTexture {
 pub struct Texture<'a, T: AnyColor = ColorRGB> {
 	data:   &'a [T],
 	stride: i16,
-	size:   Vec2<i16>,
+	size:   I16Vec2,
 	clip:   Rect,
 }
 
@@ -82,18 +82,15 @@ pub struct Texture<'a, T: AnyColor = ColorRGB> {
 pub struct TextureMut<'a, T: AnyColor = ColorRGB> {
 	data:   &'a mut [T],
 	stride: i16,
-	size:   Vec2<i16>,
+	size:   I16Vec2,
 	clip:   Rect,
 }
 
 /// Shader implementation for textures.
 ///
 /// Short for `Fn(&Texture<T1>, usize, Vec2<f32>) -> T2`.
-pub trait SamplerFn<T: AnyColor, U: AnyColor>: Fn(&Texture<T>, usize, Vec2<f32>) -> U {}
-impl<T: AnyColor, U: AnyColor, F: Fn(&Texture<T>, usize, Vec2<f32>) -> U> SamplerFn<T, U>
-	for F
-{
-}
+pub trait SamplerFn<T: AnyColor, U: AnyColor>: Fn(&Texture<T>, usize, Vec2) -> U {}
+impl<T: AnyColor, U: AnyColor, F: Fn(&Texture<T>, usize, Vec2) -> U> SamplerFn<T, U> for F {}
 
 /// Texture with a custom sampler function.
 ///

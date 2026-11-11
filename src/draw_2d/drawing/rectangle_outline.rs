@@ -1,8 +1,9 @@
 use core::ops::{AddAssign, SubAssign};
 
+use glam::I16Vec2;
+
 use crate::{
 	Rect,
-	Vec2,
 	color::{AnyColor, Blend},
 	drawing::{Draw, DrawRenderable},
 	mods::draw_2d::drawing::{impl_add_sub, rectangle::DrawRectangle},
@@ -31,32 +32,32 @@ impl<DST: AnyTextureMut, T: Blend<DST::Pixel>> Draw<DrawRectangleOutline<T>> for
 		let nt = rectangle.thickness.min(0);
 
 		self.draw(&DrawRectangle {
-			rect:  Rect::from_scalars(start.x + nt, start.y + nt, end.x - nt, start.y + pt),
+			rect:  Rect::pack2(start.x + nt, start.y + nt, end.x - nt, start.y + pt),
 			color: rectangle.color,
 		});
 		self.draw(&DrawRectangle {
-			rect:  Rect::from_scalars(start.x + nt, start.y + pt, start.x + pt, end.y - pt),
+			rect:  Rect::pack2(start.x + nt, start.y + pt, start.x + pt, end.y - pt),
 			color: rectangle.color,
 		});
 		self.draw(&DrawRectangle {
-			rect:  Rect::from_scalars(end.x - pt, start.y + pt, end.x - nt, end.y - pt),
+			rect:  Rect::pack2(end.x - pt, start.y + pt, end.x - nt, end.y - pt),
 			color: rectangle.color,
 		});
 		self.draw(&DrawRectangle {
-			rect:  Rect::from_scalars(start.x + nt, end.y - pt, end.x - nt, end.y - nt),
+			rect:  Rect::pack2(start.x + nt, end.y - pt, end.x - nt, end.y - nt),
 			color: rectangle.color,
 		});
 	}
 }
 
-impl<T: AnyColor> AddAssign<Vec2<i16>> for DrawRectangleOutline<T> {
-	fn add_assign(&mut self, rhs: Vec2<i16>) { self.rect += rhs; }
+impl<T: AnyColor> AddAssign<I16Vec2> for DrawRectangleOutline<T> {
+	fn add_assign(&mut self, rhs: I16Vec2) { self.rect += rhs; }
 }
 
-impl<T: AnyColor> SubAssign<Vec2<i16>> for DrawRectangleOutline<T> {
-	fn sub_assign(&mut self, rhs: Vec2<i16>) { self.rect -= rhs; }
+impl<T: AnyColor> SubAssign<I16Vec2> for DrawRectangleOutline<T> {
+	fn sub_assign(&mut self, rhs: I16Vec2) { self.rect -= rhs; }
 }
 
-impl_add_sub!(DrawRectangleOutline<T: AnyColor> for Vec2<i16>);
+impl_add_sub!(DrawRectangleOutline<T: AnyColor> for I16Vec2);
 
 impl<T: AnyColor> DrawRenderable for DrawRectangleOutline<T> {}

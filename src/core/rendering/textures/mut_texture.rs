@@ -1,43 +1,26 @@
 use core::{any, fmt::Debug};
 
 use bytemuck::NoUninit;
+use glam::I16Vec2;
 
 use crate::{
 	Rect,
-	Vec2,
 	textures::{AnyColor, AnyTexture, AnyTextureMut, Texture, TextureMut},
 };
 
 impl<'a, T: AnyColor> TextureMut<'a, T> {
-	/// Creates a new mutable texture from a given slice.
-	///
-	/// This method is a variant of `from data` with const compatibility,
-	/// as nalgebra vectors cannot be indexed in const.
-	///
-	/// The slice's size must exactly match the total texture size.
-	#[inline]
-	pub const fn from_data_const(width: i16, height: i16, data: &'a mut [T]) -> Self {
-		let size = Vec2::new(width, height);
-		Self {
-			data,
-			stride: width,
-			size,
-			clip: Rect::from_scalars(0, 0, width, height),
-		}
-	}
-
 	/// Creates a new texture from a given slice.
 	///
 	/// The slice's size must exactly match the total texture size.
 	#[inline]
-	pub fn from_data(size: Vec2<i16>, data: &'a mut [T]) -> Self {
+	pub const fn from_data(size: I16Vec2, data: &'a mut [T]) -> Self {
 		assert!(size.x >= 0 && size.y >= 0);
 		assert!(data.len() == size.x as usize * size.y as usize);
 		Self {
 			data,
 			stride: size.x,
 			size,
-			clip: Rect::at_origin(size),
+			clip: Rect::new(I16Vec2::ZERO, size),
 		}
 	}
 
@@ -45,7 +28,7 @@ impl<'a, T: AnyColor> TextureMut<'a, T> {
 	///
 	/// The slice's size must exactly match the total texture size in bytes.
 	#[inline]
-	pub fn from_bytes(size: Vec2<i16>, data: &'a mut [u8]) -> Self
+	pub fn from_bytes(size: I16Vec2, data: &'a mut [u8]) -> Self
 	where
 		T: NoUninit,
 	{
@@ -55,13 +38,13 @@ impl<'a, T: AnyColor> TextureMut<'a, T> {
 			data: bytemuck::cast_slice_mut(data),
 			stride: size.x,
 			size,
-			clip: Rect::at_origin(size),
+			clip: Rect::new(I16Vec2::ZERO, size),
 		}
 	}
 
 	/// Returns an immutable version of this texture.
 	#[inline]
-	pub fn immutable(&'a self) -> Texture<'a, T> {
+	pub const fn immutable(&'a self) -> Texture<'a, T> {
 		Texture {
 			data:   &self.data,
 			stride: self.size.x,
@@ -78,18 +61,18 @@ impl<'a, T: AnyColor> TextureMut<'a, T> {
 	/// This texture's clip and the given rect must be ordered,
 	/// or the function will panic.
 	pub fn view(&'a self, rect: Rect) -> Texture<'a, T> {
-		assert!(rect.is_ordered());
-		assert!(self.clip.is_ordered());
+		assert!(rect.is_ordered().all());
+		assert!(self.clip.is_ordered().all());
 		let rect = (rect + self.clip.start) & self.clip;
 
 		let start = self.index_of(rect.start);
-		let end = self.index_of(rect.end.add_scalar(-1)) + 1;
+		let end = self.index_of(rect.end - 1) + 1;
 		let rsize = rect.size();
 		Texture {
 			data:   &self.data[start..end],
 			stride: self.stride,
 			size:   rsize,
-			clip:   Rect::at_origin(rsize),
+			clip:   Rect::new(I16Vec2::ZERO, rsize),
 		}
 	}
 
@@ -101,39 +84,39 @@ impl<'a, T: AnyColor> TextureMut<'a, T> {
 	/// This texture's clip and the given rect must be ordered,
 	/// or the function will panic.
 	pub fn view_mut(&'a mut self, rect: Rect) -> TextureMut<'a, T> {
-		assert!(rect.is_ordered());
-		assert!(self.clip.is_ordered());
+		assert!(rect.is_ordered().all());
+		assert!(self.clip.is_ordered().all());
 		let rect = (rect + self.clip.start) & self.clip;
 
 		let start = self.index_of(rect.start);
-		let end = self.index_of(rect.end.add_scalar(-1)) + 1;
+		let end = self.index_of(rect.end - 1) + 1;
 		let rsize = rect.size();
 		TextureMut {
 			data:   &mut self.data[start..end],
 			stride: self.stride,
 			size:   rsize,
-			clip:   Rect::at_origin(rsize),
+			clip:   Rect::new(I16Vec2::ZERO, rsize),
 		}
 	}
 
 	/// Resets this texture's clip area to take the entirety of the texture area.
 	#[inline]
-	pub fn reset_clip(&mut self) { self.clip = Rect::at_origin(self.size) }
+	pub const fn reset_clip(&mut self) { self.clip = Rect::new(I16Vec2::ZERO, self.size) }
 
 	/// Returns this texture's pixel buffer.
 	#[inline]
-	pub fn get_data(&self) -> &[T] { self.data }
+	pub const fn get_data(&self) -> &[T] { self.data }
 
 	/// Returns this texture's pixel buffer as mutable.
 	#[inline]
-	pub fn get_data_mut(&mut self) -> &mut [T] { self.data }
+	pub const fn get_data_mut(&mut self) -> &mut [T] { self.data }
 }
 
 impl<'a, T: AnyColor> AnyTexture for TextureMut<'a, T> {
 	type Pixel = T;
 
 	#[inline]
-	fn size(&self) -> Vec2<i16> { self.size }
+	fn size(&self) -> I16Vec2 { self.size }
 
 	#[inline]
 	fn stride(&self) -> i16 { self.stride }
@@ -142,10 +125,10 @@ impl<'a, T: AnyColor> AnyTexture for TextureMut<'a, T> {
 	fn get_clip(&self) -> Rect { self.clip }
 
 	#[inline]
-	fn clip(&mut self, clip: Rect) { self.clip = clip & Rect::at_origin(self.size) }
+	fn clip(&mut self, clip: Rect) { self.clip = clip & Rect::new(I16Vec2::ZERO, self.size) }
 
 	#[inline]
-	fn index_of(&self, p: Vec2<i16>) -> usize {
+	fn index_of(&self, p: I16Vec2) -> usize {
 		p.y as usize * self.stride as usize + p.x as usize
 	}
 

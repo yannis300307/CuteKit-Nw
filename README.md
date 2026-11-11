@@ -56,7 +56,7 @@ fn main() {
 			&mut [
 				// In this case, a simple, red rectangle going from (x=50 y=50) to (x=100 y=100).
 				&mut DrawRectangle {
-					rect:  Rect::from_scalars(50, 50, 100, 100),
+					rect:  Rect::pack2(50, 50, 100, 100),
 					color: RGB_RED,
 				}
 			]
@@ -113,7 +113,7 @@ Textures can be loaded and rendered.
 static TEXTURE: Texture<ColorRGBA> = include_texture!("../assets/.kibble/my_texture.kib");
 ...
 pipeline.register(DrawSprite {
-	rect: Rect::from_scalars(50, 50, 100, 100),
+	rect: Rect::pack2(50, 50, 100, 100),
 	texture: &TEXTURE
 });
 ```

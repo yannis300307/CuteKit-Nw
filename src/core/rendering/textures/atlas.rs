@@ -1,9 +1,9 @@
 use enum_map::{Enum, EnumMap};
+use glam::I16Vec2;
 
 use crate::{
-	textures::{AnyColor, Texture, TextureAtlas},
 	Rect,
-	Vec2,
+	textures::{AnyColor, Texture, TextureAtlas},
 };
 
 impl<'a, K: Enum, T: AnyColor> TextureAtlas<'a, K, T> {
@@ -43,18 +43,18 @@ impl<'a, T: AnyColor> Texture<'a, T> {
 	/// This texture's clip size must be divisible by the amount of subdivisions.
 	pub fn subdivide<const N: usize>(
 		&'a self,
-		subdivisions: Vec2<i16>,
+		subdivisions: I16Vec2,
 		array: &mut [Texture<'a, T>; N],
 	) {
 		assert!(subdivisions.x > 0 && subdivisions.y > 0);
-		assert!(subdivisions.product() as usize == N);
+		assert!(subdivisions.element_product() as usize == N);
 
 		let size = self.clip.size();
 
 		assert!(size.x % subdivisions.x == 0 && size.y % subdivisions.y == 0);
 
-		let subtexture_size = size.component_div(&subdivisions);
-		let step = subtexture_size.component_mul(&size.map(|x| x.signum()));
+		let subtexture_size = size / subdivisions;
+		let step = subtexture_size * size.signum();
 
 		let mut i = 0;
 		let mut pos = self.clip.start;

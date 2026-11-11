@@ -1,8 +1,9 @@
 use core::ops::{AddAssign, SubAssign};
 
+use glam::{I16Vec2, Vec2};
+
 use crate::{
 	Rect,
-	Vec2,
 	color::Blend,
 	drawing::{Draw, DrawRenderable, Sampler},
 	mods::draw_2d::drawing::impl_add_sub,
@@ -31,26 +32,26 @@ where
 		let clip = self.get_clip();
 		let rect = sprite.rect.ordered();
 
-		let start = rect.start.zip_map(&clip.start, |a, b| a.max(b));
-		let end = rect.end.zip_map(&clip.end, |a, b| a.min(b));
+		let start = rect.start.max(clip.start);
+		let end = rect.end.min(clip.end);
 
 		if start.x >= end.x || start.y >= end.y {
 			return;
 		}
 
 		let tx_clip = sprite.texture.get_clip().ordered_on(sprite.rect);
-		let size = rect.size().cast::<f32>();
-		let tx_size = tx_clip.size().cast::<f32>();
+		let size = rect.size().as_vec2();
+		let tx_size = tx_clip.size().as_vec2();
 
-		let step = tx_size.component_div(&size);
+		let step = tx_size / size;
 
-		let tx_start = Vec2::new(0, 1).map(|i: usize| {
-			let tx_start = tx_clip.start[i] as f32;
-			let clipped = (start[i] - rect.start[i]) as f32;
-			let offset = f32::from(tx_clip.start[i] > tx_clip.end[i]);
+		let tx_start = {
+			let tx_start = tx_clip.start.as_vec2();
+			let clipped = (start - rect.start).as_vec2();
+			let offset = Vec2::select(tx_clip.is_ordered(), Vec2::ZERO, Vec2::ONE);
 
-			tx_start + clipped * step[i] - offset
-		});
+			tx_start + clipped * step - offset
+		};
 
 		let stride = self.stride() as usize;
 		let tx_stride = sprite.texture.stride() as usize;
@@ -73,14 +74,14 @@ where
 	}
 }
 
-impl<TX: AnyTexture + Sampler> AddAssign<Vec2<i16>> for DrawSprite<'_, TX> {
-	fn add_assign(&mut self, rhs: Vec2<i16>) { self.rect += rhs; }
+impl<TX: AnyTexture + Sampler> AddAssign<I16Vec2> for DrawSprite<'_, TX> {
+	fn add_assign(&mut self, rhs: I16Vec2) { self.rect += rhs; }
 }
 
-impl<TX: AnyTexture + Sampler> SubAssign<Vec2<i16>> for DrawSprite<'_, TX> {
-	fn sub_assign(&mut self, rhs: Vec2<i16>) { self.rect -= rhs; }
+impl<TX: AnyTexture + Sampler> SubAssign<I16Vec2> for DrawSprite<'_, TX> {
+	fn sub_assign(&mut self, rhs: I16Vec2) { self.rect -= rhs; }
 }
 
-impl_add_sub!(DrawSprite<'a, TX: AnyTexture + Sampler> for Vec2<i16>);
+impl_add_sub!(DrawSprite<'a, TX: AnyTexture + Sampler> for I16Vec2);
 
 impl<TX: AnyTexture + Sampler + Copy> DrawRenderable for DrawSprite<'_, TX> {}

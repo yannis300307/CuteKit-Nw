@@ -4,7 +4,8 @@ use core::{
 	ops::{Add, AddAssign, BitAnd, BitAndAssign, Sub, SubAssign},
 };
 
-use crate::Vec2;
+use glam::I16Vec2;
+use glam_traits::{BVec, GVec, GVec2, GVec3, GVec4, IntVec};
 
 /// Representation of a rectangular area on a texture or on the screen.
 ///
@@ -13,59 +14,98 @@ use crate::Vec2;
 ///
 /// start and end can swapped around, the resulting rect then becomes "unordered".
 /// Unordered rects are valid in some contexts, and can lead to special behaviors.
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd)]
-pub struct Rect {
-	pub start: Vec2<i16>,
-	pub end:   Vec2<i16>,
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub struct Rect<V: GVec = I16Vec2> {
+	pub start: V,
+	pub end:   V,
 }
 
-impl Rect {
-	/// Creates a new Rect from two points.
-	///
-	/// The points match an ordered rect's top-left and bottom-right corner.
-	#[inline]
-	pub const fn new(start: Vec2<i16>, end: Vec2<i16>) -> Self { Self { start, end } }
-
+impl<V: GVec2> Rect<V> {
 	/// Creates a new rect from two decomposed points.
 	///
 	/// The points match an ordered rect's top-left and bottom-right corner.
 	/// This method behaves similarly to `Rect::new`.
 	#[inline]
-	pub const fn from_scalars(x1: i16, y1: i16, x2: i16, y2: i16) -> Self {
-		Self {
-			start: Vec2::new(x1, y1),
-			end:   Vec2::new(x2, y2),
-		}
+	pub fn pack2(x1: V::Scalar, y1: V::Scalar, x2: V::Scalar, y2: V::Scalar) -> Self {
+		Self::new(V::new(x1, y1), V::new(x2, y2))
+	}
+}
+
+impl<V: GVec3> Rect<V> {
+	/// Creates a new rect from two decomposed points.
+	///
+	/// The points match an ordered rect's top-left and bottom-right corner.
+	/// This method behaves similarly to `Rect::new`.
+	#[inline]
+	pub fn pack3(
+		x1: V::Scalar,
+		y1: V::Scalar,
+		z1: V::Scalar,
+		x2: V::Scalar,
+		y2: V::Scalar,
+		z2: V::Scalar,
+	) -> Self {
+		Self::new(V::new(x1, y1, z1), V::new(x2, y2, z2))
+	}
+}
+
+impl<V: GVec4> Rect<V> {
+	/// Creates a new rect from two decomposed points.
+	///
+	/// The points match an ordered rect's top-left and bottom-right corner.
+	/// This method behaves similarly to `Rect::new`.
+	#[inline]
+	pub fn pack4(
+		x1: V::Scalar,
+		y1: V::Scalar,
+		z1: V::Scalar,
+		w1: V::Scalar,
+		x2: V::Scalar,
+		y2: V::Scalar,
+		z2: V::Scalar,
+		w2: V::Scalar,
+	) -> Self {
+		Self::new(V::new(x1, y1, z1, w1), V::new(x2, y2, z2, w2))
+	}
+}
+
+impl<V: GVec> Rect<V> {
+	/// Creates a new Rect from two points.
+	///
+	/// The points match an ordered rect's top-left and bottom-right corner.
+	#[inline]
+	pub const fn new(start: V, end: V) -> Self { Self { start, end } }
+
+	/// Creates a new rect from two slices.
+	///
+	/// The slices match an ordered rect's top-left and bottom-right corner.
+	/// This method behaves similarly to `Rect::new`.
+	#[inline]
+	pub fn from_slices(start: &[V::Scalar], end: &[V::Scalar]) -> Self {
+		Self::new(V::from_slice(start), V::from_slice(end))
 	}
 
 	/// Creates a new rect from the position of its top-left corner and its size.
 	#[inline]
-	pub fn from_size(pos: Vec2<i16>, size: Vec2<i16>) -> Self { Self::new(pos, pos + size) }
-
-	/// Creates a new rect from its size, with its position at x=0 y=0.
-	#[inline]
-	pub fn at_origin(size: Vec2<i16>) -> Self { Self::new(Vec2::new(0, 0), size) }
+	pub fn from_size(pos: V, size: V) -> Self { Self::new(pos, pos + size) }
 
 	/// Returns true if this rect's end point is greater or equal than its start point on both axis.
 	#[inline]
-	pub fn is_ordered(&self) -> bool {
-		self.start.x <= self.end.x && self.start.y <= self.end.y
-	}
+	pub fn is_ordered(&self) -> V::BVec { self.start.cmple(self.end) }
 
 	/// Returns this rect with its values rearranged to guarantee that it is ordered.
 	#[inline]
-	pub fn ordered(self) -> Rect { self.ordered_on(self) }
+	pub fn ordered(self) -> Rect<V> { self.ordered_on(self) }
 
 	/// Returns this rect with its values rearranged according to another rect's ordering.
 	///
 	/// If the second rect is unordered on one axis, this rect's points will swap on that axis.
 	#[inline]
-	pub fn ordered_on(mut self, rect: Rect) -> Rect {
-		if rect.start.x > rect.end.x {
-			swap(&mut self.start.x, &mut self.end.x);
-		}
-		if rect.start.y > rect.end.y {
-			swap(&mut self.start.y, &mut self.end.y);
+	pub fn ordered_on(mut self, rect: Rect<V>) -> Rect<V> {
+		for i in 0..V::DIM {
+			if rect.start[i] > rect.end[i] {
+				swap(&mut self.start[i], &mut self.end[i]);
+			}
 		}
 		Rect::new(self.start, self.end)
 	}
@@ -76,7 +116,7 @@ impl Rect {
 	///
 	/// This is equivalent to `rect.end - rect.start`.
 	#[inline]
-	pub fn size(&self) -> Vec2<i16> { self.end.zip_map(&self.start, |a, b| a.wrapping_sub(b)) }
+	pub fn size(&self) -> V { self.end - self.start }
 
 	/// Returns the size of this rect as an i32.
 	///
@@ -87,29 +127,30 @@ impl Rect {
 	///
 	/// This is equivalent to `rect.end - rect.start`.
 	#[inline]
-	pub fn lsize(&self) -> Vec2<i32> { self.end.cast::<i32>() - self.start.cast::<i32>() }
+	pub fn lsize(&self) -> V::ISizeVec {
+		self.end
+			.as_isizevec()
+			.wrapping_sub(self.start.as_isizevec())
+	}
 
 	/// Returns this rect's start and end point packed in an array.
 	#[inline]
-	pub fn bounds(&self) -> [Vec2<i16>; 2] { [self.start, self.end] }
+	pub fn bounds(&self) -> [V; 2] { [self.start, self.end] }
 
 	/// Returns true if the given point is inside the bounds of this rect.
 	///
 	/// This method will return false if the rect is unordered.
 	#[inline]
-	pub fn contains(&self, p: Vec2<i16>) -> bool {
-		p.x >= self.start.x && p.x < self.end.x && p.y >= self.start.y && p.y < self.end.y
+	pub fn contains(&self, p: V) -> bool {
+		p.cmpge(self.start).all() && p.cmplt(self.end).all()
 	}
 
 	/// Returns true if the given rect is fully inside the bounds of this rect.
 	///
 	/// This method will return false if the one of the rects is unordered.
 	#[inline]
-	pub fn encapsulates(&self, rect: Rect) -> bool {
-		rect.start.x >= self.start.x
-			&& rect.end.x <= self.end.x
-			&& rect.start.y >= self.start.y
-			&& rect.end.y <= self.end.y
+	pub fn encapsulates(&self, rect: Rect<V>) -> bool {
+		rect.start.cmpge(self.start).all() && rect.end.cmple(self.end).all()
 	}
 
 	/// Returns the area shared by this rect and the given one.
@@ -119,71 +160,62 @@ impl Rect {
 	///
 	/// If the second rect is unordered on an axis,
 	/// the returned rect will have a size of zero on that axis.
-	pub fn intersection(self, bounds: Rect) -> Self {
+	pub fn intersection(self, bounds: Rect<V>) -> Self {
 		let ord = self.ordered();
-		Self::from_scalars(
-			ord.start.x.max(bounds.start.x),
-			ord.start.y.max(bounds.start.y),
-			ord.end.x.min(bounds.end.x),
-			ord.end.y.min(bounds.end.y),
-		)
+		Self::new(ord.start.max(bounds.start), ord.end.min(bounds.end))
 	}
 }
 
-impl Add<Vec2<i16>> for Rect {
+impl<V: GVec> Add<V> for Rect<V> {
 	type Output = Self;
 
 	/// Returns this rect offset by the right-hand-side vector
-	fn add(mut self, rhs: Vec2<i16>) -> Self {
+	fn add(mut self, rhs: V) -> Self {
 		self += rhs;
 		self
 	}
 }
 
-impl AddAssign<Vec2<i16>> for Rect {
+impl<V: GVec> AddAssign<V> for Rect<V> {
 	/// Offsets this rect by the right-hand-side vector
-	fn add_assign(&mut self, rhs: Vec2<i16>) {
+	fn add_assign(&mut self, rhs: V) {
 		self.start += rhs;
 		self.end += rhs
 	}
 }
 
-impl Sub<Vec2<i16>> for Rect {
+impl<V: GVec> Sub<V> for Rect<V> {
 	type Output = Self;
 
 	/// Returns this rect offset by the right-hand-side vector
-	fn sub(mut self, rhs: Vec2<i16>) -> Self {
+	fn sub(mut self, rhs: V) -> Self {
 		self -= rhs;
 		self
 	}
 }
 
-impl SubAssign<Vec2<i16>> for Rect {
+impl<V: GVec> SubAssign<V> for Rect<V> {
 	/// Offsets this rect by the right-hand-side vector
-	fn sub_assign(&mut self, rhs: Vec2<i16>) {
+	fn sub_assign(&mut self, rhs: V) {
 		self.start -= rhs;
 		self.end -= rhs;
 	}
 }
 
-impl BitAnd<Rect> for Rect {
+impl<V: GVec> BitAnd<Rect<V>> for Rect<V> {
 	type Output = Self;
 
 	/// Returns the area shared by both rects.
-	fn bitand(self, rhs: Rect) -> Self { self.intersection(rhs.ordered()) }
+	fn bitand(self, rhs: Rect<V>) -> Self { self.intersection(rhs.ordered()) }
 }
 
-impl BitAndAssign<Rect> for Rect {
+impl<V: GVec> BitAndAssign<Rect<V>> for Rect<V> {
 	/// Clamps this rect to be fully inside the right-hand-side rect.
-	fn bitand_assign(&mut self, rhs: Rect) { *self = self.intersection(rhs.ordered()); }
+	fn bitand_assign(&mut self, rhs: Rect<V>) { *self = self.intersection(rhs.ordered()); }
 }
 
-impl Debug for Rect {
+impl<V: GVec> Debug for Rect<V> {
 	fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-		write!(
-			f,
-			"Rect([{}, {}] -> [{}, {}])",
-			self.start.x, self.start.y, self.end.x, self.end.y
-		)
+		write!(f, "Rect({} -> {})", self.start, self.end,)
 	}
 }

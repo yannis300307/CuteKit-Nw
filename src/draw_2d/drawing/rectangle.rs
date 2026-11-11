@@ -1,8 +1,9 @@
 use core::ops::{AddAssign, SubAssign};
 
+use glam::I16Vec2;
+
 use crate::{
 	Rect,
-	Vec2,
 	color::{AnyColor, Blend},
 	drawing::{Draw, DrawRenderable},
 	mods::draw_2d::drawing::impl_add_sub,
@@ -42,14 +43,14 @@ impl<DST: AnyTextureMut, T: Blend<DST::Pixel>> Draw<DrawRectangle<T>> for DST {
 	}
 }
 
-impl<T: AnyColor> AddAssign<Vec2<i16>> for DrawRectangle<T> {
-	fn add_assign(&mut self, rhs: Vec2<i16>) { self.rect += rhs; }
+impl<T: AnyColor> AddAssign<I16Vec2> for DrawRectangle<T> {
+	fn add_assign(&mut self, rhs: I16Vec2) { self.rect += rhs; }
 }
 
-impl<T: AnyColor> SubAssign<Vec2<i16>> for DrawRectangle<T> {
-	fn sub_assign(&mut self, rhs: Vec2<i16>) { self.rect -= rhs; }
+impl<T: AnyColor> SubAssign<I16Vec2> for DrawRectangle<T> {
+	fn sub_assign(&mut self, rhs: I16Vec2) { self.rect -= rhs; }
 }
 
-impl_add_sub!(DrawRectangle<T: AnyColor> for Vec2<i16>);
+impl_add_sub!(DrawRectangle<T: AnyColor> for I16Vec2);
 
 impl<T: AnyColor> DrawRenderable for DrawRectangle<T> {}

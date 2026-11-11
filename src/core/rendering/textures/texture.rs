@@ -1,41 +1,25 @@
 use core::{any, fmt::Debug};
 
+use glam::I16Vec2;
+
 use crate::{
 	Rect,
-	Vec2,
 	textures::{AnyColor, AnyTexture, Texture},
 };
 
 impl<'a, T: AnyColor> Texture<'a, T> {
 	/// Creates a new texture from a given slice.
 	///
-	/// This method is a variant of `from data` with const compatibility,
-	/// as nalgebra vectors cannot be indexed in const.
-	///
 	/// The slice's size must exactly match the total texture size.
 	#[inline]
-	pub const fn from_data_const(width: i16, height: i16, data: &'a [T]) -> Self {
-		let size = Vec2::new(width, height);
-		Self {
-			data,
-			stride: width,
-			size,
-			clip: Rect::from_scalars(0, 0, width, height),
-		}
-	}
-
-	/// Creates a new texture from a given slice.
-	///
-	/// The slice's size must exactly match the total texture size.
-	#[inline]
-	pub fn from_data(size: Vec2<i16>, data: &'a [T]) -> Self {
+	pub const fn from_data(size: I16Vec2, data: &'a [T]) -> Self {
 		assert!(size.x >= 0 && size.y >= 0);
 		assert!(data.len() == size.x as usize * size.y as usize);
 		Self {
 			data,
 			stride: size.x,
 			size,
-			clip: Rect::at_origin(size),
+			clip: Rect::new(I16Vec2::ZERO, size),
 		}
 	}
 
@@ -43,14 +27,14 @@ impl<'a, T: AnyColor> Texture<'a, T> {
 	///
 	/// The slice's size must exactly match the total texture size in bytes.
 	#[inline]
-	pub fn from_bytes(size: Vec2<i16>, data: &'a [u8]) -> Self {
+	pub fn from_bytes(size: I16Vec2, data: &'a [u8]) -> Self {
 		assert!(size.x >= 0 && size.y >= 0);
 		assert!(data.len() == size.x as usize * size.y as usize * size_of::<T>());
 		Self {
 			data: bytemuck::cast_slice(data),
 			stride: size.x,
 			size,
-			clip: Rect::at_origin(size),
+			clip: Rect::new(I16Vec2::ZERO, size),
 		}
 	}
 
@@ -62,12 +46,12 @@ impl<'a, T: AnyColor> Texture<'a, T> {
 	/// This texture's clip and the given rect must be ordered,
 	/// or the function will panic.
 	pub fn view(&'a self, rect: Rect) -> Texture<'a, T> {
-		assert!(rect.is_ordered());
-		let rect = rect & Rect::at_origin(self.size);
+		assert!(rect.is_ordered().all());
+		let rect = rect & Rect::new(I16Vec2::ZERO, self.size);
 		let ord_rect = rect.ordered();
 
 		let start = self.index_of(ord_rect.start);
-		let end = self.index_of(ord_rect.end.add_scalar(-1)) + 1;
+		let end = self.index_of(ord_rect.end - 1) + 1;
 		Texture {
 			data:   &self.data[start..end],
 			stride: self.stride,
@@ -78,11 +62,11 @@ impl<'a, T: AnyColor> Texture<'a, T> {
 
 	/// Resets this texture's clip area to take the entirety of the texture area.
 	#[inline]
-	pub fn reset_clip(&mut self) { self.clip = Rect::at_origin(self.size) }
+	pub const fn reset_clip(&mut self) { self.clip = Rect::new(I16Vec2::ZERO, self.size) }
 
 	/// Returns this texture's pixel buffer.
 	#[inline]
-	pub fn get_data(&self) -> &[T] { self.data }
+	pub const fn get_data(&self) -> &[T] { self.data }
 }
 
 impl<'a, T: AnyColor> AnyTexture for Texture<'a, T> {
@@ -90,7 +74,7 @@ impl<'a, T: AnyColor> AnyTexture for Texture<'a, T> {
 	type Pixel = T;
 
 	#[inline]
-	fn size(&self) -> Vec2<i16> { self.size }
+	fn size(&self) -> I16Vec2 { self.size }
 
 	#[inline]
 	fn stride(&self) -> i16 { self.stride }
@@ -99,10 +83,10 @@ impl<'a, T: AnyColor> AnyTexture for Texture<'a, T> {
 	fn get_clip(&self) -> Rect { self.clip }
 
 	#[inline]
-	fn clip(&mut self, rect: Rect) { self.clip = rect & Rect::at_origin(self.size) }
+	fn clip(&mut self, rect: Rect) { self.clip = rect & Rect::new(I16Vec2::ZERO, self.size) }
 
 	#[inline]
-	fn index_of(&self, p: Vec2<i16>) -> usize {
+	fn index_of(&self, p: I16Vec2) -> usize {
 		p.y as usize * self.stride as usize + p.x as usize
 	}
 

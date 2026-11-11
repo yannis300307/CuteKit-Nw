@@ -1,16 +1,17 @@
 use core::{any, fmt::Debug, marker::PhantomData};
 
+use glam::I16Vec2;
+
 use crate::{
 	Rect,
 	Texture,
-	Vec2,
 	color::AnyColor,
 	textures::{AnyTexture, SamplerFn, SamplerTexture},
 };
 
 impl<'a, S: SamplerFn<T, U>, T: AnyColor, U: AnyColor> SamplerTexture<'a, S, T, U> {
 	/// Creates a new sampler texture from the given texture and a sampler function.
-	pub fn from_texture(texture: Texture<'a, T>, sampler: S) -> Self {
+	pub const fn from_texture(texture: Texture<'a, T>, sampler: S) -> Self {
 		Self {
 			_out: PhantomData,
 			texture,
@@ -22,7 +23,7 @@ impl<'a, S: SamplerFn<T, U>, T: AnyColor, U: AnyColor> SamplerTexture<'a, S, T, 
 impl<'a, T: AnyColor> Texture<'a, T> {
 	/// Creates and returns a new sampler texture
 	/// from this texture and the given sampler function.
-	pub fn with_sampler<S: SamplerFn<T, U>, U: AnyColor>(
+	pub const fn with_sampler<S: SamplerFn<T, U>, U: AnyColor>(
 		self,
 		sampler: S,
 	) -> SamplerTexture<'a, S, T, U> {
@@ -37,7 +38,7 @@ impl<'a, S: SamplerFn<T, U>, T: AnyColor, U: AnyColor> AnyTexture
 	type Pixel = T;
 
 	#[inline]
-	fn size(&self) -> Vec2<i16> { self.texture.size() }
+	fn size(&self) -> I16Vec2 { self.texture.size() }
 
 	#[inline]
 	fn stride(&self) -> i16 { self.texture.stride() }
@@ -49,7 +50,7 @@ impl<'a, S: SamplerFn<T, U>, T: AnyColor, U: AnyColor> AnyTexture
 	fn clip(&mut self, rect: Rect) { self.texture.clip(rect); }
 
 	#[inline]
-	fn index_of(&self, p: Vec2<i16>) -> usize {
+	fn index_of(&self, p: I16Vec2) -> usize {
 		p.y as usize * self.texture.stride as usize + p.x as usize
 	}
 

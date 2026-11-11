@@ -3,7 +3,6 @@ use core::ops::{AddAssign, SubAssign};
 use crate::{
 	CutekitMatrix,
 	Rect,
-	Vec2,
 	color::Blend,
 	drawing::{Draw, DrawRenderable, Sampler},
 	mods::draw_2d::drawing::impl_add_sub,
@@ -85,14 +84,14 @@ where
 	}
 }
 
-impl<TX: AnyTexture + Sampler> AddAssign<Vec2<i16>> for SpriteTiled<'_, TX> {
-	fn add_assign(&mut self, rhs: Vec2<i16>) { self.rect += rhs; }
+impl<TX: AnyTexture + Sampler> AddAssign<I16Vec2> for SpriteTiled<'_, TX> {
+	fn add_assign(&mut self, rhs: I16Vec2) { self.rect += rhs; }
 }
 
-impl<TX: AnyTexture + Sampler> SubAssign<Vec2<i16>> for SpriteTiled<'_, TX> {
-	fn sub_assign(&mut self, rhs: Vec2<i16>) { self.rect -= rhs; }
+impl<TX: AnyTexture + Sampler> SubAssign<I16Vec2> for SpriteTiled<'_, TX> {
+	fn sub_assign(&mut self, rhs: I16Vec2) { self.rect -= rhs; }
 }
 
-impl_add_sub!(SpriteTiled<'a, TX: AnyTexture + Sampler> for Vec2<i16>);
+impl_add_sub!(SpriteTiled<'a, TX: AnyTexture + Sampler> for I16Vec2);
 
 impl<TX: AnyTexture + Sampler + Copy> DrawRenderable for SpriteTiled<'_, TX> {}

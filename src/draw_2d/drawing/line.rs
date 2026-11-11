@@ -1,7 +1,8 @@
 use core::ops::{AddAssign, SubAssign};
 
+use glam::I16Vec2;
+
 use crate::{
-	Vec2,
 	color::{AnyColor, Blend},
 	drawing::{Draw, DrawRenderable},
 	mods::draw_2d::drawing::impl_add_sub,
@@ -42,22 +43,22 @@ impl<DST: AnyTextureMut, T: Blend<DST::Pixel>> Draw<DrawHorizontalLine<T>> for D
 	}
 }
 
-impl<T: AnyColor> AddAssign<Vec2<i16>> for DrawHorizontalLine<T> {
-	fn add_assign(&mut self, rhs: Vec2<i16>) {
+impl<T: AnyColor> AddAssign<I16Vec2> for DrawHorizontalLine<T> {
+	fn add_assign(&mut self, rhs: I16Vec2) {
 		self.start_x += rhs.x;
 		self.end_x += rhs.x;
 		self.y += rhs.y;
 	}
 }
 
-impl<T: AnyColor> SubAssign<Vec2<i16>> for DrawHorizontalLine<T> {
-	fn sub_assign(&mut self, rhs: Vec2<i16>) {
+impl<T: AnyColor> SubAssign<I16Vec2> for DrawHorizontalLine<T> {
+	fn sub_assign(&mut self, rhs: I16Vec2) {
 		self.start_x -= rhs.x;
 		self.end_x -= rhs.x;
 		self.y -= rhs.y;
 	}
 }
 
-impl_add_sub!(DrawHorizontalLine<T: AnyColor> for Vec2<i16>);
+impl_add_sub!(DrawHorizontalLine<T: AnyColor> for I16Vec2);
 
 impl<T: AnyColor> DrawRenderable for DrawHorizontalLine<T> {}

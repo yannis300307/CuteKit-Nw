@@ -2,17 +2,25 @@ pub mod drawing;
 pub mod font;
 pub mod pipeline;
 
-pub mod public {
+pub mod prelude {
+	pub mod charsets {
+		pub use super::super::font::charsets::{
+			ascii::Ascii,
+			basic_text::BasicText,
+			numeric::Numeric,
+		};
+	}
 	pub use super::{
 		drawing::*,
-		font::{
-			charsets::{ascii::Ascii, basic_text::BasicText, numeric::Numeric},
-			ColorFont,
-		},
+		font::ColorFont,
 		pipeline::{
+			Pipeline2D,
 			elements::{Element2D, NineParts},
 			registry::Pipeline,
-			Pipeline2D,
 		},
 	};
+}
+
+pub mod public {
+	pub use super::prelude::{charsets::*, *};
 }

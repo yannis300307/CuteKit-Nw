@@ -1,7 +1,8 @@
 use core::ops::{AddAssign, SubAssign};
 
+use glam::I16Vec2;
+
 use crate::{
-	Vec2,
 	color::{AnyColor, Blend},
 	drawing::{Draw, DrawRenderable},
 	mods::draw_2d::drawing::{impl_add_sub, line::DrawHorizontalLine},
@@ -15,7 +16,7 @@ use crate::{
 /// This struct can be given to `Pipeline2D`'s `register` method.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct DrawCircle<T: AnyColor> {
-	pub center: Vec2<i16>,
+	pub center: I16Vec2,
 	pub radius: i16,
 	pub color:  T,
 }
@@ -62,14 +63,14 @@ impl<DST: AnyTextureMut, T: Blend<DST::Pixel>> Draw<DrawCircle<T>> for DST {
 	}
 }
 
-impl<T: AnyColor> AddAssign<Vec2<i16>> for DrawCircle<T> {
-	fn add_assign(&mut self, rhs: Vec2<i16>) { self.center += rhs; }
+impl<T: AnyColor> AddAssign<I16Vec2> for DrawCircle<T> {
+	fn add_assign(&mut self, rhs: I16Vec2) { self.center += rhs; }
 }
 
-impl<T: AnyColor> SubAssign<Vec2<i16>> for DrawCircle<T> {
-	fn sub_assign(&mut self, rhs: Vec2<i16>) { self.center -= rhs; }
+impl<T: AnyColor> SubAssign<I16Vec2> for DrawCircle<T> {
+	fn sub_assign(&mut self, rhs: I16Vec2) { self.center -= rhs; }
 }
 
-impl_add_sub!(DrawCircle<T: AnyColor> for Vec2<i16>);
+impl_add_sub!(DrawCircle<T: AnyColor> for I16Vec2);
 
 impl<T: AnyColor> DrawRenderable for DrawCircle<T> {}

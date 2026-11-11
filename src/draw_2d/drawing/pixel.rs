@@ -1,7 +1,8 @@
 use core::ops::{AddAssign, SubAssign};
 
+use glam::I16Vec2;
+
 use crate::{
-	Vec2,
 	color::{AnyColor, Blend},
 	drawing::{Draw, DrawRenderable},
 	mods::draw_2d::drawing::impl_add_sub,
@@ -18,7 +19,7 @@ use crate::{
 /// or making your own draw operation to make batching more efficient.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct DrawPixel<T: AnyColor> {
-	pub pos:   Vec2<i16>,
+	pub pos:   I16Vec2,
 	pub color: T,
 }
 
@@ -33,14 +34,14 @@ impl<DST: AnyTextureMut, T: Blend<DST::Pixel>> Draw<DrawPixel<T>> for DST {
 	}
 }
 
-impl<T: AnyColor> AddAssign<Vec2<i16>> for DrawPixel<T> {
-	fn add_assign(&mut self, rhs: Vec2<i16>) { self.pos += rhs; }
+impl<T: AnyColor> AddAssign<I16Vec2> for DrawPixel<T> {
+	fn add_assign(&mut self, rhs: I16Vec2) { self.pos += rhs; }
 }
 
-impl<T: AnyColor> SubAssign<Vec2<i16>> for DrawPixel<T> {
-	fn sub_assign(&mut self, rhs: Vec2<i16>) { self.pos -= rhs; }
+impl<T: AnyColor> SubAssign<I16Vec2> for DrawPixel<T> {
+	fn sub_assign(&mut self, rhs: I16Vec2) { self.pos -= rhs; }
 }
 
-impl_add_sub!(DrawPixel<T: AnyColor> for Vec2<i16>);
+impl_add_sub!(DrawPixel<T: AnyColor> for I16Vec2);
 
 impl<T: AnyColor> DrawRenderable for DrawPixel<T> {}
