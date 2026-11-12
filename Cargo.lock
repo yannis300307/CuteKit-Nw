@@ -94,7 +94,7 @@ dependencies = [
  "bytemuck",
  "enum-iterator",
  "enum-map",
- "glam 0.34.3",
+ "glam",
  "glam-traits",
  "heapless",
  "include_bytes_aligned",
@@ -172,12 +172,6 @@ dependencies = [
 
 [[package]]
 name = "glam"
-version = "0.30.10"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "19fc433e8437a212d1b6f1e68c7824af3aed907da60afa994e7f542d18d12aa9"
-
-[[package]]
-name = "glam"
 version = "0.34.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "627003914c6057c9c8f0832ee4f870b5a4f599d0cfa83f4072675114860cd0ff"
@@ -187,11 +181,11 @@ dependencies = [
 
 [[package]]
 name = "glam-traits"
-version = "0.3.1"
+version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d4e8bd857cb1216e8fff969d667884eafae3b882b36175675cdb9cb30c456937"
+checksum = "24606ca6d069b531063095059861f11925164ce00465c8578b523035f5c987eb"
 dependencies = [
- "glam 0.30.10",
+ "glam",
 ]
 
 [[package]]

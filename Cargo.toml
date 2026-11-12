@@ -32,13 +32,11 @@ ui = ["draw_2d"]
 [dependencies.nadk]
 path = "deps/nadk"
 
-[dependencies.glam-traits]
-path = "deps/glam-traits"
-
 [dependencies]
-glam = { version = "0.34.3", default-features = false, features = ["nostd-libm"]}
 bytemuck = { version = "1.25.0", features = ["derive"] }
 heapless = { version = "0.9.3" }
+glam = { version = "0.34.3", default-features = false, features = ["nostd-libm"]}
+glam-traits = "0.3.2"
 libm = "0.2.15"
 include_bytes_aligned = "0.2.0"
 enum-iterator = "2.3.0"
