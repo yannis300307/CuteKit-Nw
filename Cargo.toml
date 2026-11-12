@@ -36,7 +36,7 @@ path = "deps/nadk"
 bytemuck = { version = "1.25.0", features = ["derive"] }
 heapless = { version = "0.9.3" }
 glam = { version = "0.34.3", default-features = false, features = ["nostd-libm"]}
-glam-traits = "0.3.2"
+glam-traits = { version = "0.3.2", default-features = false, features = ["libm"]}
 libm = "0.2.15"
 include_bytes_aligned = "0.2.0"
 enum-iterator = "2.3.0"
